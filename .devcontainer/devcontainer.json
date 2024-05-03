@@ -10,6 +10,7 @@
 
   "dockerComposeFile":"docker-compose.yml",
   "service": "app",
+  "workspaceFolder": "/workspaces/WorkTimeManagementV2",
 
   // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "sudo chown node node_modules && sudo chown node dist && yarn install",
