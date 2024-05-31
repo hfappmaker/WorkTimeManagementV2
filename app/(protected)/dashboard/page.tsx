@@ -1,48 +1,71 @@
-import { z } from 'zod';
-
-const DaySchema = z.object({
-  start: z.string(),
-  end: z.string(),
-});
-
-const MonthlyAttendanceSchema = z.object({
-  days: z.array(DaySchema),
-});
-
+'use client';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { getDaysInMonth } from 'date-fns';
+import { MonthlyAttendanceSchema } from '@/schemas';
+import { Form } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import * as z from "zod";
+import { useEffect, useLayoutEffect } from 'react';
 
 export default function DashboardPage() {
-  // ...other code...
-
-  const { register, control, handleSubmit } = useForm({
+  const form = useForm<z.infer<typeof MonthlyAttendanceSchema>>({
     resolver: zodResolver(MonthlyAttendanceSchema),
   });
 
   const { fields, append, remove } = useFieldArray({
-    control,
+    control: form.control,
     name: 'days',
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = (data: z.infer<typeof MonthlyAttendanceSchema>) => {
     console.log(data);
-    // Submit the data...
   };
 
+  useLayoutEffect(() => {
+    const date = new Date();
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    const daysInMonth = getDaysInMonth(new Date(year, month));
+    for (let i = 0; i < daysInMonth; i++) {
+      append({ startTime: '', endTime: '' });
+    }
+  }, []);
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      {fields.map((field, index) => (
-        <div key={field.id}>
-          <label>Day {index + 1}</label>
-          <input {...register(`days.${index}.start`)} placeholder="Start time" />
-          <input {...register(`days.${index}.end`)} placeholder="End time" />
-          <button type="button" onClick={() => remove(index)}>Remove</button>
-        </div>
-      ))}
-      <button type="button" onClick={() => append({ start: '', end: '' })}>
-        Add Day
-      </button>
-      <input type="submit" />
-    </form>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <table>
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fields.map((day, index) => (
+              <tr key={day.id}>
+                <td>{index + 1}</td>
+                <td>
+                  <Input
+                    type="time"
+                    {...form.register(`days.${index}.startTime`)}
+                  />
+                </td>
+                <td>
+                  <Input
+                    type="time"
+                    {...form.register(`days.${index}.endTime`)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Button type="submit">Submit</Button>
+      </form>
+    </Form>
   );
 }

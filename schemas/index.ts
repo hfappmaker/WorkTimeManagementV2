@@ -109,3 +109,12 @@ export const RegisterSchema = z
     message: "Passwords do not match.",
     path: ["passwordConfirmation"],
   });
+
+  const DaySchema = z.object({
+    startTime: z.string().datetime(),
+    endTime: z.string().datetime(),
+  });
+  
+  export const MonthlyAttendanceSchema = z.object({
+    days: z.array(DaySchema),
+  });

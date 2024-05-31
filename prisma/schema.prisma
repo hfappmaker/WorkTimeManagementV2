@@ -23,6 +23,34 @@ model User {
   accounts      Account[]
   isTwoFactorEnabled Boolean @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
+  userProjects UserProject[]
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime?
+  userProjects UserProject[]
+}
+
+model UserProject {
+  user      User   @relation(fields: [userId], references: [id])
+  userId    String
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+  role      String
+  workTimes WorkTime[]
+  @@id([userId, projectId])
+}
+
+model WorkTime {
+  id        String   @id @default(cuid())
+  startTime DateTime
+  endTime   DateTime
+  userProject UserProject @relation(fields: [userProjectUserId, userProjectProjectId], references: [userId, projectId])
+  userProjectUserId String
+  userProjectProjectId String
 }
 
 model Account {
