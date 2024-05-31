@@ -7,7 +7,10 @@ import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import * as z from "zod";
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { createWorkTime, getWorkTimesByUserIdAndDateRange, getWorkTimesByUserIdAndProjectId, updateWorkTime } from '@/data/work-time';
+import { currentUser } from '@/lib/auth';
+import { User } from '@prisma/client';
 
 export default function DashboardPage() {
   const form = useForm<z.infer<typeof MonthlyAttendanceSchema>>({
@@ -19,18 +22,41 @@ export default function DashboardPage() {
     name: 'days',
   });
 
-  const onSubmit = (data: z.infer<typeof MonthlyAttendanceSchema>) => {
+  const onSubmit = async (data: z.infer<typeof MonthlyAttendanceSchema>) => {
     console.log(data);
+    const user: User = await currentUser();
+    for (const day of data.days) {
+      await createWorkTime({
+        startTime: day.startTime,
+        endTime: day.endTime,
+        userProjectUserId: user.id,
+        userProjectProjectId: 'your_project_id', // Replace with the actual project ID
+      });
+    }
   };
 
-  useLayoutEffect(() => {
-    const date = new Date();
-    const month = date.getMonth();
-    const year = date.getFullYear();
-    const daysInMonth = getDaysInMonth(new Date(year, month));
-    for (let i = 0; i < daysInMonth; i++) {
-      append({ startTime: '', endTime: '' });
-    }
+  useEffect(() => {
+    const fetchData = async () => {      
+      const user : User = await currentUser();
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const daysInMonth = getDaysInMonth(new Date(year, month));
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month, daysInMonth);
+      const datas = await getWorkTimesByUserIdAndDateRange(user.id, startDate, endDate);
+
+      if (datas) {
+        for(const data of datas) {
+          append({
+            startTime: data.startTime.toISOString(), // Convert Date to string
+            endTime: data.endTime.toISOString(), // Convert Date to string
+          });
+        }
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
