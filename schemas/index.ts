@@ -111,6 +111,8 @@ export const RegisterSchema = z
   });
 
   const DaySchema = z.object({
+    userId: z.string(),
+    projectId: z.string(),
     startTime: z.string().datetime(),
     endTime: z.string().datetime(),
   });

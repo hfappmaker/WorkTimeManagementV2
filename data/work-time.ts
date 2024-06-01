@@ -30,9 +30,9 @@ export const getWorkTimesByUserId = async (userId: string) => {
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectId = async (projectId: string) => { 
+export const getWorkTimesByProjectId = async (projectId: string) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -44,9 +44,12 @@ export const getWorkTimesByProjectId = async (projectId: string) => {
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndDate = async (userId: string, date: string) => {
+export const getWorkTimesByUserIdAndDate = async (
+  userId: string,
+  date: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -59,9 +62,12 @@ export const getWorkTimesByUserIdAndDate = async (userId: string, date: string) 
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndDate = async (projectId: string, date: string) => {  
+export const getWorkTimesByProjectIdAndDate = async (
+  projectId: string,
+  date: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -74,9 +80,14 @@ export const getWorkTimesByProjectIdAndDate = async (projectId: string, date: st
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndDateRange = async (userId: string, projectId: string, startDate: string, endDate: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndDateRange = async (
+  userId: string,
+  projectId: string,
+  startDate: string,
+  endDate: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -93,9 +104,13 @@ export const getWorkTimesByUserIdAndProjectIdAndDateRange = async (userId: strin
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndDateRange = async (userId: string, startDate: Date, endDate: Date) => { 
+export const getWorkTimesByUserIdAndDateRange = async (
+  userId: string,
+  startDate: Date,
+  endDate: Date
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -111,9 +126,13 @@ export const getWorkTimesByUserIdAndDateRange = async (userId: string, startDate
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndDateRange = async (projectId: string, startDate: string, endDate: string) => { 
+export const getWorkTimesByProjectIdAndDateRange = async (
+  projectId: string,
+  startDate: string,
+  endDate: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -129,9 +148,12 @@ export const getWorkTimesByProjectIdAndDateRange = async (projectId: string, sta
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByDateRange = async (startDate: string, endDate: string) => {
+export const getWorkTimesByDateRange = async (
+  startDate: string,
+  endDate: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -146,9 +168,13 @@ export const getWorkTimesByDateRange = async (startDate: string, endDate: string
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndDate = async (userId: string, projectId: string, date: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndDate = async (
+  userId: string,
+  projectId: string,
+  date: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -162,9 +188,13 @@ export const getWorkTimesByUserIdAndProjectIdAndDate = async (userId: string, pr
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndMonth = async (userId: string, projectId: string, month: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndMonth = async (
+  userId: string,
+  projectId: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -181,9 +211,12 @@ export const getWorkTimesByUserIdAndProjectIdAndMonth = async (userId: string, p
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndMonth = async (userId: string, month: string) => {
+export const getWorkTimesByUserIdAndMonth = async (
+  userId: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -199,9 +232,12 @@ export const getWorkTimesByUserIdAndMonth = async (userId: string, month: string
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndMonth = async (projectId: string, month: string) => {
+export const getWorkTimesByProjectIdAndMonth = async (
+  projectId: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -217,7 +253,7 @@ export const getWorkTimesByProjectIdAndMonth = async (projectId: string, month: 
   } catch {
     return null;
   }
-}
+};
 
 export const getWorkTimesByMonth = async (month: string) => {
   try {
@@ -234,9 +270,13 @@ export const getWorkTimesByMonth = async (month: string) => {
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndYear = async (userId: string, projectId: string, year: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndYear = async (
+  userId: string,
+  projectId: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -253,9 +293,12 @@ export const getWorkTimesByUserIdAndProjectIdAndYear = async (userId: string, pr
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndYear = async (userId: string, year: string) => {
+export const getWorkTimesByUserIdAndYear = async (
+  userId: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -271,9 +314,12 @@ export const getWorkTimesByUserIdAndYear = async (userId: string, year: string) 
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndYear = async (projectId: string, year: string) => {
+export const getWorkTimesByProjectIdAndYear = async (
+  projectId: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -289,7 +335,7 @@ export const getWorkTimesByProjectIdAndYear = async (projectId: string, year: st
   } catch {
     return null;
   }
-}
+};
 
 export const getWorkTimesByYear = async (year: string) => {
   try {
@@ -306,9 +352,14 @@ export const getWorkTimesByYear = async (year: string) => {
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndDateAndMonth = async (userId: string, projectId: string, date: string, month: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndDateAndMonth = async (
+  userId: string,
+  projectId: string,
+  date: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -323,9 +374,13 @@ export const getWorkTimesByUserIdAndProjectIdAndDateAndMonth = async (userId: st
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndDateAndMonth = async (userId: string, date: string, month: string) => {
+export const getWorkTimesByUserIdAndDateAndMonth = async (
+  userId: string,
+  date: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -339,9 +394,13 @@ export const getWorkTimesByUserIdAndDateAndMonth = async (userId: string, date: 
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndDateAndMonth = async (projectId: string, date: string, month: string) => {
+export const getWorkTimesByProjectIdAndDateAndMonth = async (
+  projectId: string,
+  date: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -355,9 +414,12 @@ export const getWorkTimesByProjectIdAndDateAndMonth = async (projectId: string, 
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByDateAndMonth = async (date: string, month: string) => {
+export const getWorkTimesByDateAndMonth = async (
+  date: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -370,9 +432,14 @@ export const getWorkTimesByDateAndMonth = async (date: string, month: string) =>
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndDateAndYear = async (userId: string, projectId: string, date: string, year: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndDateAndYear = async (
+  userId: string,
+  projectId: string,
+  date: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -387,9 +454,13 @@ export const getWorkTimesByUserIdAndProjectIdAndDateAndYear = async (userId: str
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndDateAndYear = async (userId: string, date: string, year: string) => {
+export const getWorkTimesByUserIdAndDateAndYear = async (
+  userId: string,
+  date: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -403,9 +474,13 @@ export const getWorkTimesByUserIdAndDateAndYear = async (userId: string, date: s
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndDateAndYear = async (projectId: string, date: string, year: string) => {
+export const getWorkTimesByProjectIdAndDateAndYear = async (
+  projectId: string,
+  date: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -419,7 +494,7 @@ export const getWorkTimesByProjectIdAndDateAndYear = async (projectId: string, d
   } catch {
     return null;
   }
-}
+};
 
 export const getWorkTimesByDateAndYear = async (date: string, year: string) => {
   try {
@@ -434,9 +509,14 @@ export const getWorkTimesByDateAndYear = async (date: string, year: string) => {
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndMonthAndYear = async (userId: string, projectId: string, month: string, year: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndMonthAndYear = async (
+  userId: string,
+  projectId: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -457,9 +537,13 @@ export const getWorkTimesByUserIdAndProjectIdAndMonthAndYear = async (userId: st
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndMonthAndYear = async (userId: string, month: string, year: string) => {
+export const getWorkTimesByUserIdAndMonthAndYear = async (
+  userId: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -479,9 +563,13 @@ export const getWorkTimesByUserIdAndMonthAndYear = async (userId: string, month:
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndMonthAndYear = async (projectId: string, month: string, year: string) => {
+export const getWorkTimesByProjectIdAndMonthAndYear = async (
+  projectId: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -501,9 +589,12 @@ export const getWorkTimesByProjectIdAndMonthAndYear = async (projectId: string, 
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByMonthAndYear = async (month: string, year: string) => {
+export const getWorkTimesByMonthAndYear = async (
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -522,9 +613,15 @@ export const getWorkTimesByMonthAndYear = async (month: string, year: string) =>
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndDateRangeAndMonth = async (userId: string, projectId: string, startDate: string, endDate: string, month: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndDateRangeAndMonth = async (
+  userId: string,
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -545,9 +642,14 @@ export const getWorkTimesByUserIdAndProjectIdAndDateRangeAndMonth = async (userI
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndDateRangeAndMonth = async (userId: string, startDate: string, endDate: string, month: string) => {
+export const getWorkTimesByUserIdAndDateRangeAndMonth = async (
+  userId: string,
+  startDate: string,
+  endDate: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -567,9 +669,14 @@ export const getWorkTimesByUserIdAndDateRangeAndMonth = async (userId: string, s
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndDateRangeAndMonth = async (projectId: string, startDate: string, endDate: string, month: string) => {
+export const getWorkTimesByProjectIdAndDateRangeAndMonth = async (
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -589,9 +696,13 @@ export const getWorkTimesByProjectIdAndDateRangeAndMonth = async (projectId: str
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByDateRangeAndMonth = async (startDate: string, endDate: string, month: string) => {
+export const getWorkTimesByDateRangeAndMonth = async (
+  startDate: string,
+  endDate: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -610,9 +721,15 @@ export const getWorkTimesByDateRangeAndMonth = async (startDate: string, endDate
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndDateRangeAndYear = async (userId: string, projectId: string, startDate: string, endDate: string, year: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndDateRangeAndYear = async (
+  userId: string,
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -633,10 +750,14 @@ export const getWorkTimesByUserIdAndProjectIdAndDateRangeAndYear = async (userId
   } catch {
     return null;
   }
-}
+};
 
-
-export const getWorkTimesByUserIdAndDateRangeAndYear = async (userId: string, startDate: string, endDate: string, year: string) => {
+export const getWorkTimesByUserIdAndDateRangeAndYear = async (
+  userId: string,
+  startDate: string,
+  endDate: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -656,9 +777,14 @@ export const getWorkTimesByUserIdAndDateRangeAndYear = async (userId: string, st
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndDateRangeAndYear = async (projectId: string, startDate: string, endDate: string, year: string) => {
+export const getWorkTimesByProjectIdAndDateRangeAndYear = async (
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -678,9 +804,13 @@ export const getWorkTimesByProjectIdAndDateRangeAndYear = async (projectId: stri
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByDateRangeAndYear = async (startDate: string, endDate: string, year: string) => {
+export const getWorkTimesByDateRangeAndYear = async (
+  startDate: string,
+  endDate: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -699,9 +829,12 @@ export const getWorkTimesByDateRangeAndYear = async (startDate: string, endDate:
   } catch {
     return null;
   }
-}
+};
 
-export const updateWorkTime = async (id: string, data: { startTime: string, endTime: string }) => {
+export const updateWorkTime = async (
+  id: string,
+  data: { startTime: string; endTime: string }
+) => {
   try {
     const workTime = await db.workTime.update({
       where: { id },
@@ -712,7 +845,7 @@ export const updateWorkTime = async (id: string, data: { startTime: string, endT
   } catch {
     return null;
   }
-}
+};
 
 export const deleteWorkTime = async (id: string) => {
   try {
@@ -724,9 +857,14 @@ export const deleteWorkTime = async (id: string) => {
   } catch {
     return null;
   }
-} 
+};
 
-export const createWorkTime = async (data: { startTime: string, endTime: string, userProjectUserId: string, userProjectProjectId: string }) => {
+export const createWorkTime = async (data: {
+  startTime: string;
+  endTime: string;
+  userProjectUserId: string;
+  userProjectProjectId: string;
+}) => {
   try {
     const workTime = await db.workTime.create({
       data,
@@ -736,9 +874,35 @@ export const createWorkTime = async (data: { startTime: string, endTime: string,
   } catch {
     return null;
   }
+};
+
+export const getProjectsByUserId = async (userId: string) => {
+  try {
+    const projects = await db.project.findMany({
+      where: {
+        userProjects: {
+          some: {
+            userId: userId,
+          },
+        },
+      },
+    });
+
+    return projects;
+  } catch (ex){
+    console.log(ex);
+    return null;
+  }
 }
 
-export const createWorkTimes = async (data: { startTime: string, endTime: string, userProjectUserId: string, userProjectProjectId: string }[]) => {
+export const createWorkTimes = async (
+  data: {
+    startTime: string;
+    endTime: string;
+    userProjectUserId: string;
+    userProjectProjectId: string;
+  }[]
+) => {
   try {
     const workTimes = await db.workTime.createMany({
       data,
@@ -748,9 +912,9 @@ export const createWorkTimes = async (data: { startTime: string, endTime: string
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserId = async (userId: string) => {  
+export const deleteWorkTimesByUserId = async (userId: string) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -762,9 +926,9 @@ export const deleteWorkTimesByUserId = async (userId: string) => {
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByProjectId = async (projectId: string) => {  
+export const deleteWorkTimesByProjectId = async (projectId: string) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -776,9 +940,12 @@ export const deleteWorkTimesByProjectId = async (projectId: string) => {
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectId = async (userId: string, projectId: string) => {   
+export const deleteWorkTimesByUserIdAndProjectId = async (
+  userId: string,
+  projectId: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -791,9 +958,12 @@ export const deleteWorkTimesByUserIdAndProjectId = async (userId: string, projec
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndDate = async (userId: string, date: string) => {  
+export const deleteWorkTimesByUserIdAndDate = async (
+  userId: string,
+  date: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -806,9 +976,12 @@ export const deleteWorkTimesByUserIdAndDate = async (userId: string, date: strin
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByProjectIdAndDate = async (projectId: string, date: string) => {
+export const deleteWorkTimesByProjectIdAndDate = async (
+  projectId: string,
+  date: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -821,9 +994,13 @@ export const deleteWorkTimesByProjectIdAndDate = async (projectId: string, date:
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndDateRange = async (userId: string, startDate: string, endDate: string) => {
+export const deleteWorkTimesByUserIdAndDateRange = async (
+  userId: string,
+  startDate: string,
+  endDate: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -839,9 +1016,13 @@ export const deleteWorkTimesByUserIdAndDateRange = async (userId: string, startD
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByProjectIdAndDateRange = async (projectId: string, startDate: string, endDate: string) => {
+export const deleteWorkTimesByProjectIdAndDateRange = async (
+  projectId: string,
+  startDate: string,
+  endDate: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -857,9 +1038,12 @@ export const deleteWorkTimesByProjectIdAndDateRange = async (projectId: string, 
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByDateRange = async (startDate: string, endDate: string) => {
+export const deleteWorkTimesByDateRange = async (
+  startDate: string,
+  endDate: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -874,9 +1058,13 @@ export const deleteWorkTimesByDateRange = async (startDate: string, endDate: str
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndDate = async (userId: string, projectId: string, date: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndDate = async (
+  userId: string,
+  projectId: string,
+  date: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -890,9 +1078,13 @@ export const deleteWorkTimesByUserIdAndProjectIdAndDate = async (userId: string,
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndMonth = async (userId: string, projectId: string, month: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndMonth = async (
+  userId: string,
+  projectId: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -909,9 +1101,12 @@ export const deleteWorkTimesByUserIdAndProjectIdAndMonth = async (userId: string
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndMonth = async (userId: string, month: string) => {
+export const deleteWorkTimesByUserIdAndMonth = async (
+  userId: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -927,9 +1122,12 @@ export const deleteWorkTimesByUserIdAndMonth = async (userId: string, month: str
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByProjectIdAndMonth = async (projectId: string, month: string) => {
+export const deleteWorkTimesByProjectIdAndMonth = async (
+  projectId: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -945,7 +1143,7 @@ export const deleteWorkTimesByProjectIdAndMonth = async (projectId: string, mont
   } catch {
     return null;
   }
-}
+};
 
 export const deleteWorkTimesByMonth = async (month: string) => {
   try {
@@ -962,9 +1160,13 @@ export const deleteWorkTimesByMonth = async (month: string) => {
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndYear = async (userId: string, projectId: string, year: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndYear = async (
+  userId: string,
+  projectId: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -981,9 +1183,12 @@ export const deleteWorkTimesByUserIdAndProjectIdAndYear = async (userId: string,
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndYear = async (userId: string, year: string) => {
+export const deleteWorkTimesByUserIdAndYear = async (
+  userId: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -999,9 +1204,12 @@ export const deleteWorkTimesByUserIdAndYear = async (userId: string, year: strin
   } catch {
     return null;
   }
-} 
+};
 
-export const deleteWorkTimesByProjectIdAndYear = async (projectId: string, year: string) => {
+export const deleteWorkTimesByProjectIdAndYear = async (
+  projectId: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1017,7 +1225,7 @@ export const deleteWorkTimesByProjectIdAndYear = async (projectId: string, year:
   } catch {
     return null;
   }
-}
+};
 
 export const deleteWorkTimesByYear = async (year: string) => {
   try {
@@ -1034,9 +1242,14 @@ export const deleteWorkTimesByYear = async (year: string) => {
   } catch {
     return null;
   }
-} 
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndDateAndMonth = async (userId: string, projectId: string, date: string, month: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndDateAndMonth = async (
+  userId: string,
+  projectId: string,
+  date: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1051,9 +1264,13 @@ export const deleteWorkTimesByUserIdAndProjectIdAndDateAndMonth = async (userId:
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndDateAndMonth = async (userId: string, date: string, month: string) => {
+export const deleteWorkTimesByUserIdAndDateAndMonth = async (
+  userId: string,
+  date: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1067,9 +1284,13 @@ export const deleteWorkTimesByUserIdAndDateAndMonth = async (userId: string, dat
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByProjectIdAndDateAndMonth = async (projectId: string, date: string, month: string) => {
+export const deleteWorkTimesByProjectIdAndDateAndMonth = async (
+  projectId: string,
+  date: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1083,9 +1304,12 @@ export const deleteWorkTimesByProjectIdAndDateAndMonth = async (projectId: strin
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByDateAndMonth = async (date: string, month: string) => {
+export const deleteWorkTimesByDateAndMonth = async (
+  date: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1098,9 +1322,14 @@ export const deleteWorkTimesByDateAndMonth = async (date: string, month: string)
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndDateAndYear = async (userId: string, projectId: string, date: string, year: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndDateAndYear = async (
+  userId: string,
+  projectId: string,
+  date: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1115,9 +1344,13 @@ export const deleteWorkTimesByUserIdAndProjectIdAndDateAndYear = async (userId: 
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndDateAndYear = async (userId: string, date: string, year: string) => {
+export const deleteWorkTimesByUserIdAndDateAndYear = async (
+  userId: string,
+  date: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1131,9 +1364,13 @@ export const deleteWorkTimesByUserIdAndDateAndYear = async (userId: string, date
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByProjectIdAndDateAndYear = async (projectId: string, date: string, year: string) => {
+export const deleteWorkTimesByProjectIdAndDateAndYear = async (
+  projectId: string,
+  date: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1147,9 +1384,12 @@ export const deleteWorkTimesByProjectIdAndDateAndYear = async (projectId: string
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByDateAndYear = async (date: string, year: string) => {
+export const deleteWorkTimesByDateAndYear = async (
+  date: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1162,9 +1402,14 @@ export const deleteWorkTimesByDateAndYear = async (date: string, year: string) =
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndMonthAndYear = async (userId: string, projectId: string, month: string, year: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndMonthAndYear = async (
+  userId: string,
+  projectId: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1185,9 +1430,13 @@ export const deleteWorkTimesByUserIdAndProjectIdAndMonthAndYear = async (userId:
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndMonthAndYear = async (userId: string, month: string, year: string) => {
+export const deleteWorkTimesByUserIdAndMonthAndYear = async (
+  userId: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1207,9 +1456,13 @@ export const deleteWorkTimesByUserIdAndMonthAndYear = async (userId: string, mon
   } catch {
     return null;
   }
-} 
+};
 
-export const deleteWorkTimesByProjectIdAndMonthAndYear = async (projectId: string, month: string, year: string) => {
+export const deleteWorkTimesByProjectIdAndMonthAndYear = async (
+  projectId: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1229,9 +1482,12 @@ export const deleteWorkTimesByProjectIdAndMonthAndYear = async (projectId: strin
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByMonthAndYear = async (month: string, year: string) => {
+export const deleteWorkTimesByMonthAndYear = async (
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1250,9 +1506,15 @@ export const deleteWorkTimesByMonthAndYear = async (month: string, year: string)
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndDateRangeAndMonth = async (userId: string, projectId: string, startDate: string, endDate: string, month: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndDateRangeAndMonth = async (
+  userId: string,
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1273,9 +1535,14 @@ export const deleteWorkTimesByUserIdAndProjectIdAndDateRangeAndMonth = async (us
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndDateRangeAndMonth = async (userId: string, startDate: string, endDate: string, month: string) => {
+export const deleteWorkTimesByUserIdAndDateRangeAndMonth = async (
+  userId: string,
+  startDate: string,
+  endDate: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1295,9 +1562,14 @@ export const deleteWorkTimesByUserIdAndDateRangeAndMonth = async (userId: string
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByProjectIdAndDateRangeAndMonth = async (projectId: string, startDate: string, endDate: string, month: string) => {
+export const deleteWorkTimesByProjectIdAndDateRangeAndMonth = async (
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1317,9 +1589,13 @@ export const deleteWorkTimesByProjectIdAndDateRangeAndMonth = async (projectId: 
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByDateRangeAndMonth = async (startDate: string, endDate: string, month: string) => {
+export const deleteWorkTimesByDateRangeAndMonth = async (
+  startDate: string,
+  endDate: string,
+  month: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1338,9 +1614,15 @@ export const deleteWorkTimesByDateRangeAndMonth = async (startDate: string, endD
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndDateRangeAndYear = async (userId: string, projectId: string, startDate: string, endDate: string, year: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndDateRangeAndYear = async (
+  userId: string,
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1361,9 +1643,14 @@ export const deleteWorkTimesByUserIdAndProjectIdAndDateRangeAndYear = async (use
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndDateRangeAndYear = async (userId: string, startDate: string, endDate: string, year: string) => {
+export const deleteWorkTimesByUserIdAndDateRangeAndYear = async (
+  userId: string,
+  startDate: string,
+  endDate: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1383,9 +1670,14 @@ export const deleteWorkTimesByUserIdAndDateRangeAndYear = async (userId: string,
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByProjectIdAndDateRangeAndYear = async (projectId: string, startDate: string, endDate: string, year: string) => {
+export const deleteWorkTimesByProjectIdAndDateRangeAndYear = async (
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1405,9 +1697,13 @@ export const deleteWorkTimesByProjectIdAndDateRangeAndYear = async (projectId: s
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByDateRangeAndYear = async (startDate: string, endDate: string, year: string) => {
+export const deleteWorkTimesByDateRangeAndYear = async (
+  startDate: string,
+  endDate: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1426,7 +1722,7 @@ export const deleteWorkTimesByDateRangeAndYear = async (startDate: string, endDa
   } catch {
     return null;
   }
-}
+};
 
 export const getWorkTimeById = async (id: string) => {
   try {
@@ -1438,7 +1734,7 @@ export const getWorkTimeById = async (id: string) => {
   } catch {
     return null;
   }
-}
+};
 
 export const getWorkTimes = async () => {
   try {
@@ -1448,9 +1744,15 @@ export const getWorkTimes = async () => {
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndDateAndMonthAndYear = async (userId: string, projectId: string, date: string, month: string, year: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndDateAndMonthAndYear = async (
+  userId: string,
+  projectId: string,
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -1465,9 +1767,14 @@ export const getWorkTimesByUserIdAndProjectIdAndDateAndMonthAndYear = async (use
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndDateAndMonthAndYear = async (userId: string, date: string, month: string, year: string) => {
+export const getWorkTimesByUserIdAndDateAndMonthAndYear = async (
+  userId: string,
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -1481,9 +1788,14 @@ export const getWorkTimesByUserIdAndDateAndMonthAndYear = async (userId: string,
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByProjectIdAndDateAndMonthAndYear = async (projectId: string, date: string, month: string, year: string) => {
+export const getWorkTimesByProjectIdAndDateAndMonthAndYear = async (
+  projectId: string,
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -1497,9 +1809,13 @@ export const getWorkTimesByProjectIdAndDateAndMonthAndYear = async (projectId: s
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByDateAndMonthAndYear = async (date: string, month: string, year: string) => {
+export const getWorkTimesByDateAndMonthAndYear = async (
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -1512,14 +1828,42 @@ export const getWorkTimesByDateAndMonthAndYear = async (date: string, month: str
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndProjectIdAndDateAndMonthAndYearRange = async (userId: string, projectId: string, date: string, month: string, year: string) => {
+export const getWorkTimesByUserIdAndProjectIdAndDateAndMonthAndYearRange =
+  async (
+    userId: string,
+    projectId: string,
+    date: string,
+    month: string,
+    year: string
+  ) => {
+    try {
+      const workTimes = await db.workTime.findMany({
+        where: {
+          userProjectUserId: userId,
+          userProjectProjectId: projectId,
+          startTime: date,
+          endTime: date,
+        },
+      });
+
+      return workTimes;
+    } catch {
+      return null;
+    }
+  };
+
+export const getWorkTimesByUserIdAndDateAndMonthAndYearRange = async (
+  userId: string,
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
         userProjectUserId: userId,
-        userProjectProjectId: projectId,
         startTime: date,
         endTime: date,
       },
@@ -1529,25 +1873,14 @@ export const getWorkTimesByUserIdAndProjectIdAndDateAndMonthAndYearRange = async
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByUserIdAndDateAndMonthAndYearRange = async (userId: string, date: string, month: string, year: string) => {
-  try {
-    const workTimes = await db.workTime.findMany({
-      where: {
-        userProjectUserId: userId,
-        startTime: date,
-        endTime: date,
-      },
-    });
-
-    return workTimes;
-  } catch {
-    return null;
-  }
-}
-
-export const getWorkTimesByProjectIdAndDateAndMonthAndYearRange = async (projectId: string, date: string, month: string, year: string) => {
+export const getWorkTimesByProjectIdAndDateAndMonthAndYearRange = async (
+  projectId: string,
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -1561,9 +1894,13 @@ export const getWorkTimesByProjectIdAndDateAndMonthAndYearRange = async (project
   } catch {
     return null;
   }
-}
+};
 
-export const getWorkTimesByDateAndMonthAndYearRange = async (date: string, month: string, year: string) => {
+export const getWorkTimesByDateAndMonthAndYearRange = async (
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.findMany({
       where: {
@@ -1576,9 +1913,15 @@ export const getWorkTimesByDateAndMonthAndYearRange = async (date: string, month
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndDateAndMonthAndYear = async (userId: string, projectId: string, date: string, month: string, year: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndDateAndMonthAndYear = async (
+  userId: string,
+  projectId: string,
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1593,9 +1936,14 @@ export const deleteWorkTimesByUserIdAndProjectIdAndDateAndMonthAndYear = async (
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndDateAndMonthAndYear = async (userId: string, date: string, month: string, year: string) => {
+export const deleteWorkTimesByUserIdAndDateAndMonthAndYear = async (
+  userId: string,
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1609,9 +1957,14 @@ export const deleteWorkTimesByUserIdAndDateAndMonthAndYear = async (userId: stri
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByProjectIdAndDateAndMonthAndYear = async (projectId: string, date: string, month: string, year: string) => {
+export const deleteWorkTimesByProjectIdAndDateAndMonthAndYear = async (
+  projectId: string,
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1625,9 +1978,13 @@ export const deleteWorkTimesByProjectIdAndDateAndMonthAndYear = async (projectId
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByDateAndMonthAndYear = async (date: string, month: string, year: string) => {
+export const deleteWorkTimesByDateAndMonthAndYear = async (
+  date: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1640,13 +1997,77 @@ export const deleteWorkTimesByDateAndMonthAndYear = async (date: string, month: 
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndProjectIdAndDateRangeAndMonthAndYear = async (userId: string, projectId: string, startDate: string, endDate: string, month: string, year: string) => {
+export const deleteWorkTimesByUserIdAndProjectIdAndDateRangeAndMonthAndYear =
+  async (
+    userId: string,
+    projectId: string,
+    startDate: string,
+    endDate: string,
+    month: string,
+    year: string
+  ) => {
+    try {
+      const workTimes = await db.workTime.deleteMany({
+        where: {
+          userProjectUserId: userId,
+          userProjectProjectId: projectId,
+          startTime: {
+            gte: startDate,
+            lte: endDate,
+          },
+          endTime: {
+            gte: month,
+            lte: month,
+          },
+        },
+      });
+
+      return workTimes;
+    } catch {
+      return null;
+    }
+  };
+
+export const deleteWorkTimesByUserIdAndDateRangeAndMonthAndYear = async (
+  userId: string,
+  startDate: string,
+  endDate: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
         userProjectUserId: userId,
+        startTime: {
+          gte: startDate,
+          lte: endDate,
+        },
+        endTime: {
+          gte: month,
+          lte: month,
+        },
+      },
+    });
+
+    return workTimes;
+  } catch {
+    return null;
+  }
+};
+
+export const deleteWorkTimesByProjectIdAndDateRangeAndMonthAndYear = async (
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  month: string,
+  year: string
+) => {
+  try {
+    const workTimes = await db.workTime.deleteMany({
+      where: {
         userProjectProjectId: projectId,
         startTime: {
           gte: startDate,
@@ -1663,53 +2084,14 @@ export const deleteWorkTimesByUserIdAndProjectIdAndDateRangeAndMonthAndYear = as
   } catch {
     return null;
   }
-}
+};
 
-export const deleteWorkTimesByUserIdAndDateRangeAndMonthAndYear = async (userId: string, startDate: string, endDate: string, month: string, year: string) => {
-  try {
-    const workTimes = await db.workTime.deleteMany({
-      where: {
-        userProjectUserId: userId,
-        startTime: {
-          gte: startDate,
-          lte: endDate,
-        },
-        endTime: {
-          gte: month,
-          lte: month,
-        },
-      },
-    });
-
-    return workTimes;
-  } catch {
-    return null;
-  }
-}
-
-export const deleteWorkTimesByProjectIdAndDateRangeAndMonthAndYear = async (projectId: string, startDate: string, endDate: string, month: string, year: string) => {
-  try {
-    const workTimes = await db.workTime.deleteMany({
-      where: {
-        userProjectProjectId: projectId,
-        startTime: {
-          gte: startDate,
-          lte: endDate,
-        },
-        endTime: {
-          gte: month,
-          lte: month,
-        },
-      },
-    });
-
-    return workTimes;
-  } catch {
-    return null;
-  }
-}
-
-export const deleteWorkTimesByDateRangeAndMonthAndYear = async (startDate: string, endDate: string, month: string, year: string) => {
+export const deleteWorkTimesByDateRangeAndMonthAndYear = async (
+  startDate: string,
+  endDate: string,
+  month: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.deleteMany({
       where: {
@@ -1728,9 +2110,15 @@ export const deleteWorkTimesByDateRangeAndMonthAndYear = async (startDate: strin
   } catch {
     return null;
   }
-}
+};
 
-export const createWorkTimesByUserIdAndProjectIdAndDateRangeAndYear = async (userId: string, projectId: string, startDate: string, endDate: string, year: string) => {
+export const createWorkTimesByUserIdAndProjectIdAndDateRangeAndYear = async (
+  userId: string,
+  projectId: string,
+  startDate: string,
+  endDate: string,
+  year: string
+) => {
   try {
     const workTimes = await db.workTime.createMany({
       data: Array.from({ length: 7 }, (_, i) => ({
@@ -1745,7 +2133,4 @@ export const createWorkTimesByUserIdAndProjectIdAndDateRangeAndYear = async (use
   } catch {
     return null;
   }
-}
-
-
-
+};
