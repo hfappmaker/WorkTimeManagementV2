@@ -1,47 +1,31 @@
-import { useEffect, useState } from 'react';
 import { getProjectsByUserId } from '@/data/work-time';
-import { useCurrentUser } from '@/hooks/use-current-user';
 import Link from 'next/link';
-import { getSession } from 'next-auth/react';
 import { currentUser } from '@/lib/auth';
-
-interface Project {
-  id: string;
-  name: string;
-  startDate: Date;
-  endDate: Date | null;
-}
+import { Label } from '@/components/ui/label';
 
 export default async function DashboardPage() {
   const user = await currentUser();
   const projects = await getProjectsByUserId(user.id);
-  // useEffect(() => {
-  //   const fetchData = async () => {
-
-  //   };
-
-  //   fetchData();
-  // }, []);
-
+  const currentProjects = projects?.filter(project =>  project.endDate == null || project.endDate > new Date());
   return (
     <table>
       <thead>
         <tr>
-          <th>Day</th>
-          <th>Start Time</th>
-          <th>End Time</th>
+          <th>Project Name</th>
+          <th>Start Date</th>
+          <th>End Date</th>
         </tr>
       </thead>
       <tbody>
-        {projects?.map(project => (
+        {currentProjects?.map(project => (
           <tr key={project.id}>
             <td>
-              <Link href={`/dashborad?projectId=${project.id}`}>
+              <Link href={`/project/${project.id}`}>
                 {project.name}
               </Link>
             </td>
-            <td>{project.startDate.toDateString()}</td>
-            <td>{project.endDate?.toDateString()}</td>
+            <td><Label>{project.startDate.toLocaleDateString()}</Label></td>
+            <td><Label>{project.endDate?.toLocaleDateString()}</Label></td>
           </tr>
         ))}
       </tbody>
