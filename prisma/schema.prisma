@@ -37,11 +37,12 @@ model Project {
 model WorkTimeReport {
   id        String     @id @default(cuid())
   startDate DateTime
-  endDate   DateTime?
+  endDate   DateTime
   user      User       @relation(fields: [userId], references: [id])
   userId    String
   project   Project    @relation(fields: [projectId], references: [id])
   projectId String
+  isClosed  Boolean    @default(false)
   workTimes WorkTime[]
 }
 
