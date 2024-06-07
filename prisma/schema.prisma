@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url  	    = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -13,59 +13,59 @@ enum UserRole {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          UserRole @default(USER)
-  accounts      Account[]
-  isTwoFactorEnabled Boolean @default(false)
+  id                    String                 @id @default(cuid())
+  name                  String?
+  email                 String?                @unique
+  emailVerified         DateTime?
+  image                 String?
+  password              String?
+  role                  UserRole               @default(USER)
+  accounts              Account[]
+  isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
-  userProjects UserProject[]
+  WorkTimeReport        WorkTimeReport[]
 }
 
 model Project {
-  id        String   @id @default(cuid())
-  name      String
-  startDate DateTime
-  endDate   DateTime?
-  userProjects UserProject[]
+  id             String           @id @default(cuid())
+  name           String
+  startDate      DateTime
+  endDate        DateTime?
+  WorkTimeReport WorkTimeReport[]
 }
 
-model UserProject {
-  user      User   @relation(fields: [userId], references: [id])
+model WorkTimeReport {
+  id        String     @id @default(cuid())
+  startDate DateTime
+  endDate   DateTime?
+  user      User       @relation(fields: [userId], references: [id])
   userId    String
-  project   Project @relation(fields: [projectId], references: [id])
+  project   Project    @relation(fields: [projectId], references: [id])
   projectId String
-  role      String
   workTimes WorkTime[]
-  @@id([userId, projectId])
 }
 
 model WorkTime {
-  id        String   @id @default(cuid())
-  startTime DateTime
-  endTime   DateTime
-  userProject UserProject @relation(fields: [userProjectUserId, userProjectProjectId], references: [userId, projectId])
-  userProjectUserId String
-  userProjectProjectId String
+  id               String         @id @default(cuid())
+  startTime        DateTime
+  endTime          DateTime
+  workTimeReport   WorkTimeReport @relation(fields: [workTimeReportId], references: [id])
+  workTimeReportId String
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -73,27 +73,27 @@ model Account {
 }
 
 model VerificationToken {
-  id String @id @default(cuid())
-  email String
-  token String @unique
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
   expires DateTime
 
   @@unique([email, token])
 }
 
 model PasswordResetToken {
-  id String @id @default(cuid())
-  email String
-  token String @unique
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
   expires DateTime
 
   @@unique([email, token])
 }
 
 model TwoFactorToken {
-  id String @id @default(cuid())
-  email String
-  token String @unique
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
   expires DateTime
 
   @@unique([email, token])
@@ -103,7 +103,7 @@ model TwoFactorConfirmation {
   id String @id @default(cuid())
 
   userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId])
 }

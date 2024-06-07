@@ -1,11 +1,16 @@
 import { Input } from '@/components/ui/input';
-import { getWorkTimesByUserIdAndProjectId } from '@/data/work-time';
+import { getOpenedWorkTimeReport } from '@/data/work-time';
 import { currentUser } from '@/lib/auth';
 import { createWorkTime } from '@/data/work-time';
+import { Button } from '@/components/ui/button';
+import { getDaysInMonth } from 'date-fns';
+
+const date = new Date(); // 現在の日付
+const daysInMonth = getDaysInMonth(date); // 月の日数を取得
 
 export default async function ProjectPage({ params }: { params: { projectId: string } }) {
     const user = await currentUser();
-    const workTimes = await getWorkTimesByUserIdAndProjectId(user.id, params.projectId);
+    const workTimes = await getOpenedWorkTimeReport(user.id, params.projectId);
 
     const date = new Date();
     const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -27,13 +32,7 @@ export default async function ProjectPage({ params }: { params: { projectId: str
 
 const handleSubmit = async (formData: FormData) => {
     'use server';
-    // const workTimes = workTimesByDay.map(({ day }) => {
-    //     const workTimes = formData.getAll(day.toString());
-    //     return workTimes.map((workTime: FormDataEntryValue) => {
-    //         const [startTime, endTime] = workTime.toString().split(',');
-    //         return { startTime, endTime };
-    //     });
-    // });
+
     const date = new Date();
     const startTimeString = formData.get('start1')?.toString() ?? '';
     const [startHours, startMinutes] = startTimeString.split(':').map(Number);
@@ -61,43 +60,10 @@ return (
                 })}
             </div>
         ))}
-        <button style={{ marginTop: 10 }} type="submit">
+        <Button style={{ marginTop: 10 }} type="submit">
             Post question
-        </button>
+        </Button>
     </form>
 )
-    // return (
-    //     <Form.Root className="FormRoot"
-    //         // `onSubmit` only triggered if it passes client-side validation
-    //         // onSubmit={async (event) => {
-    //         //     'use server'
-    //         //     const data = Object.fromEntries(new FormData(event.currentTarget));
-    //         //     // prevent default form submission
-    //         //     event.preventDefault();
-    //         // }}
-    //         >
-    //         {workTimesByDay.map(({ day, workTimes }) => (
-    //             <Form.Field className="FormField" key={day} name={day.toString()}>
-    //                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-    //                     <Form.Label className="FormLabel">{day}</Form.Label>
-    //                     {workTimes?.map(workTime => <div>
-    //                         <Form.Control asChild>
-    //                             <Input className="Input" type="time" required >{workTime.startTime}</Input>
-    //                         </Form.Control>
-    //                         <Form.Control asChild>
-    //                             <Input className="Input" type="time" required >{workTime.endTime}</Input>
-    //                         </Form.Control>
-    //                     </div>
-    //                     )}
-    //                 </div>
-    //             </Form.Field>
-    //         ))}
-    //         <Form.Submit asChild>
-    //             <button className="Button" style={{ marginTop: 10 }}>
-    //                 Post question
-    //             </button>
-    //         </Form.Submit>
-    //     </Form.Root>
-    // );
 };
 
