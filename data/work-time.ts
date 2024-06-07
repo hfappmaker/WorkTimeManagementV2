@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Console } from "console";
 
 export const getWorkTimesByUserIdAndProjectId = async (
   userId: string,
@@ -860,8 +861,8 @@ export const deleteWorkTime = async (id: string) => {
 };
 
 export const createWorkTime = async (data: {
-  startTime: string;
-  endTime: string;
+  startTime: Date;
+  endTime: Date;
   userProjectUserId: string;
   userProjectProjectId: string;
 }) => {
@@ -871,7 +872,8 @@ export const createWorkTime = async (data: {
     });
 
     return workTime;
-  } catch {
+  } catch (ex){
+    console.log(ex);
     return null;
   }
 };
