@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import Dashborad from './dashborad';
 import { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
-import { Toaster } from "@/components/ui/sonner";
 
 export default function DashboardPage() {
   return (
@@ -17,10 +16,6 @@ export default function DashboardPage() {
       <NewForm action={deleteAllProjectAndWorkTimeReport}>
         <Button type="submit">Delete All Projects</Button>
       </NewForm>
-      <Toaster
-        richColors
-        closeButton
-      />
     </Stack>
   );
 }

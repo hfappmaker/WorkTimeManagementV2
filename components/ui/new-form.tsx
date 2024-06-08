@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { useFormState } from 'react-dom';
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 
 interface State {
     error?: string | undefined,

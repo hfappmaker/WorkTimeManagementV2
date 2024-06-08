@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto_Mono as Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const mono = Mono({ subsets: ["latin"] });
 
@@ -24,6 +25,10 @@ export default function RootLayout({
       className="dark"
     >
       <body className={mono.className}>{children}</body>
+      <Toaster
+        richColors
+        closeButton
+      />
     </html>
   );
 }
