@@ -10,7 +10,10 @@ export async function getWorkTimesByWorkTimeReportId(workTimeReportId: string) {
   return workTimes;
 }
 
-export async function getOpenedWorkTimeReport(userId: string, projectId: string) {
+export async function getOpenedWorkTimeReport(
+  userId: string,
+  projectId: string
+) {
   const workTimeReport = await db.workTimeReport.findFirst({
     where: {
       userId: userId,
@@ -30,9 +33,9 @@ export async function getProjectsByUserId(userId: string) {
     select: {
       projectId: true,
     },
-    distinct: ['projectId'],
+    distinct: ["projectId"],
     orderBy: {
-      isClosed: 'asc',
+      isClosed: "asc",
     },
   });
 
@@ -47,7 +50,11 @@ export async function getProjectsByUserId(userId: string) {
   return projects;
 }
 
-export async function createProject(name: string, startDate: Date, endDate: Date | null) {
+export async function createProject(
+  name: string,
+  startDate: Date,
+  endDate: Date | null
+) {
   const project = await db.project.create({
     data: {
       name: name,
@@ -59,7 +66,12 @@ export async function createProject(name: string, startDate: Date, endDate: Date
   return project;
 }
 
-export async function createWorkTimeReport(userId: string, projectId: string, startDate: Date, endDate: Date) {
+export async function createWorkTimeReport(
+  userId: string,
+  projectId: string,
+  startDate: Date,
+  endDate: Date
+) {
   const workTimeReport = await db.workTimeReport.create({
     data: {
       userId: userId,
@@ -70,4 +82,47 @@ export async function createWorkTimeReport(userId: string, projectId: string, st
   });
 
   return workTimeReport;
+}
+
+export async function createWorkTime(
+  startTime: Date,
+  endTime: Date,
+  workTimeReportId: string
+) {
+  const workTime = await db.workTime.create({
+    data: {
+      startTime: startTime,
+      endTime: endTime,
+      workTimeReportId: workTimeReportId,
+    },
+  });
+
+  return workTime;
+}
+
+export async function updateWorkTime(
+  id: string,
+  startTime: Date,
+  endTime: Date,
+  workTimeReportId: string
+) {
+  const updatedWorkTime = await db.workTime.update({
+    where: {
+      id: id,
+    },
+    data: {
+      startTime: startTime,
+      endTime: endTime,
+      workTimeReportId: workTimeReportId,
+    },
+  });
+  return updatedWorkTime;
+}
+
+export async function deleteProject(projectId: string) {
+  await db.project.delete({
+    where: {
+      id: projectId,
+    },
+  });
 }

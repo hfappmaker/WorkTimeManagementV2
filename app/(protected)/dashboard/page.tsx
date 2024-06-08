@@ -2,19 +2,25 @@ import { Stack } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Dashborad from './dashborad';
-import { Suspense } from "react";
-import FormAction from './formAction';
+import { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport } from '../../../actions/formAction';
+import NewForm from '@/components/ui/new-form';
+import { Toaster } from "@/components/ui/sonner";
 
-export default async function DashboardPage() {
+export default function DashboardPage() {
   return (
     <Stack>
-      <Suspense fallback={<div >処理中</div>}>
-        <Dashborad />
-      </Suspense>
-      <form action={FormAction}>
+      <Dashborad />
+      <NewForm action={createProjectAndWorkTimeReport}>
         <Input name="newProjectName" type="text" required placeholder="New Project Name"></Input>
         <Button type="submit">Create New Project And WortTimeReport</Button>
-      </form>
+      </NewForm>
+      <NewForm action={deleteAllProjectAndWorkTimeReport}>
+        <Button type="submit">Delete All Projects</Button>
+      </NewForm>
+      <Toaster
+        richColors
+        closeButton
+      />
     </Stack>
   );
 }
