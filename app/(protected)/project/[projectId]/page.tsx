@@ -1,11 +1,13 @@
 import { getOpenedWorkTimeReport, getWorkTimesByWorkTimeReportId, updateWorkTime } from '@/data/work-time';
 import { currentUser } from '@/lib/auth';
 import { addDays, differenceInCalendarDays, addHours } from 'date-fns';
-import { Grid, TextField, FormControlLabel, FormLabel } from '@mui/material';
+import { Grid, TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Stack } from '@mui/material';
 import { Label } from '@/components/ui/label';
+import NewForm from '@/components/ui/new-form';
+import { FormActionResult } from '@/models/form-action-result';
 
 function areDatesEqual(date1: Date, date2: Date): boolean {
     const year1 = date1.getFullYear();
@@ -35,7 +37,7 @@ export default async function ProjectPage({ params }: { params: { projectId: str
         workTimes: workTimesInPeriod.filter((workTime) => areDatesEqual(workTime.startTime, day)),
     }));
 
-    const handleAction = async (formData: FormData) => {
+    const handleAction = async (prevResult: FormActionResult, formData: FormData) => {
         'use server'
         function getTimeFromFormData(day: Date, formData: FormData, prefix: string, id: string): Date | null {
             const timeString = formData.get(`${prefix}-${id}`);
@@ -60,10 +62,12 @@ export default async function ProjectPage({ params }: { params: { projectId: str
                 await updateWorkTime(workTime.id, startDate, endDate, workTime.workTimeReportId);
             }
         }
+
+        return { success: 'Work times are updated' };
     }
 
     return (
-        <form action={handleAction}>
+        <NewForm action={handleAction}>
             <Stack>
                 {workTimesByDay.map(({ day, workTimes }) => (
                     <Grid key={day.toLocaleDateString('ja-JP')} container spacing={2} alignItems="center" direction="row">
@@ -102,7 +106,7 @@ export default async function ProjectPage({ params }: { params: { projectId: str
                     Update
                 </Button>
             </Stack>
-        </form>
+        </NewForm>
     );
 };
 

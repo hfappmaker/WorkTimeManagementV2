@@ -1,9 +1,10 @@
 'use server';
+
 import { getProjectsByUserId } from '@/data/work-time';
 import Link from 'next/link';
 import { currentUser } from '@/lib/auth';
-import { Typography, Stack } from '@mui/material';
 import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 
 const Dashborad = async () => {
   const user = await currentUser();
@@ -11,20 +12,18 @@ const Dashborad = async () => {
   return <>
     {projects.map(project => (
       <Card>
-        <CardContent>
-          <Stack direction="row" spacing={2}>
+        <CardContent style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             <Link href={`/project/${project.id}`}>
-              <Typography variant="h6" component="h2">
+              <Label>
                 {project.name}
-              </Typography>
+              </Label>
             </Link>
-            <Typography variant="body2" color="textSecondary" component="p">Start Date: {project.startDate.toLocaleDateString()}</Typography>
-            <Typography variant="body2" color="textSecondary" component="p">End Date: {project.endDate?.toLocaleDateString()}</Typography>
-          </Stack>
+            <Label >Start Date: {project.startDate.toLocaleDateString('ja-JP')}</Label>
+            <Label >End Date: {project.endDate?.toLocaleDateString('ja-JP')}</Label>
         </CardContent>
       </Card>
     ))}
-  </>
+  </>;
 }
 
 export default Dashborad;

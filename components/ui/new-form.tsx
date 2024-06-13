@@ -3,18 +3,13 @@ import React, { useEffect } from 'react';
 import { useFormState } from 'react-dom';
 import { toast } from "sonner";
 import * as Form from '@radix-ui/react-form';
-
-interface State {
-    error?: string | undefined,
-    success?: string | undefined
-}
+import { FormActionResult } from '@/models/form-action-result';
 
 const NewForm: React.FC<{
-    action: (prevState: State, data: FormData) => Promise<State>,
+    action: (prevState: FormActionResult, data: FormData) => Promise<FormActionResult>,
     children: React.ReactNode | React.ReactNode[],
-}> = (props) => {
-    const { action, children } = props;
-    const [state, formDispatch] = useFormState(action, { error: undefined, success: undefined });
+}> = ({ action, children }) => {
+    const [state, formDispatch] = useFormState(action ?? (() => Promise.resolve({})), {});
 
     useEffect(() => {
         if (state.error) {
