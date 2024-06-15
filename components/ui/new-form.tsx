@@ -6,7 +6,7 @@ import * as Form from '@radix-ui/react-form';
 import { FormActionResult } from '@/models/form-action-result';
 
 const NewForm: React.FC<{
-    action: (prevState: FormActionResult, data: FormData) => Promise<FormActionResult>,
+    action: (prevResult: FormActionResult, data: FormData) => Promise<FormActionResult>,
     children: React.ReactNode | React.ReactNode[],
 }> = ({ action, children }) => {
     const [state, formDispatch] = useFormState(action ?? (() => Promise.resolve({})), {});

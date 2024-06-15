@@ -1,10 +1,8 @@
 import { getOpenedWorkTimeReport, getWorkTimesByWorkTimeReportId, updateWorkTime } from '@/data/work-time';
 import { currentUser } from '@/lib/auth';
 import { addDays, differenceInCalendarDays, addHours } from 'date-fns';
-import { Grid, TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Stack } from '@mui/material';
 import { Label } from '@/components/ui/label';
 import NewForm from '@/components/ui/new-form';
 import { FormActionResult } from '@/models/form-action-result';
@@ -37,7 +35,7 @@ export default async function ProjectPage({ params }: { params: { projectId: str
         workTimes: workTimesInPeriod.filter((workTime) => areDatesEqual(workTime.startTime, day)),
     }));
 
-    const handleAction = async (prevResult: FormActionResult, formData: FormData) => {
+    const handleAction = async (_prevResult: FormActionResult, formData: FormData) => {
         'use server'
         function getTimeFromFormData(day: Date, formData: FormData, prefix: string, id: string): Date | null {
             const timeString = formData.get(`${prefix}-${id}`);
@@ -68,44 +66,34 @@ export default async function ProjectPage({ params }: { params: { projectId: str
 
     return (
         <NewForm action={handleAction}>
-            <Stack>
+            <div className="grid grid-cols-1">
                 {workTimesByDay.map(({ day, workTimes }) => (
-                    <Grid key={day.toLocaleDateString('ja-JP')} container spacing={2} alignItems="center" direction="row">
-                        <Grid item xs={12}>
-                            <Label color='primary'>{day.toLocaleDateString('ja-JP')}</Label>
-                        </Grid>
-                        {workTimes.map(workTime => (
-                            <Grid item xs={12} key={workTime.id}>
-                                <TextField
-                                    color='primary'
-                                    type="time"
-                                    name={`start-${workTime.id}`}
-                                    defaultValue={workTime.startTime.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false, hour: '2-digit', minute: '2-digit' }).slice(0, 5)} // Convert Date to string in the format "HH:mm"
-                                    variant="outlined" // Add this line to display the text field border
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    style={{ backgroundColor: 'white' }} // Add this line to change the background color
-                                ></TextField>
-                                <TextField
-                                    color='primary'
-                                    type="time"
-                                    name={`end-${workTime.id}`}
-                                    defaultValue={workTime.endTime.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false, hour: '2-digit', minute: '2-digit' }).slice(0, 5)} // Convert Date to Japanese time format "HH:mm"
-                                    variant="outlined" // Add this line to display the text field border
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    style={{ backgroundColor: 'white' }} // Add this line to change the background color
-                                ></TextField>
-                            </Grid>
-                        ))}
-                    </Grid>
+                    <div className="grid grid-cols-2 gap-4" key={day.toLocaleDateString('ja-JP')}>
+                        <Label color='primary'>{day.toLocaleDateString('ja-JP')}</Label>
+                        <div className='grid grid-cols-1'>
+                            {workTimes.map(workTime => (
+                                <div className='grid grid-cols-2' key={workTime.id}>
+                                    <Input
+                                        color='primary'
+                                        type="time"
+                                        name={`start-${workTime.id}`}
+                                        defaultValue={workTime.startTime.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false, hour: '2-digit', minute: '2-digit' }).slice(0, 5)} // Convert Date to string in the format "HH:mm"
+                                    ></Input>
+                                    <Input
+                                        color='primary'
+                                        type="time"
+                                        name={`end-${workTime.id}`}
+                                        defaultValue={workTime.endTime.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false, hour: '2-digit', minute: '2-digit' }).slice(0, 5)} // Convert Date to Japanese time format "HH:mm"
+                                    ></Input>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 ))}
                 <Button color="primary" type="submit" style={{ marginTop: 10 }}>
                     Update
                 </Button>
-            </Stack>
+            </div>
         </NewForm>
     );
 };
