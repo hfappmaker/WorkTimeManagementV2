@@ -4,10 +4,10 @@ on: push
 jobs:
   hello-job:
     runs-on: ubuntu-latest
-    step:
+    steps:
       - run: echo "Hello"
       - run: echo "Github Actions!"
   goodbye-job:
     runs-on: ubuntu-latest
-    step:
+    steps:
       - run: echo "Goodbye, Github Actions."
