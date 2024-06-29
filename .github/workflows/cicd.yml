@@ -1,5 +1,8 @@
-name: Hello Github Actions
-on: push
+name: Deploy Pipeline
+on: 
+  push:
+    paths:
+      - '/**'
 
 jobs:
   hello-job:
