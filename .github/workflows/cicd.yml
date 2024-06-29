@@ -5,9 +5,9 @@ jobs:
   hello-job:
     runs-on: ubuntu-latest
     step:
-      - run:echo "Hello"
-      - run:echo "Github Actions!"
+      - run: echo "Hello"
+      - run: echo "Github Actions!"
   goodbye-job:
     runs-on: ubuntu-latest
     step:
-      - run:echo "Goodbye, Github Actions."
+      - run: echo "Goodbye, Github Actions."
