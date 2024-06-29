@@ -18,7 +18,11 @@
   "customizations": {
     // Configure properties specific to VS Code.
     "vscode": {
-      "extensions": ["esbenp.prettier-vscode", "vscode-icons-team.vscode-icons","bradlc.vscode-tailwindcss"]
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "vscode-icons-team.vscode-icons",
+        "bradlc.vscode-tailwindcss"
+      ]
     }
   },
 

@@ -11,7 +11,7 @@ import { addDays, differenceInCalendarDays } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
 
-const deleteAllProjectAndWorkTimeReport = async (prevResult: FormActionResult, formData: FormData) => {
+const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, _formData: FormData) => {
   const user = await currentUser();
   const projects = await getProjectsByUserId(user.id);
   for (var project of projects) {
@@ -21,7 +21,7 @@ const deleteAllProjectAndWorkTimeReport = async (prevResult: FormActionResult, f
   return { success: "All projects deleted successfully" };
 }
 
-const createProjectAndWorkTimeReport = async (prevResult: FormActionResult, formData: FormData) => {
+const createProjectAndWorkTimeReport = async (_prevResult: FormActionResult, formData: FormData) => {
   var newProjectName = formData.get("newProjectName")?.toString();
   if (!newProjectName) {
     return { error: "Project name is required" };

@@ -38,3 +38,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+public_key_filename.txt
+work-time-management-user-deploy_accessKeys.csv
