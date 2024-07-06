@@ -1,0 +1,6 @@
+FROM postgres AS db
+WORKDIR /usr/src/db
+COPY ["./package.json","./yarn.lock","./"]
+COPY ["prisma/schema.prisma", "./prisma/schema.prisma"]
+RUN yarn install
+CMD ["yarn","prisma","migrate","deploy"]
