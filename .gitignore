@@ -40,3 +40,4 @@ yarn-error.log*
 next-env.d.ts
 public_key_filename.txt
 work-time-management-user-deploy_accessKeys.csv
+.env.production
