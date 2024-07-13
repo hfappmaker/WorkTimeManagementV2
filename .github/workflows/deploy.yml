@@ -99,16 +99,16 @@ jobs:
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
-      - name: Run Migrations
-        uses: noelzubin/aws-ecs-run-task@v1.0
-        with:
-          cluster: ${{ env.ECS_CLUSTER }}
-          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
-          subnets: ${{ secrets.SUBNET_NAME }}
-          security-groups: ${{ secrets.SECURITY_GROUP_NAME }}
-          assign-public-ip: ENABLED
-          override-container: work-time-management-container
-          override-container-command: |
-            sh
-            -c
-            yarn prisma migrate deploy
+      # - name: Run Migrations
+      #   uses: noelzubin/aws-ecs-run-task@v1.0
+      #   with:
+      #     cluster: ${{ env.ECS_CLUSTER }}
+      #     task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+      #     subnets: ${{ secrets.SUBNET_NAME }}
+      #     security-groups: ${{ secrets.SECURITY_GROUP_NAME }}
+      #     assign-public-ip: ENABLED
+      #     override-container: work-time-management-container
+      #     override-container-command: |
+      #       sh
+      #       -c
+      #       yarn prisma migrate deploy
