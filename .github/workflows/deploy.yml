@@ -4,20 +4,114 @@ on:
     paths:
       - .github/workflows/**
       - prisma/migrations/** # Only run this workflow when migrations are updated
+      - ./**
     branches:
       - main
 
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-west-2
+  ECS_CLUSTER: work-time-management-cluster
+  ECS_SERVICE: work-time-management-service
+  ECR_REPOSITORY: work-time-management-repository
+  ECS_TASK_DEFINITION_API: task-definition.json
+  SUBNET_NAME: subnet-011ac77ed97e20806
+  SECURITY_GROUP_NAME: default
+
 jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+
+      - name: Build an Image
+        run: docker image build -t temp-api-image:latest .
+
+      - name: Configure AWS credencials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push the image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker image tag temp_api_image:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+          docker image push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+          echo $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} > api_image_uri.txt
+
+      - name: Upload the image uri file as an artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: api-image-uri
+          path: api-image-uri.txt
+
+      # - name: Install dependencies
+      #   run: yarn install
+      # - name: Apply all pending migrations to the database
+      #   run: yarn prisma migrate deploy
+      #   env:
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
-      - name: Setup Node
-        uses: actions/setup-node@v3
-      - name: Install dependencies
-        run: yarn install
-      - name: Apply all pending migrations to the database
-        run: yarn prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credencials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Download the artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: api-image-uri
+          path: artifacts
+
+      - name: Define the image uri
+        run: |
+          echo "API_IMAGE_URI=$(cat artifacts/api-image-uri.txt)" >> $GITHUB_ENV
+
+      - name: Fill in the new image URI in the amazon ECS task definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION_API }}
+          container-name: work-time-management-container
+          image: ${{ env.API_IMAGE_URI }}
+
+      - name: Deploy ECS Task
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Run Migrations
+        uses: noelzubin/aws-ecs-run-task@v1.0
+        with:
+          cluster: ${{ env.ECS_CLUSTER }}
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+          subnets: ${{ env.SUBNET_NAME }}
+          security-groups: ${{ env.SECURITY_GROUP_NAME }}
+          assign-public-ip: ENABLED
+          override-container: work-time-management-container
+          override-container-command: |
+            sh
+            -c
+            yarn prisma migrate deploy
