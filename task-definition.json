@@ -7,7 +7,7 @@
             "portMappings": [
                 {
                     "name": "work-time-management-container-80-tcp",
-                    "containerPort": 80,
+                    "containerPort": 3000,
                     "hostPort": 80,
                     "protocol": "tcp",
                     "appProtocol": "http"
