@@ -50,7 +50,7 @@ jobs:
         run: |
           docker image tag temp-api-image:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
           docker image push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
-          echo $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} > api_image_uri.txt
+          echo $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} > api-image-uri.txt
 
       - name: Upload the image uri file as an artifact
         uses: actions/upload-artifact@v2
