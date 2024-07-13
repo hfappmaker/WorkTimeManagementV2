@@ -1,10 +1,8 @@
 name: Deploy
 on:
   push:
-    paths:
-      - .github/workflows/**
-      - prisma/migrations/** # Only run this workflow when migrations are updated
-      - /**
+    paths-ignore:
+      - '**.md'
     branches:
       - main
 
