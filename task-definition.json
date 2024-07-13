@@ -13,6 +13,32 @@
                     "appProtocol": "http"
                 }
             ],
+            "secrets": [
+                {
+                    "name": "DATABASE_USERNAME",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-2:637423174558:secret:work-time-management-db-secret-y3aKwH:username::"
+                },
+                {
+                    "name": "DATABASE_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-2:637423174558:secret:work-time-management-db-secret-y3aKwH:password::"
+                },
+                {
+                    "name": "DATABASE_ENGINE",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-2:637423174558:secret:work-time-management-db-secret-y3aKwH:engine::"
+                },
+                {
+                    "name": "DATABASE_HOST",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-2:637423174558:secret:work-time-management-db-secret-y3aKwH:host::"
+                },
+                {
+                    "name": "DATABASE_PORT",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-2:637423174558:secret:work-time-management-db-secret-y3aKwH:port::"
+                },
+                {
+                    "name": "DATABASE_IDENTIFIER",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-2:637423174558:secret:work-time-management-db-secret-y3aKwH:dbInstanceIdentifier::"
+                }
+            ],
             "essential": true,
             "entryPoint": [
                 "sh",
@@ -21,14 +47,8 @@
             "environment": [
             ],
             "command": [
-                "SECRET=$(aws secretsmanager get-secret-value --secret-id work-time-management-db-secret --query SecretString --output text)",
-                "USERNAME=$(echo $SECRET | jq -r '.username')",
-                "PASSWORD=$(echo $SECRET | jq -r '.password')",
-                "ENGINE=$(echo $SECRET | jq -r '.engine')",
-                "HOST=$(echo $SECRET | jq -r '.host')",
-                "PORT=$(echo $SECRET | jq -r '.port')",
-                "DBNAME=$(echo $SECRET | jq -r '.dbInstanceIdentifier')",
-                "export DATABASE_URL=\"$ENGINE://$USERNAME:$PASSWORD@$HOST:$PORT/$DBNAME?schema=public&connection_limit=1\"",
+                "export DATABASE_URL=\"$DATABASE_ENGINE://$DATABASE_USERNAME:$DATABASE_PASSWORD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_IDENTIFIER?schema=public&connection_limit=1\"",
+                "echo $DATABASE_URL",
                 "exec \"yarn run start\""
             ],
             "environmentFiles": [],
