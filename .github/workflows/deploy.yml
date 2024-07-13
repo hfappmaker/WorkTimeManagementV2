@@ -48,6 +48,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
+          docker image ls
           docker image tag temp_api_image:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
           docker image push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
           echo $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} > api_image_uri.txt
@@ -66,6 +67,7 @@ jobs:
       #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
   deploy:
     runs-on: ubuntu-latest
+    needs: build-and-push
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
