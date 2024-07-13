@@ -14,7 +14,7 @@
                 }
             ],
             "essential": true,
-            "entrypoint": [
+            "entryPoint": [
                 "sh",
                 "-c"
             ],
@@ -29,7 +29,7 @@
                 "PORT=$(echo $SECRET | jq -r '.port')",
                 "DBNAME=$(echo $SECRET | jq -r '.dbInstanceIdentifier')",
                 "export DATABASE_URL=\"$ENGINE://$USERNAME:$PASSWORD@$HOST:$PORT/$DBNAME?schema=public&connection_limit=1\"",
-                "exec \"$@\""
+                "exec \"yarn run start\""
             ],
             "environmentFiles": [],
             "mountPoints": [],
