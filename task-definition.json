@@ -13,14 +13,24 @@
                     "appProtocol": "http"
                 }
             ],
-            "secrets" : [
-                {
-                    "name": "DATABASE_URL",
-                    "valueFrom": "${data.aws_secretsmanager_secret.this.arn}:database_url::"
-                }
-            ],
             "essential": true,
-            "environment": [],
+            "entrypoint": [
+                "sh",
+                "-c"
+            ],
+            "environment": [
+            ],
+            "command": [
+                "SECRET=$(aws secretsmanager get-secret-value --secret-id work-time-management-db-secret --query SecretString --output text)",
+                "USERNAME=$(echo $SECRET | jq -r '.username')",
+                "PASSWORD=$(echo $SECRET | jq -r '.password')",
+                "ENGINE=$(echo $SECRET | jq -r '.engine')",
+                "HOST=$(echo $SECRET | jq -r '.host')",
+                "PORT=$(echo $SECRET | jq -r '.port')",
+                "DBNAME=$(echo $SECRET | jq -r '.dbInstanceIdentifier')",
+                "export DATABASE_URL=\"$ENGINE://$USERNAME:$PASSWORD@$HOST:$PORT/$DBNAME?schema=public&connection_limit=1\"",
+                "exec \"$@\""
+            ],
             "environmentFiles": [],
             "mountPoints": [],
             "volumesFrom": [],
