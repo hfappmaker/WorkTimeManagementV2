@@ -13,6 +13,12 @@
                     "appProtocol": "http"
                 }
             ],
+            "secrets" : [
+                {
+                    "name": "DATABASE_URL",
+                    "valueFrom": "${data.aws_secretsmanager_secret.this.arn}:database_url::"
+                }
+            ],
             "essential": true,
             "environment": [],
             "environmentFiles": [],
