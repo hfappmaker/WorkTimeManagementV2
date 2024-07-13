@@ -18,8 +18,6 @@ env:
   ECS_SERVICE: work-time-management-service
   ECR_REPOSITORY: work-time-management-repository
   ECS_TASK_DEFINITION_API: task-definition.json
-  SUBNET_NAME: subnet-011ac77ed97e20806
-  SECURITY_GROUP_NAME: default
 
 jobs:
   build-and-push:
@@ -108,8 +106,8 @@ jobs:
         with:
           cluster: ${{ env.ECS_CLUSTER }}
           task-definition: ${{ steps.render-task-def.outputs.task-definition }}
-          subnets: ${{ env.SUBNET_NAME }}
-          security-groups: ${{ env.SECURITY_GROUP_NAME }}
+          subnets: ${{ secrets.SUBNET_NAME }}
+          security-groups: ${{ secrets.SECURITY_GROUP_NAME }}
           assign-public-ip: ENABLED
           override-container: work-time-management-container
           override-container-command: |
