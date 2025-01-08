@@ -24,7 +24,7 @@ model User {
   accounts              Account[]
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
-  WorkTimeReport        WorkTimeReport[]
+  workTimeReports       WorkTimeReport[]
 }
 
 model Project {
@@ -32,7 +32,7 @@ model Project {
   name           String
   startDate      DateTime
   endDate        DateTime?
-  WorkTimeReport WorkTimeReport[]
+  workTimeReports WorkTimeReport[]
 }
 
 model WorkTimeReport {
