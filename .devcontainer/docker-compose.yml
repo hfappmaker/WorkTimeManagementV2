@@ -1,9 +1,12 @@
 volumes:
   postgres-data:
+    name: worktime_management_postgres-data
 
 services:
   app:
     image: mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye
+    # コンテナの名前を指定します。
+    container_name: app_container
     # env_file:
     #     # Ensure that the variables in .env match the same variables in devcontainer.json
     #     - .env
@@ -13,12 +16,14 @@ services:
     command: sleep infinity
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
     network_mode: service:db
+    depends_on:
+      - db
     # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
     # (Adding the "ports" property to this file will not forward from a Codespace.)
   db:
-    image: postgres
+    image: postgres:latest
     # コンテナの名前を指定します。
-    container_name: postgres
+    container_name: db_container
     restart: always
     # set shared memory limit when using docker-compose
     shm_size: 128mb
@@ -33,6 +38,7 @@ services:
       # - 3000:3000
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     env_file:
       # Ensure that the variables in .env match the same variables in devcontainer.json
       - ../.env.local
