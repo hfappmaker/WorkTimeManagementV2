@@ -26,7 +26,7 @@ services:
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:db
+    network: worktime-management-network
     depends_on:
       - db
       - ollama
@@ -48,6 +48,7 @@ services:
     # ports:
       # - 5432:5432
       # - 3000:3000
+    network: worktime-management-network
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
@@ -62,6 +63,7 @@ services:
       context: .
       dockerfile: Dockerfile.ollama
     container_name: ollama_container
+    network: worktime-management-network
     volumes:
       - ollama:/root/.ollama
     deploy:
@@ -72,3 +74,7 @@ services:
               count: 1
               capabilities: [gpu]
     restart: unless-stopped
+
+networks:
+  worktime-management-network:
+    driver: bridge
