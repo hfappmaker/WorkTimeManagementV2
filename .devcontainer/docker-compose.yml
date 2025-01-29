@@ -17,9 +17,9 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    # env_file:
-    #     # Ensure that the variables in .env match the same variables in devcontainer.json
-    #     - .env
+    env_file:
+        # Ensure that the variables in .env match the same variables in devcontainer.json
+        - ../.env.local
     volumes:
       - ../../:/workspaces:cached 
     # Overrides default command so things don't shut down after the process ends.

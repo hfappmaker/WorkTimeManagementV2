@@ -3,9 +3,10 @@
 {
   "name": "Node.js & TypeScript & PostgreSQL",
   "features": {
-    "ghcr.io/devcontainers/features/cuda:1": {
+    "ghcr.io/devcontainers/features/nvidia-cuda:1": {
       "installCudnn": true,
-      "cudaVersion": "11.8"
+      "cudaVersion": "11.8",
+      "cudnnVersion": "8.6.0.163"
     }
   },
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
@@ -17,7 +18,7 @@
   "dockerComposeFile":"docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/WorkTimeManagementV2",
-  "initializeCommand": "./.devcontainer/initialize.sh",
+  "initializeCommand": "wsl bash .devcontainer/initialize.sh",
   "onCreateCommand": "nvidia-smi && echo 'GPU setup completed'",
   // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "sudo chown -R node:node . && yarn install",
