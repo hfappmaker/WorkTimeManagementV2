@@ -2,8 +2,9 @@ version: '3.8'
 
 volumes:
   postgres-data:
-    name: worktime_management_postgres-data
   ollama:
+   driver_opts:
+    o: 'size=50G'
 
 services:
   app:
