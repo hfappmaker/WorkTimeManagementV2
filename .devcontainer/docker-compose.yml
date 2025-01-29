@@ -1,12 +1,13 @@
+version: '3.8'
+
 volumes:
   postgres-data:
     name: worktime_management_postgres-data
+  ollama:
 
 services:
   app:
-    build: 
-      context: .
-      dockerfile: Dockerfile
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye
     # コンテナの名前を指定します。
     container_name: app_container
     # GPUサポートの追加
@@ -15,7 +16,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: all
+              count: 1
               capabilities: [gpu]
     env_file:
         # Ensure that the variables in .env match the same variables in devcontainer.json
@@ -54,3 +55,18 @@ services:
       - ../.env.local
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
