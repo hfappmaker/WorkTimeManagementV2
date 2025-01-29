@@ -12,8 +12,12 @@ import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
 import { generateWithOllama } from '@/lib/ai';
 
-const generateOllamaAction = async (_prevResult: FormActionResult, _formData: FormData) => {
-  const result = await generateWithOllama('Hello, world!');
+const generateOllamaAction = async (_prevResult: FormActionResult, formData: FormData) => {
+  const prompt = formData.get("deepSeekPrompt")?.toString();
+  if (!prompt) {
+    return { error: "Prompt is required" };
+  }
+  const result = await generateWithOllama(prompt);
   return { success: result };
 }
 

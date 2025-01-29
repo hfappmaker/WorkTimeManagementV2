@@ -17,6 +17,7 @@ export default function DashboardPage() {
         <Button type="submit">Delete All Projects</Button>
       </NewForm>
       <NewForm action={generateOllamaAction}>
+        <Input name="deepSeekPrompt" type="text" required placeholder="Ask DeepSeek"></Input>
         <Button type="submit">Generate with Ollama</Button>
       </NewForm>
     </Stack>
