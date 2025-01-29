@@ -4,7 +4,9 @@ volumes:
 
 services:
   app:
-    image: mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye
+    build: 
+      context: .
+      dockerfile: Dockerfile
     # コンテナの名前を指定します。
     container_name: app_container
     # env_file:
