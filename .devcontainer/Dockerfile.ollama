@@ -1,0 +1,5 @@
+FROM ollama/ollama:latest
+
+# サーバー起動とモデルのプル
+ENTRYPOINT ["sh", "-c"]
+CMD ["ollama serve & sleep 5 && ollama pull deepseek-coder:latest && tail -f /dev/null"] 

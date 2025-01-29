@@ -10,6 +10,12 @@ import { currentUser } from "@/lib/auth";
 import { addDays, differenceInCalendarDays } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
+import { generateWithOllama } from '@/lib/ai';
+
+const generateOllamaAction = async (_prevResult: FormActionResult, _formData: FormData) => {
+  const result = await generateWithOllama('Hello, world!');
+  return { success: result };
+}
 
 const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, _formData: FormData) => {
   const user = await currentUser();
@@ -48,4 +54,4 @@ const createProjectAndWorkTimeReport = async (_prevResult: FormActionResult, for
   return { success: "Project created successfully"}
 };
 
-export {createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport};
+export {createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, generateOllamaAction};

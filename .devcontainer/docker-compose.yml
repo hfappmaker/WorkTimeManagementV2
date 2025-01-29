@@ -29,6 +29,7 @@ services:
     network_mode: service:db
     depends_on:
       - db
+      - ollama
     # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
     # (Adding the "ports" property to this file will not forward from a Codespace.)
   db:
@@ -57,11 +58,12 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   ollama:
-    image: ollama/ollama:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
+    container_name: ollama_container
     volumes:
       - ollama:/root/.ollama
-    ports:
-      - "11434:11434"
     deploy:
       resources:
         reservations:

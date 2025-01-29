@@ -2,7 +2,7 @@ import { Stack } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Dashborad from './dashborad';
-import { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport } from '../../../actions/formAction';
+import { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, generateOllamaAction } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
 
 export default function DashboardPage() {
@@ -15,6 +15,9 @@ export default function DashboardPage() {
       </NewForm>
       <NewForm action={deleteAllProjectAndWorkTimeReport}>
         <Button type="submit">Delete All Projects</Button>
+      </NewForm>
+      <NewForm action={generateOllamaAction}>
+        <Button type="submit">Generate with Ollama</Button>
       </NewForm>
     </Stack>
   );

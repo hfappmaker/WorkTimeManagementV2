@@ -1,71 +1,40 @@
-import { spawn } from 'child_process';
+import axios from 'axios';
 
-interface DeepSeekConfig {
-  model: string;
+interface OllamaConfig {
+  model?: string;
   temperature?: number;
   max_tokens?: number;
 }
 
-export async function generateWithDeepseek(
-  prompt: string, 
-  config: DeepSeekConfig = {
-    model: 'deepseek-coder-6.7b',
+export async function generateWithOllama(
+  prompt: string,
+  config: OllamaConfig = {
+    model: 'deepseek-coder:latest',
     temperature: 0.7,
     max_tokens: 2048
   }
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const process = spawn('python', [
-      '-c',
-      `
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
-
-def generate_response(prompt, model_name, temperature=0.7, max_tokens=2048):
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=torch.float16,
-        device_map="auto"
-    )
-    
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=max_tokens,
-        temperature=temperature,
-        do_sample=True
-    )
-    
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-result = generate_response(
-    """${prompt}""", 
-    "${config.model}",
-    ${config.temperature},
-    ${config.max_tokens}
-)
-print(result)
-      `
-    ]);
-
-    let output = '';
-    let error = '';
-
-    process.stdout.on('data', (data) => {
-      output += data.toString();
-    });
-
-    process.stderr.on('data', (data) => {
-      error += data.toString();
-    });
-
-    process.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Process exited with code ${code}\nError: ${error}`));
-      } else {
-        resolve(output.trim());
+  try {
+    const response = await axios.post('http://localhost:11434/api/generate', {
+      model: config.model,
+      prompt: prompt,
+      temperature: config.temperature,
+      max_tokens: config.max_tokens,
+      stream: false
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
       }
     });
-  });
+
+    return response.data.response;
+
+  } catch (error) {
+    console.error('Error calling Ollama API:', error);
+    throw error;
+  }
 }
+
+// 使用例：
+// const response = await generateWithOllama("Write a function that sorts an array");
+// console.log(response);
