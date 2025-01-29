@@ -39,9 +39,9 @@ model WorkTimeReport {
   id        String     @id @default(cuid())
   startDate DateTime
   endDate   DateTime
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Restrict)
   userId    String
-  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Restrict)
   projectId String
   isClosed  Boolean    @default(false)
   workTimes WorkTime[]
