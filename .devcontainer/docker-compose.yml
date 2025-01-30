@@ -68,7 +68,7 @@ services:
     networks: 
       - worktime-management-network
     volumes:
-      - ollama:/root/.ollama
+      - ollama:/root/.ollama:cached
     deploy:
       resources:
         reservations:
