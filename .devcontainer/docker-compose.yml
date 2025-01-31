@@ -4,7 +4,7 @@ volumes:
   postgres-data:
   ollama:
    driver_opts:
-    o: 'size=50G'
+    o: 'size=100G'
 
 services:
   app:
