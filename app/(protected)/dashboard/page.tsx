@@ -20,24 +20,24 @@ export default function DashboardPage() {
       </NewForm>
       <NewForm action={generateOllamaAction}>
         <Select name="aiModel" defaultValue="">
-          <SelectTrigger>
-            <SelectValue placeholder="Select AI Model" />
+          <SelectTrigger className="w-[400px] truncate">
+            <SelectValue placeholder="Select AI Model" className="truncate" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="deepseek-coder:latest">
-              deepseek-coder:latest
+              deepseek-coder
             </SelectItem>
             <SelectItem value="hf.co/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF">
-              hf.co/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF
+              DeepSeek-R1-Distill-Llama-8B
             </SelectItem>
             <SelectItem value="hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-gguf:latest">
-              hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-gguf:latest
+              DeepSeek-R1-Distill-Qwen-14B-Japanese
             </SelectItem>
             <SelectItem value="hf.co/TheBloke/deepseek-coder-6.7B-instruct-GGUF:deepseek-coder-6.7b-instruct.Q4_K_M.gguf">
-              hf.co/TheBloke/deepseek-coder-6.7B-instruct-GGUF:deepseek-coder-6.7b-instruct.Q4_K_M.gguf
+              deepseek-coder-6.7b-instruct.Q4_K_M
             </SelectItem>
             <SelectItem value="hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-32B-Japanese-gguf:latest">
-              hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-32B-Japanese-gguf:latest
+              DeepSeek-R1-Distill-Qwen-32B-Japanese
             </SelectItem>
           </SelectContent>
         </Select>
