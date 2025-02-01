@@ -1,18 +1,11 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Launch",
-      "type": "msedge",
-      "request": "launch",
-      // "port": 9229,
-      "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}",
-      // "sourceMapPathOverrides": {
-      //   "webpack:///*": "${webRoot}/*"
-      // },
-      // "sourceMaps": true,
-      // "trace": true // Optional for troubleshooting
-    }
-  ]
+    "configurations": [
+        {
+            "type": "node-terminal",
+            "name": "スクリプトの実行: dev",
+            "request": "launch",
+            "command": "yarn run dev",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
 }
