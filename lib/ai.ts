@@ -14,7 +14,7 @@ export async function generateWithOllama(
     temperature: 0.7,
     max_tokens: 2048
   }
-): Promise<string> {
+) {
   try {
     const response = await axios.post('http://ollama:11434/api/generate', {
       model: config.model,
@@ -28,11 +28,10 @@ export async function generateWithOllama(
       }
     });
 
-    return response.data.response;
+    return { success : response.data.response };
 
   } catch (error) {
-    console.error('Error calling Ollama API:', error);
-    throw error;
+    return { error : 'Error calling Ollama API: ' + error};
   }
 }
 

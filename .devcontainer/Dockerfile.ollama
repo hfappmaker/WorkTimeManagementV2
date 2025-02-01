@@ -1,6 +1,5 @@
 FROM ollama/ollama:latest
 
-# サーバー起動とモデルのプル
-# ENTRYPOINT ["sh", "-c"]
-# CMD ["ollama serve & sleep 5 && ollama pull hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-32B-Japanese-gguf:latest && tail -f /dev/null"] 
-# CMD ["ollama serve & sleep 5 && ollama pull deepseek-coder:latest && tail -f /dev/null"] 
+# コンテナ起動後に以下を手動実行する
+# ollama pull hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-32B-Japanese-gguf:latest
+# ollama pull deepseek-coder:latest

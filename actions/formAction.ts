@@ -17,8 +17,8 @@ const generateOllamaAction = async (_prevResult: FormActionResult, formData: For
   if (!prompt) {
     return { error: "Prompt is required" };
   }
-  const result = await generateWithOllama(prompt);
-  return { success: result };
+  
+  return await generateWithOllama(prompt);
 }
 
 const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, _formData: FormData) => {
