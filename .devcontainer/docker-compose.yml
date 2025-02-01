@@ -82,6 +82,8 @@ services:
       - ollama:/root/.ollama:cached
     deploy:
       resources:
+        limits:
+          memory: 24g
         reservations:
           devices:
             - driver: nvidia

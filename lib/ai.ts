@@ -9,7 +9,8 @@ interface OllamaConfig {
 export async function generateWithOllama(
   prompt: string,
   config: OllamaConfig = {
-    model: 'deepseek-coder:latest',
+    // model: 'deepseek-coder:latest',
+    model: 'hf.co/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF',
     // model: 'hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-32B-Japanese-gguf:latest',
     temperature: 0.7,
     max_tokens: 2048

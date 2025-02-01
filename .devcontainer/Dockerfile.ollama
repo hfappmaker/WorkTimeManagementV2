@@ -3,3 +3,4 @@ FROM ollama/ollama:latest
 # コンテナ起動後に以下を手動実行する
 # ollama pull hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-32B-Japanese-gguf:latest
 # ollama pull deepseek-coder:latest
+# ollama pull hf.co/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF:latest
