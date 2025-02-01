@@ -1,1 +1,0 @@
-CREATE DATABASE worktime_management;
