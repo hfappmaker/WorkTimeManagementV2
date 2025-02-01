@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, generateOllamaAction } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
 import Dashboard from './dashboard';
-  
+import { TextArea } from '@/components/ui/textarea';
+
 export default function DashboardPage() {
   return (
     <Stack>
@@ -40,7 +41,7 @@ export default function DashboardPage() {
             </SelectItem>
           </SelectContent>
         </Select>
-        <Input name="deepSeekPrompt" type="text" required placeholder="Ask DeepSeek" />
+        <TextArea name="deepSeekPrompt" required placeholder="Ask DeepSeek" />
         <Button type="submit">Generate with Ollama</Button>
       </NewForm>
     </Stack>
