@@ -18,7 +18,18 @@ const generateOllamaAction = async (_prevResult: FormActionResult, formData: For
     return { error: "Prompt is required" };
   }
   
-  return await generateWithOllama(prompt);
+  const aiModel = formData.get("aiModel")?.toString();
+  if (!aiModel) {
+    return { error: "AI model selection is required" };
+  }
+  
+  const config = {
+    model: aiModel,
+    temperature: 0.7,
+    max_tokens: 2048
+  };
+
+  return await generateWithOllama(prompt, config);
 }
 
 const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, _formData: FormData) => {
@@ -27,7 +38,7 @@ const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, 
   for (var project of projects) {
     await deleteProject(project.id);
   }
-  revalidatePath("/dashborad");
+  revalidatePath("/dashboard");
   return { success: "All projects deleted successfully" };
 }
 
@@ -54,7 +65,7 @@ const createProjectAndWorkTimeReport = async (_prevResult: FormActionResult, for
     await createWorkTime(date, date, workTimeReport.id);
   }
   
-  revalidatePath("/dashborad");
+  revalidatePath("/dashboard");
   return { success: "Project created successfully"}
 };
 
