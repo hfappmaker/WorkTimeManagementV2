@@ -12,7 +12,7 @@
   "service": "app",
   "workspaceFolder": "/WorkTimeManagementV2",
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "sudo chown -R node:node . && npx update-browserslist-db@latest && yarn install",
+  "postCreateCommand": "sudo chown -R node:node . && yarn install",
   // Configure tool-specific properties.
 
   "customizations": {

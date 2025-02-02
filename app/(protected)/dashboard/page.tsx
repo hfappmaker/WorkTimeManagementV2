@@ -13,7 +13,7 @@ import { DateInput } from '@/components/ui/date-input';
 
 export default function DashboardPage() {
   return (
-    <Stack>
+    <Stack spacing={3}>
       <Suspense fallback={<Spinner />}>
         <Dashboard />
       </Suspense>

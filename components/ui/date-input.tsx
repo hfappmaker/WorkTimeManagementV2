@@ -29,7 +29,6 @@ export const DateInput : FC<Props> =
           {...props}
           ref={inputRef}
         />
-        {/* <FontAwesomeIcon icon="far fa-calendar-alt" /> */}
         <FaCalendarAlt
           className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10 cursor-pointer"
           onClick={handleIconClick}
