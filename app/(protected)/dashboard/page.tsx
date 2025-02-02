@@ -1,3 +1,5 @@
+"use client";
+
 import { Stack } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -6,11 +8,15 @@ import { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, gene
 import NewForm from '@/components/ui/new-form';
 import Dashboard from './dashboard';
 import { TextArea } from '@/components/ui/textarea';
+import { Suspense } from 'react';
+import Spinner from '@/components/spinner';
 
 export default function DashboardPage() {
   return (
     <Stack>
-      <Dashboard />
+      <Suspense fallback={<Spinner />}>
+        <Dashboard />
+      </Suspense>
       <NewForm action={createProjectAction}>
         <Input name="projectName" type="text" required placeholder="New Project Name" />
         <Input name="startDate" type="date" required placeholder="Select a Start Date" />
