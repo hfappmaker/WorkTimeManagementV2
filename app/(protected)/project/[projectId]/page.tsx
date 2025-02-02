@@ -19,7 +19,8 @@ function areDatesEqual(date1: Date, date2: Date): boolean {
     return year1 === year2 && month1 === month2 && day1 === day2;
 }
 
-export default async function ProjectPage({ params }: { params: { projectId: string } }) {
+export default async function ProjectPage(props: { params: Promise<{ projectId: string }> }) {
+    const params = await props.params;
     const user = await currentUser();
     const workTimeReport = await getOpenedWorkTimeReport(user.id, params.projectId);
 
