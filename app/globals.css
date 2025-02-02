@@ -80,3 +80,25 @@ body,
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide the default indicator */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Optionally, remove the native appearance */
+input[type="date"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* add some right padding to make room for your icon */
+  padding-right: 2.5rem;
+  position: relative;
+}
+
+/* Add a custom icon as a background
+input[type="date"] {
+  background: url('/icons/calendar.svg') no-repeat right 0.5rem center;
+  background-size: 1rem 1rem;
+} */

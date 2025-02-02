@@ -2,12 +2,14 @@ import { Stack } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+
 import { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
 import Dashboard from './dashboard';
 import { TextArea } from '@/components/ui/textarea';
 import { Suspense } from 'react';
 import Spinner from '@/components/spinner';
+import { DateInput } from '@/components/ui/date-input';
 
 export default function DashboardPage() {
   return (
@@ -17,7 +19,7 @@ export default function DashboardPage() {
       </Suspense>
       <NewForm action={createProjectAction}>
         <Input name="projectName" type="text" required placeholder="New Project Name" />
-        <Input name="startDate" type="date" required placeholder="Select a Start Date" />
+        <DateInput name="startDate" required placeholder="Select a Start Date" />
         <Button type="submit">Create New Project</Button>
       </NewForm>
       <NewForm action={createProjectAndWorkTimeReport}>
