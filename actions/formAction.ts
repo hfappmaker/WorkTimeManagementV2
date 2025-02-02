@@ -12,7 +12,7 @@ import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
 import { generateWithOllama } from '@/lib/ai';
 
-const generateOllamaAction = async (_prevResult: FormActionResult, formData: FormData) => {
+const generateOllamaAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   const prompt = formData.get("deepSeekPrompt")?.toString();
   if (!prompt) {
     return { error: "Prompt is required" };
@@ -32,7 +32,7 @@ const generateOllamaAction = async (_prevResult: FormActionResult, formData: For
   return await generateWithOllama(prompt, config);
 }
 
-const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, _formData: FormData) => {
+const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, _formData: FormData) : Promise<FormActionResult> => {
   const user = await currentUser();
   const projects = await getProjectsByUserId(user.id);
   for (var project of projects) {
@@ -42,7 +42,7 @@ const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, 
   return { success: "All projects deleted successfully" };
 }
 
-const createProjectAndWorkTimeReport = async (_prevResult: FormActionResult, formData: FormData) => {
+const createProjectAndWorkTimeReport = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   var newProjectName = formData.get("newProjectName")?.toString();
   if (!newProjectName) {
     return { error: "Project name is required" };
@@ -69,7 +69,7 @@ const createProjectAndWorkTimeReport = async (_prevResult: FormActionResult, for
   return { success: "Project created successfully" };
 };
 
-const createProjectAction = async (_prevResult: FormActionResult, formData: FormData) => {
+const createProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   const projectName = formData.get('projectName') as string;
   const startDateStr = formData.get('startDate') as string;
   
