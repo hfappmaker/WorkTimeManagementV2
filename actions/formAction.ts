@@ -69,4 +69,29 @@ const createProjectAndWorkTimeReport = async (_prevResult: FormActionResult, for
   return { success: "Project created successfully" };
 };
 
-export { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, generateOllamaAction };
+const createProjectAction = async (_prevResult: FormActionResult, formData: FormData) => {
+  const projectName = formData.get('projectName') as string;
+  const startDateStr = formData.get('startDate') as string;
+  
+  if (!projectName || projectName.trim() === "") {
+    return { error: "Project name is required" };
+  }
+  if (!startDateStr) {
+    return { error: "Start date is required" };
+  }
+  
+  // 入力された開始日を Date 型に変換
+  const startDate = new Date(startDateStr);
+  
+  console.log('Creating project:', projectName, 'with start date:', startDate);
+  
+  // DB にプロジェクトを登録（endDate は null とするか、必要に応じて別途設定）
+  const project = await createProject(projectName, startDate, null);
+  
+  // キャッシュ再検証を実行（適切なパスに変更してください）
+  revalidatePath('/dashboard');
+  
+  return { success: `Project '${projectName}' created successfully` };
+}
+
+export { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction };

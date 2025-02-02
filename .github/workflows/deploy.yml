@@ -12,9 +12,9 @@ permissions:
 
 env:
   AWS_REGION: us-west-2
-  ECS_CLUSTER: work-time-management-cluster
-  ECS_SERVICE: work-time-management-service
-  ECR_REPOSITORY: work-time-management-repository
+  ECS_CLUSTER: worktime-management-cluster
+  ECS_SERVICE: worktime-management-service
+  ECR_REPOSITORY: worktime-management-repository
   ECS_TASK_DEFINITION_API: task-definition.json
 
 jobs:
@@ -49,7 +49,7 @@ jobs:
           echo $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} > api-image-uri.txt
 
       - name: Upload the image uri file as an artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: api-image-uri
           path: api-image-uri.txt

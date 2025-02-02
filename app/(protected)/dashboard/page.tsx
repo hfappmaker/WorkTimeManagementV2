@@ -2,7 +2,7 @@ import { Stack } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, generateOllamaAction } from '../../../actions/formAction';
+import { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
 import Dashboard from './dashboard';
 import { TextArea } from '@/components/ui/textarea';
@@ -11,6 +11,11 @@ export default function DashboardPage() {
   return (
     <Stack>
       <Dashboard />
+      <NewForm action={createProjectAction}>
+        <Input name="projectName" type="text" required placeholder="New Project Name" />
+        <Input name="startDate" type="date" required placeholder="Select a Start Date" />
+        <Button type="submit">Create New Project</Button>
+      </NewForm>
       <NewForm action={createProjectAndWorkTimeReport}>
         <Input name="newProjectName" type="text" required placeholder="New Project Name"></Input>
         <Button type="submit">Create New Project And WortTimeReport</Button>
