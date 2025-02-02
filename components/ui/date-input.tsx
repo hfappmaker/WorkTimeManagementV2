@@ -3,14 +3,14 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Input, InputProps } from "./input";
 import { FaCalendarAlt } from "react-icons/fa";
+import { ComponentPropsWithRef, FC } from "react";
 
 export type DateInputProps = InputProps;
+type Props = ComponentPropsWithRef<"input">;
 
-export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
-  ({ className, ...props }, ref) => {
+export const DateInput : FC<Props> = 
+  ({ className, ...props }) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
-    React.useImperativeHandle(ref, () => inputRef.current!);
-
     const handleIconClick = () => {
       if (inputRef.current) {
         if (inputRef.current.showPicker) {
@@ -24,10 +24,10 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
     return (
       <div className="relative">
         <Input
-          ref={inputRef}
           type="date"
           className={cn("pr-10", className)}
           {...props}
+          ref={inputRef}
         />
         {/* <FontAwesomeIcon icon="far fa-calendar-alt" /> */}
         <FaCalendarAlt
@@ -36,6 +36,5 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
         />
       </div>
     );
-  }
-);
+  };
 DateInput.displayName = "DateInput"; 
