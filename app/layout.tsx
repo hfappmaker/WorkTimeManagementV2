@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Roboto_Mono as Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { Suspense } from 'react';
-import Spinner from "@/components/spinner";
 
 const mono = Mono({ subsets: ["latin"] });
 
@@ -27,9 +25,7 @@ export default function RootLayout({
       className="dark"
     >
       <body className={mono.className}>
-        <Suspense fallback={<Spinner />}>
-          {children}
-        </Suspense>
+       {children}
       </body>
       <Toaster
         richColors
