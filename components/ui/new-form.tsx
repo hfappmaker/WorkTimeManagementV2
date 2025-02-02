@@ -1,16 +1,14 @@
 "use client"
-import React, { useEffect } from 'react';
-import { useFormState } from 'react-dom';
+import React, { useActionState, useEffect } from 'react';
 import { toast } from "sonner";
 import * as Form from '@radix-ui/react-form';
 import { FormActionResult } from '@/models/form-action-result';
-import Spinner from '@/components/spinner';
 
 const NewForm: React.FC<{
     action: (prevResult: FormActionResult, data: FormData) => Promise<FormActionResult>,
     children: React.ReactNode | React.ReactNode[],
 }> = ({ action, children }) => {
-    const [state, formDispatch, isPending] = useFormState(
+    const [state, formDispatch] = useActionState(
         action ?? (() => Promise.resolve({})),
         {}
     );
@@ -23,17 +21,11 @@ const NewForm: React.FC<{
         if (state.success) {
             toast.success(state.success);
         }
-    }, [state, isPending]);
+    }, [state]);
 
     return (
         <Form.Root action={formDispatch}>
-            {isPending ? (
-                <div className="flex items-center justify-center min-h-[200px]">
-                    <Spinner />
-                </div>
-            ) : (
-                children
-            )}
+            {children}
         </Form.Root>
     );
 };

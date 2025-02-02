@@ -26,11 +26,11 @@ export default function RootLayout({
     >
       <body className={mono.className}>
        {children}
-      </body>
-      <Toaster
+       <Toaster
         richColors
         closeButton
       />
+      </body>
     </html>
   );
 }
