@@ -26,12 +26,21 @@ CREATE TABLE "Project" (
 );
 
 -- CreateTable
+CREATE TABLE "UserProject" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "projectId" TEXT NOT NULL,
+    "role" TEXT,
+
+    CONSTRAINT "UserProject_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "WorkTimeReport" (
     "id" TEXT NOT NULL,
     "startDate" TIMESTAMP(3) NOT NULL,
     "endDate" TIMESTAMP(3) NOT NULL,
-    "userId" TEXT NOT NULL,
-    "projectId" TEXT NOT NULL,
+    "userProjectId" TEXT NOT NULL,
     "isClosed" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "WorkTimeReport_pkey" PRIMARY KEY ("id")
@@ -107,6 +116,9 @@ CREATE TABLE "TwoFactorConfirmation" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "UserProject_userId_projectId_key" ON "UserProject"("userId", "projectId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
 
 -- CreateIndex
@@ -131,10 +143,13 @@ CREATE UNIQUE INDEX "TwoFactorToken_email_token_key" ON "TwoFactorToken"("email"
 CREATE UNIQUE INDEX "TwoFactorConfirmation_userId_key" ON "TwoFactorConfirmation"("userId");
 
 -- AddForeignKey
-ALTER TABLE "WorkTimeReport" ADD CONSTRAINT "WorkTimeReport_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "UserProject" ADD CONSTRAINT "UserProject_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "WorkTimeReport" ADD CONSTRAINT "WorkTimeReport_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "UserProject" ADD CONSTRAINT "UserProject_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkTimeReport" ADD CONSTRAINT "WorkTimeReport_userProjectId_fkey" FOREIGN KEY ("userProjectId") REFERENCES "UserProject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "WorkTime" ADD CONSTRAINT "WorkTime_workTimeReportId_fkey" FOREIGN KEY ("workTimeReportId") REFERENCES "WorkTimeReport"("id") ON DELETE CASCADE ON UPDATE CASCADE;

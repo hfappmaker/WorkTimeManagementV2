@@ -11,13 +11,11 @@ export async function getWorkTimesByWorkTimeReportId(workTimeReportId: string) {
 }
 
 export async function getOpenedWorkTimeReport(
-  userId: string,
-  projectId: string
+  userProjectId: string
 ) {
   const workTimeReport = await db.workTimeReport.findFirst({
     where: {
-      userId: userId,
-      projectId: projectId,
+      userProjectId: userProjectId,
       isClosed: false,
     },
   });
@@ -26,28 +24,12 @@ export async function getOpenedWorkTimeReport(
 }
 
 export async function getProjectsByUserId(userId: string) {
-  const projectIdDatas = await db.workTimeReport.findMany({
-    where: {
-      userId: userId,
-    },
-    select: {
-      projectId: true,
-    },
-    distinct: ["projectId"],
-    orderBy: {
-      isClosed: "asc",
-    },
+  const userProjects = await db.userProject.findMany({
+    where: { userId },
+    include: { project: true },
   });
 
-  const projects = await db.project.findMany({
-    where: {
-      id: {
-        in: projectIdDatas.map((projectIdData) => projectIdData.projectId),
-      },
-    },
-  });
-
-  return projects;
+  return userProjects.map((userProject) => userProject.project);
 }
 
 export async function createProject(
@@ -67,15 +49,13 @@ export async function createProject(
 }
 
 export async function createWorkTimeReport(
-  userId: string,
-  projectId: string,
+  userProjectId: string,
   startDate: Date,
   endDate: Date
 ) {
   const workTimeReport = await db.workTimeReport.create({
     data: {
-      userId: userId,
-      projectId: projectId,
+      userProjectId: userProjectId,
       startDate: startDate,
       endDate: endDate,
     },
@@ -125,4 +105,29 @@ export async function deleteProject(projectId: string) {
       id: projectId,
     },
   });
+}
+
+export async function assignUserToProject(userId: string, projectId: string, role: string) {
+  await db.userProject.create({
+    data: {
+      userId: userId,
+      projectId: projectId, 
+      role: role,
+    },
+  });
+}
+
+export async function getUnassignedProjects(userId: string) {
+  const userProjects = await db.userProject.findMany({
+    where: { userId },
+  });
+  const assignedProjectIds = userProjects.map((userProject) => userProject.projectId);
+  const unassignedProjects = await db.project.findMany({  
+    where: {
+      NOT: {
+        id: { in: assignedProjectIds },
+      },
+    },
+  });
+  return unassignedProjects;
 }

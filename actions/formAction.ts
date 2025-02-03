@@ -1,8 +1,7 @@
 "use server";
 import {
   createProject,
-  createWorkTime,
-  createWorkTimeReport,
+  assignUserToProject,
   deleteProject,
   getProjectsByUserId,
 } from "@/data/work-time";
@@ -42,33 +41,6 @@ const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, 
   return { success: "All projects deleted successfully" };
 }
 
-const createProjectAndWorkTimeReport = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
-  var newProjectName = formData.get("newProjectName")?.toString();
-  if (!newProjectName) {
-    return { error: "Project name is required" };
-  }
-  var startDate = new Date();
-  const user = await currentUser();
-  var project = await createProject(newProjectName, startDate, null);
-  var endDate = addDays(startDate, 30);
-  var workTimeReport = await createWorkTimeReport(
-    user.id,
-    project.id,
-    startDate,
-    endDate
-  );
-  const daysInPeriod = differenceInCalendarDays(endDate, startDate) + 1;
-  const datesInPeriod = Array.from({ length: daysInPeriod }, (_, i) =>
-    addDays(startDate, i)
-  );
-  for (var date of datesInPeriod) {
-    await createWorkTime(date, date, workTimeReport.id);
-  }
-  
-  revalidatePath("/dashboard");
-  return { success: "Project created successfully" };
-};
-
 const createProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   const projectName = formData.get('projectName') as string;
   const startDateStr = formData.get('startDate') as string;
@@ -94,4 +66,16 @@ const createProjectAction = async (_prevResult: FormActionResult, formData: Form
   return { success: `Project '${projectName}' created successfully` };
 }
 
-export { createProjectAndWorkTimeReport, deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction };
+const assignUserToProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
+  const userId = formData.get("userId")?.toString();
+  const projectId = formData.get("projectId")?.toString();
+  const role = formData.get("role")?.toString() ?? "USER";
+  if (!userId || !projectId) {  
+    return { error: "User and project are required" };
+  }
+  await assignUserToProject(userId, projectId, role);
+  revalidatePath("/dashboard");
+  return { success: "User assigned to project successfully" };
+}
+
+export { deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction, assignUserToProjectAction };
