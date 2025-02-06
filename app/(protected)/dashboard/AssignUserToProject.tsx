@@ -1,27 +1,25 @@
-import UserSelect from "./UserSelect";
-import AssignableProjects from "./AssignableProjects.server";
-import AvailableUsers from "./AvailableUsers.server";
 import NewForm from "@/components/ui/new-form";
-import { assignUserToProjectAction } from "@/actions/formAction";
+import { assignUserToProjectAction, getAssignableProjectsAction } from "@/actions/formAction";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { currentUser } from "@/lib/auth";
+import AssginUserToProject from "./AssignUserToProject.client";
+import { db } from "@/lib/db";
 
-interface Props {
-  searchParams: { userId?: string };
-}
-
-export default async function AssignUserToProjectPage({ searchParams }: Props) {
-  // サーバー側でユーザー一覧を取得（Prisma もここで実行可能）
-  const selectedUser = searchParams.userId ?? "";
-
+export default async function AssignUserToProjectPage() {
+  const user = await currentUser();
+  const userId = user?.id;
+  const users = await db.user.findMany();
+  const assignableProjects = await getAssignableProjectsAction([], userId ?? "" );
   return (
       <NewForm action={assignUserToProjectAction}>
-        <UserSelect initialSelectedUser={selectedUser}>
-          <AvailableUsers />
-        </UserSelect>
-        {selectedUser && <AssignableProjects userId={selectedUser} />}
-        <Input name="role" defaultValue="USER" />
-        <Button type="submit">Assign User to Project</Button>
+         <div className="flex flex-col gap-4">
+           <AssginUserToProject 
+             defaultUserId={userId ?? ""} 
+             users={users} 
+             defaultAssignableProjects={assignableProjects}
+           />
+           <Button type="submit">Assign User to Project</Button>
+         </div>
       </NewForm>
   );
 }

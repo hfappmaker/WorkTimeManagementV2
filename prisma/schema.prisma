@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -13,6 +13,28 @@ enum UserRole {
   USER
 }
 
+enum WorkReportStatus {
+  DRAFT // 作成中
+  COMPLETED // 作成完了
+  APPROVED // 承認済み
+  REJECTED // 却下
+  REQUEST_REVISION // 修正依頼
+}
+
+enum WorkReportPeriodUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+// ADMINは契約の作成、Projectの作成、支払いの作成、Userの割り当てとUSERで出来ることが全て可能
+// USERは契約の閲覧、WorkReportの作成が可能
 model User {
   id                    String                 @id @default(cuid())
   name                  String?
@@ -25,44 +47,52 @@ model User {
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
   userProjects          UserProject[]
+  auditLogs             AuditLog[]
 }
 
 model Project {
-  id             String           @id @default(cuid())
-  name           String
-  startDate      DateTime
-  endDate        DateTime?
-  userProjects   UserProject[]
+  id           String        @id @default(cuid())
+  name         String
+  startDate    DateTime
+  endDate      DateTime?
+  userProjects UserProject[]
 }
 
 model UserProject {
-  id              String           @id @default(cuid())
-  user            User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String?
-  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId       String
-  role            String?
-  workTimeReports WorkTimeReport[]
+  id                   String               @id @default(cuid())
+  userId               String
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project              Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId            String
+  workReports          WorkReport[]
+  unitPrice            Decimal?
+  settlementMin        Decimal?
+  settlementMax        Decimal?
+  upperRate            Decimal?
+  middleRate           Decimal?
+  workReportPeriodUnit WorkReportPeriodUnit @default(WEEK) // WorkReport作成期間の単位
 
   @@unique([userId, projectId])
 }
 
-model WorkTimeReport {
-  id            String       @id @default(cuid())
+model WorkReport {
+  id            String           @id @default(cuid())
   startDate     DateTime
   endDate       DateTime
-  userProject   UserProject  @relation(fields: [userProjectId], references: [id])
+  userProject   UserProject      @relation(fields: [userProjectId], references: [id])
   userProjectId String
-  isClosed      Boolean      @default(false)
+  memo          String?
   workTimes     WorkTime[]
+  status        WorkReportStatus @default(DRAFT)
 }
 
 model WorkTime {
-  id               String         @id @default(cuid())
-  startTime        DateTime
-  endTime          DateTime
-  workTimeReport   WorkTimeReport @relation(fields: [workTimeReportId], references: [id], onDelete: Cascade)
-  workTimeReportId String
+  id           String     @id @default(cuid())
+  startTime    DateTime
+  endTime      DateTime
+  memo         String?
+  workReport   WorkReport @relation(fields: [workReportId], references: [id], onDelete: Cascade)
+  workReportId String
 }
 
 model Account {
@@ -118,4 +148,17 @@ model TwoFactorConfirmation {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId])
+}
+
+model AuditLog {
+  id            String      @id @default(cuid())
+  tableName     String // 変更対象のテーブル名（例："User", "Project", 等）
+  recordId      String // 対象レコードのID
+  action        AuditAction // 操作の種別
+  // 変更内容の詳細を JSON 形式で格納（必要に応じて）
+  changedFields Json?
+  createdAt     DateTime    @default(now())
+  // 操作を行ったユーザー（任意）
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
 }

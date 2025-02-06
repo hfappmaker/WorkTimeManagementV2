@@ -4,12 +4,14 @@ import {
   assignUserToProject,
   deleteProject,
   getProjectsByUserId,
+  getUnassignedProjects,
 } from "@/data/work-time";
 import { currentUser } from "@/lib/auth";
 import { addDays, differenceInCalendarDays } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
 import { generateWithOllama } from '@/lib/ai';
+import { Project } from "@prisma/client";
 
 const generateOllamaAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   const prompt = formData.get("deepSeekPrompt")?.toString();
@@ -69,13 +71,17 @@ const createProjectAction = async (_prevResult: FormActionResult, formData: Form
 const assignUserToProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   const userId = formData.get("userId")?.toString();
   const projectId = formData.get("projectId")?.toString();
-  const role = formData.get("role")?.toString() ?? "USER";
   if (!userId || !projectId) {  
     return { error: "User and project are required" };
   }
-  await assignUserToProject(userId, projectId, role);
+  await assignUserToProject(userId, projectId);
   revalidatePath("/dashboard");
   return { success: "User assigned to project successfully" };
 }
 
-export { deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction, assignUserToProjectAction };
+const getAssignableProjectsAction = async (_prevResult: Project[], userId: string) => {
+  const assignableProjects: Project[] = await getUnassignedProjects(userId);
+  return assignableProjects;
+};
+
+export { deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction, assignUserToProjectAction, getAssignableProjectsAction };

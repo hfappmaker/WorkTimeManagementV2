@@ -1,18 +1,11 @@
-import { getUnassignedProjects } from "@/data/work-time";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Project } from "@prisma/client";
 
 interface Props {
-  userId: string;
+  assignableProjects: Project[];
 }
 
-export default async function AssignableProjects({ userId }: Props) {
-  if (!userId) {
-    return null;
-  }
-
-  const assignableProjects: Project[] = await getUnassignedProjects(userId);
-
+export default function AssignableProjects({ assignableProjects }: Props) {
   if (assignableProjects.length === 0) {
     return <p>No assignable projects available.</p>;
   }

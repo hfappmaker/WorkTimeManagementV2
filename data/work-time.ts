@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
-
+import { WorkReportStatus } from "@prisma/client";
 export async function getWorkTimesByWorkTimeReportId(workTimeReportId: string) {
   const workTimes = await db.workTime.findMany({
     where: {
-      workTimeReportId: workTimeReportId,
+      workReportId: workTimeReportId,
     },
   });
 
@@ -13,15 +13,18 @@ export async function getWorkTimesByWorkTimeReportId(workTimeReportId: string) {
 export async function getOpenedWorkTimeReport(
   userProjectId: string
 ) {
-  const workTimeReport = await db.workTimeReport.findFirst({
+  const workReport = await db.workReport.findFirst({
     where: {
       userProjectId: userProjectId,
-      isClosed: false,
-    },
+      status: {
+        notIn: [WorkReportStatus.COMPLETED, WorkReportStatus.APPROVED, WorkReportStatus.REJECTED],
+      },
+    },  
   });
 
-  return workTimeReport;
+  return workReport;
 }
+
 
 export async function getProjectsByUserId(userId: string) {
   const userProjects = await db.userProject.findMany({
@@ -53,27 +56,31 @@ export async function createWorkTimeReport(
   startDate: Date,
   endDate: Date
 ) {
-  const workTimeReport = await db.workTimeReport.create({
+  const workReport = await db.workReport.create({
     data: {
       userProjectId: userProjectId,
       startDate: startDate,
       endDate: endDate,
+
     },
   });
 
-  return workTimeReport;
+  return workReport;
 }
+
 
 export async function createWorkTime(
   startTime: Date,
   endTime: Date,
-  workTimeReportId: string
+  workReportId: string
 ) {
   const workTime = await db.workTime.create({
     data: {
       startTime: startTime,
+
       endTime: endTime,
-      workTimeReportId: workTimeReportId,
+      workReportId: workReportId,
+
     },
   });
 
@@ -84,7 +91,8 @@ export async function updateWorkTime(
   id: string,
   startTime: Date,
   endTime: Date,
-  workTimeReportId: string
+  workReportId: string
+
 ) {
   const updatedWorkTime = await db.workTime.update({
     where: {
@@ -93,7 +101,8 @@ export async function updateWorkTime(
     data: {
       startTime: startTime,
       endTime: endTime,
-      workTimeReportId: workTimeReportId,
+      workReportId: workReportId,
+
     },
   });
   return updatedWorkTime;
@@ -107,12 +116,11 @@ export async function deleteProject(projectId: string) {
   });
 }
 
-export async function assignUserToProject(userId: string, projectId: string, role: string) {
+export async function assignUserToProject(userId: string, projectId: string) {
   await db.userProject.create({
     data: {
       userId: userId,
       projectId: projectId, 
-      role: role,
     },
   });
 }

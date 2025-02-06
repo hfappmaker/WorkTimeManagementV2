@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 
 import { deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
-import Dashboard from './dashboard';
+import AssignedProjects from './AssignedProjects';
 import { TextArea } from '@/components/ui/textarea';
 import { Suspense } from 'react';
 import Spinner from '@/components/spinner';
@@ -13,7 +13,7 @@ import { DateInput } from '@/components/ui/date-input';
 
 import AssignUserToProjectPage from './AssignUserToProject';
 
-export default async function DashboardPage({ searchParams }: { searchParams: { userId: string } }) {
+export default async function DashboardPage() {
   // Define the list of select items
   const selectItems = [
     { value: "deepseek-coder:latest", label: "deepseek-coder" },
@@ -23,16 +23,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
     { value: "hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-32B-Japanese-gguf:latest", label: "DeepSeek-R1-Distill-Qwen-32B-Japanese" },
   ];
 
-  const awaitedSearchParams = await searchParams;
-  const userId = awaitedSearchParams.userId;
-
   return (
     <Stack spacing={3}>
       <Suspense fallback={<Spinner />}>
-        <Dashboard />
+        <AssignedProjects />
       </Suspense>
       <Suspense fallback={<Spinner />}>
-        <AssignUserToProjectPage searchParams={{ userId }} />
+        <AssignUserToProjectPage />
       </Suspense>
       <NewForm action={createProjectAction}>
         <Input name="projectName" type="text" required placeholder="New Project Name" />

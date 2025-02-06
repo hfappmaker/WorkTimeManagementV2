@@ -6,7 +6,7 @@ import { currentUser } from '@/lib/auth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 
-const Dashboard = async () => {
+const AssignedProjects = async () => {
   const user = await currentUser();
   const projects = await getProjectsByUserId(user.id);
   return (
@@ -30,4 +30,4 @@ const Dashboard = async () => {
   );
 };
 
-export default Dashboard;
+export default AssignedProjects;

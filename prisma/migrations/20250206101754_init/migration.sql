@@ -1,6 +1,15 @@
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'USER');
 
+-- CreateEnum
+CREATE TYPE "WorkReportStatus" AS ENUM ('DRAFT', 'COMPLETED', 'APPROVED', 'REJECTED', 'REQUEST_REVISION');
+
+-- CreateEnum
+CREATE TYPE "WorkReportPeriodUnit" AS ENUM ('DAY', 'WEEK', 'MONTH');
+
+-- CreateEnum
+CREATE TYPE "AuditAction" AS ENUM ('CREATE', 'UPDATE', 'DELETE');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -28,22 +37,28 @@ CREATE TABLE "Project" (
 -- CreateTable
 CREATE TABLE "UserProject" (
     "id" TEXT NOT NULL,
-    "userId" TEXT,
+    "userId" TEXT NOT NULL,
     "projectId" TEXT NOT NULL,
-    "role" TEXT,
+    "unitPrice" DECIMAL(65,30),
+    "settlementMin" DECIMAL(65,30),
+    "settlementMax" DECIMAL(65,30),
+    "upperRate" DECIMAL(65,30),
+    "middleRate" DECIMAL(65,30),
+    "workReportPeriodUnit" "WorkReportPeriodUnit" NOT NULL DEFAULT 'WEEK',
 
     CONSTRAINT "UserProject_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "WorkTimeReport" (
+CREATE TABLE "WorkReport" (
     "id" TEXT NOT NULL,
     "startDate" TIMESTAMP(3) NOT NULL,
     "endDate" TIMESTAMP(3) NOT NULL,
     "userProjectId" TEXT NOT NULL,
-    "isClosed" BOOLEAN NOT NULL DEFAULT false,
+    "memo" TEXT,
+    "status" "WorkReportStatus" NOT NULL DEFAULT 'DRAFT',
 
-    CONSTRAINT "WorkTimeReport_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "WorkReport_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -51,7 +66,8 @@ CREATE TABLE "WorkTime" (
     "id" TEXT NOT NULL,
     "startTime" TIMESTAMP(3) NOT NULL,
     "endTime" TIMESTAMP(3) NOT NULL,
-    "workTimeReportId" TEXT NOT NULL,
+    "memo" TEXT,
+    "workReportId" TEXT NOT NULL,
 
     CONSTRAINT "WorkTime_pkey" PRIMARY KEY ("id")
 );
@@ -112,6 +128,19 @@ CREATE TABLE "TwoFactorConfirmation" (
     CONSTRAINT "TwoFactorConfirmation_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "AuditLog" (
+    "id" TEXT NOT NULL,
+    "tableName" TEXT NOT NULL,
+    "recordId" TEXT NOT NULL,
+    "action" "AuditAction" NOT NULL,
+    "changedFields" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "userId" TEXT,
+
+    CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -149,13 +178,16 @@ ALTER TABLE "UserProject" ADD CONSTRAINT "UserProject_userId_fkey" FOREIGN KEY (
 ALTER TABLE "UserProject" ADD CONSTRAINT "UserProject_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "WorkTimeReport" ADD CONSTRAINT "WorkTimeReport_userProjectId_fkey" FOREIGN KEY ("userProjectId") REFERENCES "UserProject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "WorkReport" ADD CONSTRAINT "WorkReport_userProjectId_fkey" FOREIGN KEY ("userProjectId") REFERENCES "UserProject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "WorkTime" ADD CONSTRAINT "WorkTime_workTimeReportId_fkey" FOREIGN KEY ("workTimeReportId") REFERENCES "WorkTimeReport"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "WorkTime" ADD CONSTRAINT "WorkTime_workReportId_fkey" FOREIGN KEY ("workReportId") REFERENCES "WorkReport"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TwoFactorConfirmation" ADD CONSTRAINT "TwoFactorConfirmation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
