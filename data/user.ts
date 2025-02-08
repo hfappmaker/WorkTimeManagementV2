@@ -1,4 +1,6 @@
-import { db } from "@/lib/db";
+import { PrismaClient } from "@prisma/client";
+
+const db = new PrismaClient();
 
 export const getUserByEmail = async (email: string) => {
   try {
