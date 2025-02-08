@@ -1,6 +1,6 @@
 'use server';
 
-import { getProjectsByUserId } from '@/data/work-time';
+import { getAssignedProjects } from '@/data/work-time';
 import Link from 'next/link';
 import { currentUser } from '@/lib/auth';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 
 const AssignedProjects = async () => {
   const user = await currentUser();
-  const projects = await getProjectsByUserId(user.id);
+  const projects = await getAssignedProjects(user.id);
   return (
     <div className='grid grid-cols-1'>
       {projects.map((project) => (

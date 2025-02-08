@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { WorkReportStatus } from "@prisma/client";
+
 export async function getWorkTimesByWorkTimeReportId(workTimeReportId: string) {
   const workTimes = await db.workTime.findMany({
     where: {
@@ -23,16 +24,6 @@ export async function getOpenedWorkTimeReport(
   });
 
   return workReport;
-}
-
-
-export async function getProjectsByUserId(userId: string) {
-  const userProjects = await db.userProject.findMany({
-    where: { userId },
-    include: { project: true },
-  });
-
-  return userProjects.map((userProject) => userProject.project);
 }
 
 export async function createProject(
@@ -116,6 +107,14 @@ export async function deleteProject(projectId: string) {
   });
 }
 
+export async function unassignUserFromProject(userId: string, projectId: string) {
+  await db.userProject.delete({
+    where: {
+      userId_projectId: { userId, projectId },
+    },
+  });
+} 
+
 export async function assignUserToProject(userId: string, projectId: string) {
   await db.userProject.create({
     data: {
@@ -138,4 +137,13 @@ export async function getUnassignedProjects(userId: string) {
     },
   });
   return unassignedProjects;
+}
+
+export async function getAssignedProjects(userId: string) {
+  const userProjects = await db.userProject.findMany({
+    where: { userId },
+    include: { project: true },
+  });
+
+  return userProjects.map((userProject) => userProject.project);
 }

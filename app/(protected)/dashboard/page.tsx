@@ -2,16 +2,15 @@ import { Stack } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-
-import { deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction } from '../../../actions/formAction';
+import { generateOllamaAction, createProjectAction } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
 import AssignedProjects from './AssignedProjects';
 import { TextArea } from '@/components/ui/textarea';
 import { Suspense } from 'react';
 import Spinner from '@/components/spinner';
 import { DateInput } from '@/components/ui/date-input';
-
 import AssignUserToProjectPage from './AssignUserToProject';
+import UnassignUserFromProjectPage from './UnassignUserFromProject'
 
 export default async function DashboardPage() {
   // Define the list of select items
@@ -36,11 +35,11 @@ export default async function DashboardPage() {
         <DateInput name="startDate" required placeholder="Select a Start Date" />
         <Button type="submit">Create New Project</Button>
       </NewForm>
-      <NewForm action={deleteAllProjectAndWorkTimeReport}>
-        <Button type="submit">Delete All Projects</Button>
-      </NewForm>
+      <Suspense fallback={<Spinner />}>
+        <UnassignUserFromProjectPage />
+      </Suspense>
       <NewForm action={generateOllamaAction}>
-        <Select name="aiModel" defaultValue="">
+        <Select name="aiModel">
           <SelectTrigger className="w-[400px] truncate">
             <SelectValue placeholder="Select AI Model" className="truncate" />
           </SelectTrigger>

@@ -2,8 +2,7 @@
 
 import { SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Select } from "@/components/ui/select";
-import { startTransition, Suspense } from "react";
-import AssignableProjects from "./AssignableProjects.server";
+import { startTransition } from "react";
 import { User, Project } from "@prisma/client";
 import { useActionState } from "react"; 
 import { getAssignableProjectsAction } from "@/actions/formAction";
@@ -43,7 +42,21 @@ return (
             ))}
             </SelectContent>
         </Select>
-        {isPending ? <Spinner /> : <AssignableProjects assignableProjects={assignableProjects} />}
+        {isPending ? <Spinner /> :     
+            assignableProjects.length === 0 ? <p>No assignable projects available.</p> : 
+            <Select name="projectId" defaultValue={assignableProjects[0].id}>
+                <SelectTrigger className="w-[200px] truncate">
+                    <SelectValue placeholder="Select Unassigned Project" className="truncate" />
+                </SelectTrigger>
+                <SelectContent>
+                    {assignableProjects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                    </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        }
     </>
 );
 } 

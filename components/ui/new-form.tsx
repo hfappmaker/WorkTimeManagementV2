@@ -1,4 +1,5 @@
 "use client"
+
 import React, { useActionState, useEffect } from 'react';
 import { toast } from "sonner";
 import * as Form from '@radix-ui/react-form';
@@ -12,7 +13,7 @@ const NewForm: React.FC<{
         action ?? (() => Promise.resolve({})),
         {}
     );
-
+    
     useEffect(() => {
         if (state.error) {
             toast.error(state.error);

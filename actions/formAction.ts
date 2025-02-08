@@ -2,12 +2,10 @@
 import {
   createProject,
   assignUserToProject,
-  deleteProject,
-  getProjectsByUserId,
   getUnassignedProjects,
+  unassignUserFromProject,
+  getAssignedProjects,
 } from "@/data/work-time";
-import { currentUser } from "@/lib/auth";
-import { addDays, differenceInCalendarDays } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
 import { generateWithOllama } from '@/lib/ai';
@@ -33,14 +31,15 @@ const generateOllamaAction = async (_prevResult: FormActionResult, formData: For
   return await generateWithOllama(prompt, config);
 }
 
-const deleteAllProjectAndWorkTimeReport = async (_prevResult: FormActionResult, _formData: FormData) : Promise<FormActionResult> => {
-  const user = await currentUser();
-  const projects = await getProjectsByUserId(user.id);
-  for (var project of projects) {
-    await deleteProject(project.id);
+const UnassignUserFromProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
+  const userId = formData.get("userId")?.toString();
+  const projectId = formData.get("projectId")?.toString();
+  if (!userId || !projectId) {  
+    return { error: "User and project are required" };
   }
+  await unassignUserFromProject(userId, projectId);
   revalidatePath("/dashboard");
-  return { success: "All projects deleted successfully" };
+  return { success: "User unassigned from project successfully" };
 }
 
 const createProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
@@ -84,4 +83,16 @@ const getAssignableProjectsAction = async (_prevResult: Project[], userId: strin
   return assignableProjects;
 };
 
-export { deleteAllProjectAndWorkTimeReport, generateOllamaAction, createProjectAction, assignUserToProjectAction, getAssignableProjectsAction };
+const getUnassignableProjectsAction = async (_prevResult: Project[], userId: string) => {
+  const unassignableProjects: Project[] = await getAssignedProjects(userId);
+  return unassignableProjects;
+};
+
+export { 
+  generateOllamaAction, 
+  createProjectAction, 
+  assignUserToProjectAction, 
+  getAssignableProjectsAction, 
+  UnassignUserFromProjectAction, 
+  getUnassignableProjectsAction 
+};
