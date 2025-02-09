@@ -2,8 +2,8 @@
  * Represents the result of an action.
  */
 interface FormActionResult {
-    error?: string | undefined,
-    success?: string | undefined
+    errors?: Record<string, string>;
+    success?: string;
 }
 
 export type {

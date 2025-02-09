@@ -1,34 +1,47 @@
 "use client"
 
 import React, { useActionState, useEffect } from 'react';
-import { toast } from "sonner";
 import * as Form from '@radix-ui/react-form';
 import { FormActionResult } from '@/models/form-action-result';
+import { toast } from 'sonner';
+
 
 const NewForm: React.FC<{
     action: (prevResult: FormActionResult, data: FormData) => Promise<FormActionResult>,
-    children: React.ReactNode | React.ReactNode[],
-}> = ({ action, children }) => {
+    children: React.ReactNode,
+    noValidate?: boolean
+}> = ({ action, children, noValidate }) => {
+
     const [state, formDispatch] = useActionState(
         action ?? (() => Promise.resolve({})),
         {}
     );
     
-    useEffect(() => {
-        if (state.error) {
-            toast.error(state.error);
+    // 子要素に対して1段階のみ error を注入する（再帰は行わない）
+    const content = React.Children.map(children, (child) => {
+        if (!React.isValidElement(child)) return child;
+        
+        if (child.props.name !== undefined) {
+            const { name } = child.props as { name: string };
+            const error = state.errors ? state.errors[name] : undefined;
+            return React.cloneElement(child as React.ReactElement<any>, { error });
         }
+        return child;
+    });
 
+    useEffect(() => {
         if (state.success) {
             toast.success(state.success);
         }
     }, [state]);
 
+
     return (
-        <Form.Root action={formDispatch}>
-            {children}
+        <Form.Root action={formDispatch} noValidate={noValidate}>
+            {content}
         </Form.Root>
     );
+
 };
 
 export default NewForm;

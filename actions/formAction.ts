@@ -13,20 +13,27 @@ import { Project } from "@prisma/client";
 
 const generateOllamaAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   const prompt = formData.get("deepSeekPrompt")?.toString();
+  const errorMessages: Record<string, string> = {};
+
   if (!prompt) {
-    return { error: "Prompt is required" };
+    errorMessages.deepSeekPrompt = "Prompt is required";
   }
 
   const aiModel = formData.get("aiModel")?.toString();
   if (!aiModel) {
-    return { error: "AI model selection is required" };
+    errorMessages.aiModel = "AI model selection is required";
   }
-  
+
+  if (!prompt || !aiModel) {
+    return { errors: errorMessages };
+  }
+
   const config = {
     model: aiModel,
     temperature: 0.7,
     max_tokens: 2048
   };
+
 
   return await generateWithOllama(prompt, config);
 }
@@ -34,23 +41,41 @@ const generateOllamaAction = async (_prevResult: FormActionResult, formData: For
 const UnassignUserFromProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   const userId = formData.get("userId")?.toString();
   const projectId = formData.get("projectId")?.toString();
-  if (!userId || !projectId) {  
-    return { error: "User and project are required" };
+  const errorMessages: Record<string, string> = {};
+
+  if (!userId) {  
+    errorMessages.userId = "User and project are required";
   }
+
+  if (!projectId) {
+    errorMessages.projectId = "User and project are required";
+  }
+
+  if (!userId || !projectId) {
+    return { errors: errorMessages };
+  }
+
   await unassignUserFromProject(userId, projectId);
   revalidatePath("/dashboard");
   return { success: "User unassigned from project successfully" };
+
 }
 
 const createProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   const projectName = formData.get('projectName') as string;
   const startDateStr = formData.get('startDate') as string;
-  
-  if (!projectName || projectName.trim() === "") {
-    return { error: "Project name is required" };
+  const errorMessages: Record<string, string> = {};
+
+  if(!projectName || projectName.trim() === "") {
+    errorMessages.projectName = "Project name is required";
   }
+
   if (!startDateStr) {
-    return { error: "Start date is required" };
+    errorMessages.startDate = "Start date is required";
+  }
+
+  if (!projectName || !startDateStr) {
+    return { errors: errorMessages };
   }
   
   // 入力された開始日を Date 型に変換
@@ -70,9 +95,20 @@ const createProjectAction = async (_prevResult: FormActionResult, formData: Form
 const assignUserToProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
   const userId = formData.get("userId")?.toString();
   const projectId = formData.get("projectId")?.toString();
-  if (!userId || !projectId) {  
-    return { error: "User and project are required" };
+  const errorMessages: Record<string, string> = {};
+
+  if (!userId) {  
+    errorMessages.userId = "User and project are required";
   }
+
+  if (!projectId) {
+    errorMessages.projectId = "User and project are required";
+  }
+
+  if (!userId || !projectId) {
+    return { errors: errorMessages };
+  }
+
   await assignUserToProject(userId, projectId);
   revalidatePath("/dashboard");
   return { success: "User assigned to project successfully" };

@@ -30,7 +30,7 @@ export default async function DashboardPage() {
       <Suspense fallback={<Spinner />}>
         <AssignUserToProjectPage />
       </Suspense>
-      <NewForm action={createProjectAction}>
+      <NewForm action={createProjectAction} noValidate>
         <Input name="projectName" type="text" required placeholder="New Project Name" />
         <DateInput name="startDate" required placeholder="Select a Start Date" />
         <Button type="submit">Create New Project</Button>
