@@ -2,28 +2,31 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FaCalendarAlt } from "react-icons/fa";
-import { ComponentPropsWithRef, FC, useState, useEffect, useRef } from "react";
+import { ComponentPropsWithRef, FC, useRef, useState, useEffect } from "react";
 
 export interface DateInputProps
   extends ComponentPropsWithRef<"input"> {
   error?: string;
+  errorVersion?: number;
   name: string;
 }
 
-export const DateInput : FC<DateInputProps> = ({ className, error, name, onChange, ...props }) => {
+export const DateInput : FC<DateInputProps> = ({ className, error, errorVersion, name, value, onChange, ...props }) => {
+  const [localError, setLocalError] = useState(error);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [localError, setLocalError] = useState(error);
-
   useEffect(() => {
-    setLocalError(error);
-  }, [error]);
+    // Update local error only if the current value equals defaultValue (i.e. no user modification)
+    if (inputRef.current && inputRef.current.value === inputRef.current.defaultValue) {
+      setLocalError(error);
+    }
+  }, [error, errorVersion]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
+    if (e.target.value !== "") {
       setLocalError(undefined);
     }
-    onChange && onChange(e);
+    if (onChange) onChange(e);
   };
 
   const handleIconClick = () => {
@@ -41,7 +44,9 @@ export const DateInput : FC<DateInputProps> = ({ className, error, name, onChang
       <div className="relative">
         <input
           type="date"
+          defaultValue={value}
           name={name}
+          onChange={handleChange}
           className={cn(
             "flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
             localError 
@@ -50,7 +55,6 @@ export const DateInput : FC<DateInputProps> = ({ className, error, name, onChang
             className
           )}
           {...props}
-          onChange={handleChange}
           ref={inputRef}
         />
         <FaCalendarAlt

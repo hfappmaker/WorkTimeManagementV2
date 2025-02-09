@@ -1,32 +1,35 @@
 'use client'
-import React, { ComponentPropsWithRef, FC, useState, useEffect, useRef } from "react"
+import React, { ComponentPropsWithRef, FC, useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 export interface InputProps extends ComponentPropsWithRef<"input"> {
   error?: string;
+  errorVersion?: number;
   name: string;
 }
 
-export const Input: FC<InputProps> = ({ className, type, error, name, onChange, ...props }) => {
-  // Local state to override error display
+export const Input: FC<InputProps> = ({ className, type, error, errorVersion, name, value, onChange, ...props }) => {
   const [localError, setLocalError] = useState(error);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Update local state when parent error prop changes
   useEffect(() => {
-    setLocalError(error);
-  }, [error]);
+    if (inputRef.current && inputRef.current.value === inputRef.current.defaultValue) {
+      setLocalError(error);
+    }
+  }, [error, errorVersion]);
 
-  // Clear error when input changes and call any provided onChange event
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
+    if (e.target.value !== "") {
       setLocalError(undefined);
     }
-    onChange && onChange(e);
+    if (onChange) onChange(e);
   };
 
   return (
     <div>
       <input
+        ref={inputRef}
+        defaultValue={value}
         type={type}
         name={name}
         className={cn(
@@ -41,7 +44,7 @@ export const Input: FC<InputProps> = ({ className, type, error, name, onChange, 
       />
       {localError && <div className="mt-1 text-sm text-red-500">{localError}</div>}
     </div>
-  )
-}
+  );
+};
 
 Input.displayName = "Input"

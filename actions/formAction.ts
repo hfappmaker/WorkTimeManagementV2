@@ -11,115 +11,128 @@ import { FormActionResult } from '@/models/form-action-result';
 import { generateWithOllama } from '@/lib/ai';
 import { Project } from "@prisma/client";
 
-const generateOllamaAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
-  const prompt = formData.get("deepSeekPrompt")?.toString();
-  const errorMessages: Record<string, string> = {};
+// ヘルパー型
+interface FieldValidation {
+  key: string;
+  message: string;
+}
 
-  if (!prompt) {
-    errorMessages.deepSeekPrompt = "Prompt is required";
-  }
+/**
+ * 指定された key の一覧について、formData から一度に値を取り出し、
+ * その値と、必須チェックの結果（エラーメッセージ有無）を返す。
+ */
+function getFormFields(
+  formData: FormData,
+  fields: FieldValidation[]
+): {
+  values: Record<string, string>;
+  errors: Record<string, { error: string | undefined; value: string }>;
+} {
+  const values: Record<string, string> = {};
+  const errors: Record<string, { error: string | undefined; value: string }> = {};
+  fields.forEach(({ key, message }) => {
+    const val = formData.get(key)?.toString() ?? "";
+    values[key] = val;
+    errors[key] = { error: val.trim() ? undefined : message, value: val };
+  });
+  return { values, errors };
+}
 
-  const aiModel = formData.get("aiModel")?.toString();
-  if (!aiModel) {
-    errorMessages.aiModel = "AI model selection is required";
-  }
+/**
+ * formData から指定されたフィールド群を一度に取得し、各フィールドの必須バリデーション結果をまとめる
+ * and returns { values, errors, isValid }.
+ */
+function validateFormData(
+  formData: FormData,
+  fields: FieldValidation[]
+): {
+  values: Record<string, string>;
+  errors: Record<string, { error: string | undefined; value: string }>;
+  isValid: boolean;
+} {
+  const { values, errors } = getFormFields(formData, fields);
+  const isValid = !Object.values(errors).some(({ error }) => error !== undefined);
+  return { values, errors, isValid };
+}
 
-  if (!prompt || !aiModel) {
-    return { errors: errorMessages };
-  }
+const generateOllamaAction = async (
+  _prevResult: FormActionResult,
+  formData: FormData
+): Promise<FormActionResult> => {
+  const { values, errors, isValid } = validateFormData(formData, [
+    { key: "deepSeekPrompt", message: "Prompt is required" },
+    { key: "aiModel", message: "AI model selection is required" },
+  ]);
+  if (!isValid) return { errors };
 
   const config = {
-    model: aiModel,
+    model: values.aiModel,
     temperature: 0.7,
-    max_tokens: 2048
+    max_tokens: 2048,
   };
 
+  return await generateWithOllama(values.deepSeekPrompt, config);
+};
 
-  return await generateWithOllama(prompt, config);
-}
+const UnassignUserFromProjectAction = async (
+  _prevResult: FormActionResult,
+  formData: FormData
+): Promise<FormActionResult> => {
+  const { values, errors, isValid } = validateFormData(formData, [
+    { key: "userId", message: "User and project are required" },
+    { key: "projectId", message: "User and project are required" },
+  ]);
+  if (!isValid) return { errors };
 
-const UnassignUserFromProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
-  const userId = formData.get("userId")?.toString();
-  const projectId = formData.get("projectId")?.toString();
-  const errorMessages: Record<string, string> = {};
-
-  if (!userId) {  
-    errorMessages.userId = "User and project are required";
-  }
-
-  if (!projectId) {
-    errorMessages.projectId = "User and project are required";
-  }
-
-  if (!userId || !projectId) {
-    return { errors: errorMessages };
-  }
-
-  await unassignUserFromProject(userId, projectId);
+  await unassignUserFromProject(values.userId, values.projectId);
   revalidatePath("/dashboard");
   return { success: "User unassigned from project successfully" };
+};
 
-}
+const createProjectAction = async (
+  _prevResult: FormActionResult,
+  formData: FormData
+): Promise<FormActionResult> => {
+  const { values, errors, isValid } = validateFormData(formData, [
+    { key: "projectName", message: "Project name is required" },
+    { key: "startDate", message: "Start date is required" },
+  ]);
+  if (!isValid) return { errors };
 
-const createProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
-  const projectName = formData.get('projectName') as string;
-  const startDateStr = formData.get('startDate') as string;
-  const errorMessages: Record<string, string> = {};
+  const startDate = new Date(values.startDate);
+  console.log("Creating project:", values.projectName, "with start date:", startDate);
+  const project = await createProject(values.projectName, startDate, null);
+  revalidatePath("/dashboard");
+  return { success: `Project '${values.projectName}' created successfully` };
+};
 
-  if(!projectName || projectName.trim() === "") {
-    errorMessages.projectName = "Project name is required";
-  }
+const assignUserToProjectAction = async (
+  _prevResult: FormActionResult,
+  formData: FormData
+): Promise<FormActionResult> => {
+  const { values, errors, isValid } = validateFormData(formData, [
+    { key: "userId", message: "User and project are required" },
+    { key: "projectId", message: "User and project are required" },
+  ]);
+  if (!isValid) return { errors };
 
-  if (!startDateStr) {
-    errorMessages.startDate = "Start date is required";
-  }
-
-  if (!projectName || !startDateStr) {
-    return { errors: errorMessages };
-  }
-  
-  // 入力された開始日を Date 型に変換
-  const startDate = new Date(startDateStr);
-  
-  console.log('Creating project:', projectName, 'with start date:', startDate);
-  
-  // DB にプロジェクトを登録（endDate は null とするか、必要に応じて別途設定）
-  const project = await createProject(projectName, startDate, null);
-  
-  // キャッシュ再検証を実行（適切なパスに変更してください）
-  revalidatePath('/dashboard');
-  
-  return { success: `Project '${projectName}' created successfully` };
-}
-
-const assignUserToProjectAction = async (_prevResult: FormActionResult, formData: FormData) : Promise<FormActionResult> => {
-  const userId = formData.get("userId")?.toString();
-  const projectId = formData.get("projectId")?.toString();
-  const errorMessages: Record<string, string> = {};
-
-  if (!userId) {  
-    errorMessages.userId = "User and project are required";
-  }
-
-  if (!projectId) {
-    errorMessages.projectId = "User and project are required";
-  }
-
-  if (!userId || !projectId) {
-    return { errors: errorMessages };
-  }
-
-  await assignUserToProject(userId, projectId);
+  await assignUserToProject(values.userId, values.projectId);
   revalidatePath("/dashboard");
   return { success: "User assigned to project successfully" };
-}
+};
 
-const getAssignableProjectsAction = async (_prevResult: Project[], userId: string) => {
+const getAssignableProjectsAction = async (
+  _prevResult: Project[],
+  userId: string
+) => {
   const assignableProjects: Project[] = await getUnassignedProjects(userId);
   return assignableProjects;
 };
 
-const getUnassignableProjectsAction = async (_prevResult: Project[], userId: string) => {
+const getUnassignableProjectsAction = async (
+  _prevResult: Project[],
+  userId: string
+) => {
   const unassignableProjects: Project[] = await getAssignedProjects(userId);
   return unassignableProjects;
 };

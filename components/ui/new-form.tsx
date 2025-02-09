@@ -23,8 +23,17 @@ const NewForm: React.FC<{
         
         if (child.props.name !== undefined) {
             const { name } = child.props as { name: string };
-            const error = state.errors ? state.errors[name] : undefined;
-            return React.cloneElement(child as React.ReactElement<any>, { error });
+            const fieldError = state.errors 
+              ? (state.errors as Record<string, { error: string | undefined, value: string }>)[name]
+              : undefined;
+            if (fieldError) {
+                return React.cloneElement(child as React.ReactElement<any>, { 
+                    error: fieldError.error,
+                    defaultValue: fieldError.value,
+                    errorVersion: Date.now()
+                });
+            }
+
         }
         return child;
     });
@@ -35,12 +44,12 @@ const NewForm: React.FC<{
         }
     }, [state]);
 
-
     return (
         <Form.Root action={formDispatch} noValidate={noValidate}>
             {content}
         </Form.Root>
     );
+
 
 };
 
