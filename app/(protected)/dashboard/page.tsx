@@ -38,7 +38,7 @@ export default async function DashboardPage() {
       <Suspense fallback={<Spinner />}>
         <UnassignUserFromProjectPage />
       </Suspense>
-      <NewForm action={generateOllamaAction}>
+      <NewForm action={generateOllamaAction} noValidate>
         <Select name="aiModel">
           <SelectTrigger className="w-[400px] truncate">
             <SelectValue placeholder="Select AI Model" className="truncate" />

@@ -1,21 +1,55 @@
+'use client'
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
-import { FC } from "react"
+import { ComponentPropsWithRef, FC, useEffect, useRef, useState } from "react"
 
-export interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+export interface TextAreaProps extends ComponentPropsWithRef<"textarea"> {
+  error?: string;
+  errorVersion?: number;
+  name: string;
+}
 
-const TextArea : FC<TextAreaProps> = ({ className, ...props }) => (
-  <textarea
+
+const TextArea : FC<TextAreaProps> = ({ className, error, errorVersion, name, value, onChange, ...props }) => {
+  const [localError, setLocalError] = useState(error);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current && inputRef.current.value === inputRef.current.defaultValue) {
+      setLocalError(error);
+    }
+  }, [error, errorVersion]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (e.target.value !== "") {
+      setLocalError(undefined);
+    }
+    if (onChange) onChange(e);
+  };
+
+  return (
+    <div>
+      <textarea
+        ref={inputRef}
+        defaultValue={value}
+        name={name}
         className={cn(
           "flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          localError 
+            ? "border border-red-500 focus-visible:ring-red-500"
+            : "border border-input focus-visible:ring-ring",
           className
-    )}
-    {...props}
-  />
-)
+        )}
+        onChange={handleChange}
+        {...props}
+      />
+    {localError && <div className="mt-1 text-sm text-red-500">{localError}</div>}
+    </div>
+  );
+};
 
-TextArea.displayName = "TextArea"
+TextArea.displayName = "TextArea";
 
-
-export { TextArea } 
+export { TextArea };
