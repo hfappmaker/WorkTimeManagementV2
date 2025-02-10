@@ -10,8 +10,9 @@ import {
 import * as SelectPrimitive from "@radix-ui/react-select"
 
 import { cn } from "@/lib/utils"
-import { ComponentPropsWithRef } from "react"
-import { FC } from "react"
+import { ComponentPropsWithRef, FC, useEffect, useRef, useState } from "react"
+import { SelectProps } from "@radix-ui/react-select"
+
 
 const Select = SelectPrimitive.Root
 
@@ -136,6 +137,78 @@ const SelectSeparator: FC<ComponentPropsWithRef<typeof SelectPrimitive.Separator
     />
   )
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName
+
+export type Option = {
+  label: string;
+  value: string;
+};
+
+export interface ComboBoxProps extends SelectProps {
+  /** 選択肢の配列 */
+  options: Option[];
+  /** プレースホルダー（未選択時に表示される文字） */
+  placeholder?: string;
+  /** エラーメッセージ。NewForm のエラー注入機能により自動で渡される */
+  error?: string;
+  /** 選択肢の変更時に呼び出されるコールバック関数 */
+  onChange?: (value: string) => void;
+  /** フォームの送信中かどうか */
+  isPending?: boolean;
+}
+
+
+
+export const ComboBox: React.FC<ComboBoxProps> = ({
+  name,
+  options,
+  placeholder = 'Select an option',
+  error,
+  isPending,
+  onChange,
+  ...props
+}) => {
+  // ローカルのエラーステート
+  const [localError, setLocalError] = useState(error);
+
+  useEffect(() => {
+    if(!isPending){
+      setLocalError(error);
+    }
+  }, [error, isPending]);
+
+  const handleChange = (value: string) => {
+    if (value !== '') {
+      setLocalError(undefined);
+    }
+    if (onChange) {
+      onChange(value);
+    }
+  };
+
+  return (
+    <div className="flex flex-col">
+      <Select name={name} onValueChange={handleChange} {...props}>
+        <SelectTrigger
+          className={`w-[400px] truncate border rounded-md py-2 px-3 ${
+            localError ? 'border-red-500' : 'border-gray-300'
+          }`}
+        >
+          <SelectValue placeholder={placeholder} className="truncate" />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {localError && (
+        <p className="mt-1 text-xs text-red-500">{localError}</p>
+      )}
+    </div>
+  );
+};
 
 export {
   Select,

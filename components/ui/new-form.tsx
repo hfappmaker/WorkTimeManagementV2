@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useActionState, useEffect } from 'react';
+import React, { useActionState, useEffect, useRef } from 'react';
 import * as Form from '@radix-ui/react-form';
 import { FormActionResult } from '@/models/form-action-result';
 import { toast } from 'sonner';
@@ -12,7 +12,7 @@ const NewForm: React.FC<{
     noValidate?: boolean
 }> = ({ action, children, noValidate }) => {
 
-    const [state, formDispatch] = useActionState(
+    const [state, formDispatch, isPending] = useActionState(
         action ?? (() => Promise.resolve({})),
         {}
     );
@@ -30,7 +30,7 @@ const NewForm: React.FC<{
                 return React.cloneElement(child as React.ReactElement<any>, { 
                     error: fieldError.error,
                     defaultValue: fieldError.value,
-                    errorVersion: Date.now()
+                    isPending: isPending,
                 });
             }
 
@@ -49,8 +49,6 @@ const NewForm: React.FC<{
             {content}
         </Form.Root>
     );
-
-
 };
 
 export default NewForm;

@@ -1,22 +1,23 @@
 'use client'
-import React, { ComponentPropsWithRef, FC, useEffect, useRef, useState } from "react"
+import React, { ComponentPropsWithRef, FC, useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
+
 
 export interface InputProps extends ComponentPropsWithRef<"input"> {
   error?: string;
-  errorVersion?: number;
-  name: string;
+  /** フォームの送信中かどうか */
+  isPending?: boolean;
 }
 
-export const Input: FC<InputProps> = ({ className, type, error, errorVersion, name, value, onChange, ...props }) => {
+
+export const Input: FC<InputProps> = ({ className, type, error, name, isPending, onChange, ...props }) => {
   const [localError, setLocalError] = useState(error);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (inputRef.current && inputRef.current.value === inputRef.current.defaultValue) {
+    if(!isPending){
       setLocalError(error);
     }
-  }, [error, errorVersion]);
+  }, [error, isPending]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value !== "") {
@@ -28,8 +29,6 @@ export const Input: FC<InputProps> = ({ className, type, error, errorVersion, na
   return (
     <div>
       <input
-        ref={inputRef}
-        defaultValue={value}
         type={type}
         name={name}
         className={cn(

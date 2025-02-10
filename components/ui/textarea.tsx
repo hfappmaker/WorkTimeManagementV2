@@ -3,24 +3,24 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
-import { ComponentPropsWithRef, FC, useEffect, useRef, useState } from "react"
+import { ComponentPropsWithRef, FC, useEffect, useState } from "react"
 
 export interface TextAreaProps extends ComponentPropsWithRef<"textarea"> {
   error?: string;
-  errorVersion?: number;
-  name: string;
+  /** フォームの送信中かどうか */
+  isPending?: boolean;
 }
 
 
-const TextArea : FC<TextAreaProps> = ({ className, error, errorVersion, name, value, onChange, ...props }) => {
+
+const TextArea : FC<TextAreaProps> = ({ className, error, name, isPending, onChange, ...props }) => {
   const [localError, setLocalError] = useState(error);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (inputRef.current && inputRef.current.value === inputRef.current.defaultValue) {
+    if(!isPending){
       setLocalError(error);
     }
-  }, [error, errorVersion]);
+  }, [error, isPending]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (e.target.value !== "") {
@@ -32,8 +32,6 @@ const TextArea : FC<TextAreaProps> = ({ className, error, errorVersion, name, va
   return (
     <div>
       <textarea
-        ref={inputRef}
-        defaultValue={value}
         name={name}
         className={cn(
           "flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",

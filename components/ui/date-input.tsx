@@ -7,20 +7,18 @@ import { ComponentPropsWithRef, FC, useRef, useState, useEffect } from "react";
 export interface DateInputProps
   extends ComponentPropsWithRef<"input"> {
   error?: string;
-  errorVersion?: number;
-  name: string;
+  /** フォームの送信中かどうか */
+  isPending?: boolean;
 }
 
-export const DateInput : FC<DateInputProps> = ({ className, error, errorVersion, name, value, onChange, ...props }) => {
+export const DateInput : FC<DateInputProps> = ({ className, error, name, isPending, onChange, ...props }) => {
   const [localError, setLocalError] = useState(error);
   const inputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
-    // Update local error only if the current value equals defaultValue (i.e. no user modification)
-    if (inputRef.current && inputRef.current.value === inputRef.current.defaultValue) {
+    if(!isPending){
       setLocalError(error);
     }
-  }, [error, errorVersion]);
+  }, [error, isPending]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value !== "") {
@@ -44,7 +42,6 @@ export const DateInput : FC<DateInputProps> = ({ className, error, errorVersion,
       <div className="relative">
         <input
           type="date"
-          defaultValue={value}
           name={name}
           onChange={handleChange}
           className={cn(

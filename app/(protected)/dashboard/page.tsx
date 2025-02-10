@@ -1,6 +1,6 @@
 import { Stack } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ComboBox } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { generateOllamaAction, createProjectAction } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
@@ -39,18 +39,7 @@ export default async function DashboardPage() {
         <UnassignUserFromProjectPage />
       </Suspense>
       <NewForm action={generateOllamaAction} noValidate>
-        <Select name="aiModel">
-          <SelectTrigger className="w-[400px] truncate">
-            <SelectValue placeholder="Select AI Model" className="truncate" />
-          </SelectTrigger>
-          <SelectContent>
-            {selectItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ComboBox name="aiModel" required placeholder="Select AI Model" options={selectItems} />
         <TextArea name="deepSeekPrompt" required placeholder="Ask DeepSeek" />
         <Button type="submit">Generate with Ollama</Button>
       </NewForm>
