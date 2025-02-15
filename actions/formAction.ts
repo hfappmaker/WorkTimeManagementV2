@@ -121,27 +121,27 @@ const assignUserToProjectAction = async (
   return { success: "User assigned to project successfully" };
 };
 
-const getAssignableProjectsAction = async (
+const getUnassignedProjectsAction = async (
   _prevResult: Project[],
   userId: string
 ) => {
-  const assignableProjects: Project[] = await getUnassignedProjects(userId);
-  return assignableProjects;
+  const unassignedProjects: Project[] = await getUnassignedProjects(userId);
+  return unassignedProjects;
 };
 
-const getUnassignableProjectsAction = async (
+const getAssignedProjectsAction = async (
   _prevResult: Project[],
   userId: string
 ) => {
-  const unassignableProjects: Project[] = await getAssignedProjects(userId);
-  return unassignableProjects;
+  const assignedProjects: Project[] = await getAssignedProjects(userId);
+  return assignedProjects;
 };
 
 export { 
   generateOllamaAction, 
   createProjectAction, 
   assignUserToProjectAction, 
-  getAssignableProjectsAction, 
+  getUnassignedProjectsAction, 
   UnassignUserFromProjectAction, 
-  getUnassignableProjectsAction 
+  getAssignedProjectsAction 
 };
