@@ -81,9 +81,13 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
           required
           data-required-message="Project Name is required"
           placeholder="New Project Name"
+          data-pattern="^.{10,}$"
+          data-pattern-message="Project Name must be at least 10 characters long"
         />
         <DateInput name="startDate"
           required
+          min={new Date().toISOString().split('T')[0]}  // 最小日付
+          max="2099-12-31"  // 最大日付
           data-required-message="Start Date is required"
           placeholder="Select a Start Date"
         />

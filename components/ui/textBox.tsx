@@ -20,9 +20,7 @@ export const TextBox: FC<TextBox> = ({ className, error, name, isPending, onChan
   }, [error, isPending]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value !== "") {
-      setLocalError(undefined);
-    }
+    setLocalError(undefined)
     if (onChange) onChange(e);
   };
 

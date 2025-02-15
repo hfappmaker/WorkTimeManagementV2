@@ -20,9 +20,7 @@ export const Input: FC<InputProps> = ({ className, type, error, name, isPending,
   }, [error, isPending]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value !== "") {
-      setLocalError(undefined);
-    }
+    setLocalError(undefined);
     if (onChange) onChange(e);
   };
 

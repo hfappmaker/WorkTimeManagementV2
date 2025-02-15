@@ -32,17 +32,30 @@ const NewForm: React.FC<{
                 const childProps = child.props as { 
                     name?: string; 
                     'data-required-message'?: string;
+                    'data-pattern'?: string;
+                    'data-pattern-message'?: string;
                     children?: React.ReactNode;
-                    required?: boolean
+                    required?: boolean;
                 };
 
                 // 現在の要素のバリデーション
-                if (childProps.name && childProps['data-required-message']) {
+                if (childProps.name) {
                     const value = getFormDataValue(childProps.name);
-                    customErrors[childProps.name] = { 
-                        error: (!value || value.trim() === "") && childProps.required ? childProps['data-required-message'] : undefined, 
-                        value 
-                    };
+                    let error: string | undefined;
+
+                    // required チェック
+                    if ((!value || value.trim() === "") && childProps.required) {
+                        error = childProps['data-required-message'];
+                    }
+                    // パターンチェック
+                    else if (value && childProps['data-pattern'] && childProps['data-pattern-message']) {
+                        const pattern = new RegExp(childProps['data-pattern']);
+                        if (!pattern.test(value)) {
+                            error = childProps['data-pattern-message'];
+                        }
+                    }
+
+                    customErrors[childProps.name] = { error, value };
                 }
 
                 // 子要素が存在する場合、再帰的に処理
