@@ -33,13 +33,14 @@ const NewForm: React.FC<{
                     name?: string; 
                     'data-required-message'?: string;
                     children?: React.ReactNode;
+                    required?: boolean
                 };
 
                 // 現在の要素のバリデーション
                 if (childProps.name && childProps['data-required-message']) {
                     const value = getFormDataValue(childProps.name);
                     customErrors[childProps.name] = { 
-                        error: (!value || value.trim() === "") ? childProps['data-required-message'] : undefined, 
+                        error: (!value || value.trim() === "") && childProps.required ? childProps['data-required-message'] : undefined, 
                         value 
                     };
                 }

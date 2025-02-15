@@ -1,20 +1,40 @@
 import { User } from "@prisma/client";
 import { currentUser } from "@/lib/auth";
+import { Stack } from "@mui/material";
 import { db } from "@/lib/db";
 import { Suspense } from "react";
-import { Stack } from '@mui/material';
 import DashboardPageClient from "./page.client";
 import Spinner from "@/components/spinner";
-import AssignedProjects from "./AssignedProjects";
-
-export default async function DashboardPage(){
+import { getAssignedProjects } from "@/data/work-time";
+import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+export default async function DashboardPage() {
     const user = await currentUser() as User;
     const userId = user?.id ?? "";
     const users = await db.user.findMany();
+    const projects = await getAssignedProjects(userId);
+
     return (
         <Stack spacing={3}>
             <Suspense fallback={<Spinner />}>
-                <AssignedProjects userId={userId}/>
+                <div className='grid grid-cols-1'>
+                    {projects.map((project) => (
+                        <Card key={project.id}>
+                            <CardContent className='grid grid-cols-2 gap-4'>
+                                <Link href={`/project/${project.id}`}>
+                                    <Label className='align-middle'>{project.name}</Label>
+                                </Link>
+                                <div className="grid grid-cols-2 grid-rows-2">
+                                    <Label className="text-right">Start Date:</Label>
+                                    <Label className="ml-0.5">{project.startDate.toLocaleDateString('ja-JP')}</Label>
+                                    <Label className="text-right">End Date:</Label>
+                                    <Label className="ml-0.5">{project.endDate?.toLocaleDateString('ja-JP')}</Label>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             </Suspense>
             <DashboardPageClient userId={userId} users={users} />
         </Stack>

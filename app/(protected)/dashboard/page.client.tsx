@@ -1,18 +1,21 @@
 'use client';
 
-import { Stack } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { ComboBox } from '@/components/ui/select';
 import { generateOllamaAction, createProjectAction, assignUserToProjectAction, getUnassignedProjectsAction, getAssignedProjectsAction, UnassignUserFromProjectAction } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
-import AssignedProjects from './AssignedProjects';
 import { TextArea } from '@/components/ui/textarea';
-import { startTransition, Suspense, useActionState, useEffect, useState } from 'react';
+import { startTransition, useActionState, useEffect, useState } from 'react';
 import Spinner from '@/components/spinner';
 import { DateInput } from '@/components/ui/date-input';
 import { TextBox } from '@/components/ui/textBox';
 import { User } from '@prisma/client';
 import { FormActionResult } from '@/models/form-action-result';
+
+type Record = {
+  id: string;
+  name: string | null;
+}
 
 export default function DashboardPageClient({ userId, users }: { userId: string, users: User[] }) {
   const ollamaOptions = [
@@ -48,7 +51,9 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
     }
   }
 
-  const userOptions = users.map((user) => ({ value: user.id, label: user.name ?? "" }));
+  const getOptions = (records: Record[]) => {
+    return records.map((record) => ({ value: record.id, label: record.name ?? "" }));
+  }
 
   return (
     <>
@@ -58,7 +63,7 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
             required
             placeholder="Select User"
             data-required-message="User is required"
-            options={userOptions} defaultValue={userId} onChange={(value) => {
+            options={getOptions(users)} defaultValue={userId} onChange={(value) => {
               startTransition(() => {
                 getUnassignedProjects(value);
               });
@@ -67,7 +72,7 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
             required
             placeholder="Select Project"
             data-required-message="Project is required"
-            options={unassignedProjects.map((project) => ({ value: project.id, label: project.name ?? "" }))} />}
+            options={getOptions(unassignedProjects)} />}
           <Button type="submit">Assign User to Project</Button>
         </div>
       </NewForm>
@@ -90,7 +95,7 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
             required
             placeholder="Select User"
             data-required-message="User is required"
-            options={userOptions} defaultValue={userId} onChange={(value) => {
+            options={getOptions(users)} defaultValue={userId} onChange={(value) => {
               startTransition(() => {
                 getAssignedProjects(value);
               });
@@ -99,7 +104,7 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
             required
             placeholder="Select Project"
             data-required-message="Project is required"
-            options={assignedProjects.map((project) => ({ value: project.id, label: project.name ?? "" }))} />}
+            options={getOptions(assignedProjects)} />}
           <Button type="submit">Unassign User from Project</Button>
         </div>
       </NewForm>
