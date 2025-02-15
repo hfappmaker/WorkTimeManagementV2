@@ -23,9 +23,7 @@ const TextArea : FC<TextAreaProps> = ({ className, error, name, isPending, onCha
   }, [error, isPending]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (e.target.value !== "") {
-      setLocalError(undefined);
-    }
+    setLocalError(undefined);
     if (onChange) onChange(e);
   };
 

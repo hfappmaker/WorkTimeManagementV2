@@ -167,8 +167,8 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   onChange,
   ...props
 }) => {
-  // ローカルのエラーステート
   const [localError, setLocalError] = useState(error);
+  const [localValue, setLocalValue] = useState(props.defaultValue);
 
   useEffect(() => {
     if(!isPending){
@@ -176,10 +176,13 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     }
   }, [error, isPending]);
 
+  useEffect(() => {
+    setLocalValue(props.defaultValue);
+  }, [props.defaultValue]);
+
   const handleChange = (value: string) => {
-    if (value !== '') {
-      setLocalError(undefined);
-    }
+    setLocalError(undefined);
+    setLocalValue(value);
     if (onChange) {
       onChange(value);
     }
@@ -195,7 +198,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
         >
           <SelectValue placeholder={placeholder} className="truncate" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent defaultValue={localValue}>
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
@@ -206,6 +209,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
       {localError && (
         <p className="mt-1 text-xs text-red-500">{localError}</p>
       )}
+      <input type="hidden" name={`${name}Label`} value={options.find(opt => opt.value === localValue)?.label || ''} />
     </div>
   );
 };

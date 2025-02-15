@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { ComboBox } from '@/components/ui/select';
-import { generateOllamaAction, createProjectAction, assignUserToProjectAction, getUnassignedProjectsAction, getAssignedProjectsAction, UnassignUserFromProjectAction } from '../../../actions/formAction';
+import { generateOllamaAction, createProjectAction, assignUserToProjectAction, getUnassignedProjectsAction, getAssignedProjectsAction, UnassignUserFromProjectAction, deleteProjectAction } from '../../../actions/formAction';
 import NewForm from '@/components/ui/new-form';
 import { TextArea } from '@/components/ui/textarea';
 import { startTransition, useActionState, useEffect, useState } from 'react';
@@ -57,7 +57,7 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
 
   return (
     <>
-      <NewForm action={assignUserToProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
+      <NewForm key={`assignUserToProject-${forceUpdate}`} action={assignUserToProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
         <div className="flex flex-col gap-4">
           <ComboBox name="userId"
             required
@@ -76,7 +76,7 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
           <Button type="submit">Assign User to Project</Button>
         </div>
       </NewForm>
-      <NewForm action={createProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
+      <NewForm key={`createProject-${forceUpdate}`} action={createProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
         <TextBox name="projectName"
           required
           data-required-message="Project Name is required"
@@ -93,7 +93,18 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
         />
         <Button type="submit">Create New Project</Button>
       </NewForm>
-      <NewForm action={UnassignUserFromProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
+      <NewForm key={`deleteProject-${forceUpdate}`} action={deleteProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
+        <div className="flex flex-col gap-4">
+          {isPendingUnassignedProjects ? <Spinner /> : <ComboBox name="projectId"
+            required
+            data-required-message="Project is required"
+            placeholder="Select Project"
+            defaultValue={unassignedProjects[0]?.id}
+            options={getOptions(unassignedProjects)} />}
+          <Button type="submit">Delete Project</Button>
+        </div>
+      </NewForm>
+      <NewForm key={`unassignUserFromProject-${forceUpdate}`} action={UnassignUserFromProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
         <div className="flex flex-col gap-4">
           <ComboBox name="userId"
             required
@@ -112,7 +123,7 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
           <Button type="submit">Unassign User from Project</Button>
         </div>
       </NewForm>
-      <NewForm action={generateOllamaAction} noValidate>
+      <NewForm key={`generateOllama-${forceUpdate}`} action={generateOllamaAction} noValidate>
         <ComboBox name="aiModel"
           required
           placeholder="Select AI Model"
