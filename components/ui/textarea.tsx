@@ -1,42 +1,25 @@
 'use client'
 
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
-import { ComponentPropsWithRef, FC, useEffect, useState } from "react"
-import { map, filter, Observable } from "rxjs";
+import { ComponentPropsWithRef, FC } from "react"
+import { Observable } from "rxjs";
 import { FormActionResult } from "@/models/form-action-result";
+import { useFormControl } from "@/hooks/useFormControl";
+
 export interface TextAreaProps extends ComponentPropsWithRef<"textarea"> {
   observable?: Observable<{result: FormActionResult, isPending: boolean}>
 }
 
-const TextArea : FC<TextAreaProps> = ({ className, name, onChange, placeholder, observable,...props }) => {
-  const [localError, setLocalError] = useState<string | undefined>(undefined);
-  const [localValue, setLocalValue] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if(observable){
-      const subscription = observable.pipe(
-        filter(({ isPending }) => isPending === false),
-        map(({ result }) => result.formatErrors?.[name!])
-      ).subscribe(error => {
-        if(error !== undefined){
-          setLocalError(error.error);
-          setLocalValue(error.value);
-        }
-      });
-
-      return () => subscription.unsubscribe();
-    }
-  }, [observable, name])
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setLocalError(undefined);
-    setLocalValue(e.target.value);
-    if (onChange) {
-      onChange(e);
-    }
-  };
+const TextArea : FC<TextAreaProps> = ({ 
+  className, 
+  name, 
+  onChange, 
+  placeholder, 
+  observable,
+  ...props 
+}) => {
+  const { localError, localValue, handleChange } = useFormControl(name, observable, onChange);
 
   return (
     <div>
@@ -54,7 +37,7 @@ const TextArea : FC<TextAreaProps> = ({ className, name, onChange, placeholder, 
         onChange={handleChange}
         value={localValue}
       />
-    {localError && <div className="mt-1 text-sm text-red-500">{localError}</div>}
+      {localError && <div className="mt-1 text-sm text-red-500">{localError}</div>}
     </div>
   );
 };

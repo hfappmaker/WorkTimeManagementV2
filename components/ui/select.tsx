@@ -12,8 +12,9 @@ import * as SelectPrimitive from "@radix-ui/react-select"
 import { cn } from "@/lib/utils"
 import { ComponentPropsWithRef, FC, useEffect, useState } from "react"
 import { SelectProps } from "@radix-ui/react-select"
-import { map, filter, Observable } from "rxjs"
+import { map, filter, Observable, tap } from "rxjs"
 import { FormActionResult } from "@/models/form-action-result";
+import { useFormControl } from "@/hooks/useFormControl";
 
 const Select = SelectPrimitive.Root
 
@@ -152,7 +153,7 @@ export interface ComboBoxProps extends SelectProps {
   /** 選択肢の変更時に呼び出されるコールバック関数 */
   onChange?: (value: string) => void;
   /** コンボボックスのobservable */
-  observable?: Observable<{ result: FormActionResult, isPending: boolean }>
+  observable?: Observable<{result: FormActionResult, isPending: boolean}>
 }
 
 export const ComboBox: React.FC<ComboBoxProps> = ({
@@ -163,43 +164,23 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   observable,
   ...props
 }) => {
-  const [localValue, setLocalValue] = useState(props.defaultValue);
-  const [localError, setLocalError] = useState<string | undefined>(undefined);
+  const { 
+    localError, 
+    localValue, 
+    handleChange,
+  } = useFormControl(name, observable, onChange, props.defaultValue);
 
-  useEffect(() => {
-    setLocalValue(props.defaultValue);
-  }, [props.defaultValue]);
-
-  useEffect(() => {
-    if (observable) {
-      const subscription = observable.pipe(
-        filter(({ isPending }) => isPending === false),
-        map(({ result }) => result.formatErrors?.[name!])
-      ).subscribe(error => {
-        if (error !== undefined) {
-          setLocalError(error.error);
-          setLocalValue(error.value);
-        }
-      });
-
-      return () => subscription.unsubscribe();
-    }
-  }, [observable, name]);
-
-  const handleChange = (value: string) => {
-    setLocalValue(value);
-    setLocalError(undefined);
-    if (onChange) {
-      onChange(value);
-    }
+  const handleSelectChange = (value: string) => {
+    handleChange(value);
   };
 
   return (
     <div className="flex flex-col">
-      <Select name={name} onValueChange={handleChange} {...props}>
+      <Select name={name} onValueChange={handleSelectChange} {...props}>
         <SelectTrigger
-          className={`w-[400px] truncate border rounded-md py-2 px-3 ${localError ? 'border-red-500' : 'border-gray-300'
-            }`}
+          className={`w-[400px] truncate border rounded-md py-2 px-3 ${
+            localError ? 'border-red-500' : 'border-gray-300'
+          }`}
         >
           <SelectValue placeholder={placeholder} className="truncate" />
         </SelectTrigger>
@@ -214,7 +195,11 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
       {localError && (
         <p className="mt-1 text-xs text-red-500">{localError}</p>
       )}
-      <input type="hidden" name={`${name}Label`} value={options.find(opt => opt.value === localValue)?.label || ''} />
+      <input 
+        type="hidden" 
+        name={`${name}Label`} 
+        value={options.find(opt => opt.value === localValue)?.label || ''} 
+      />
     </div>
   );
 };

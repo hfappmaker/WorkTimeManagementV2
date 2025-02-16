@@ -1,40 +1,24 @@
 'use client'
 
-import React, { ComponentPropsWithRef, FC, useEffect, useState } from "react"
+import React, { ComponentPropsWithRef, FC } from "react"
 import { cn } from "@/lib/utils"
-import { Observable, filter, map } from "rxjs";
+import { Observable } from "rxjs";
 import { FormActionResult } from "@/models/form-action-result";
+import { useFormControl } from "@/hooks/useFormControl";
+
 export interface TextBoxProps extends ComponentPropsWithRef<"input"> {
   observable?: Observable<{result: FormActionResult, isPending: boolean}>
 }
 
-export const TextBox: FC<TextBoxProps> = ({ className, name, onChange, placeholder, observable,...props }) => {
-  const [localError, setLocalError] = useState<string | undefined>(undefined);
-  const [localValue, setLocalValue] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if(observable){
-      const subscription = observable.pipe(
-        filter(({ isPending }) => isPending === false),
-        map(({ result }) => result.formatErrors?.[name!])
-      ).subscribe(error => {
-        if(error !== undefined){
-          setLocalError(error.error);
-          setLocalValue(error.value); 
-        }
-      });
-
-      return () => subscription.unsubscribe();
-    }
-  }, [observable, name])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalError(undefined);
-    setLocalValue(e.target.value);
-    if (onChange) {
-      onChange(e);
-    }
-  };
+export const TextBox: FC<TextBoxProps> = ({ 
+  className, 
+  name, 
+  onChange, 
+  placeholder, 
+  observable,
+  ...props 
+}) => {
+  const { localError, localValue, handleChange } = useFormControl(name, observable, onChange);
 
   return (
     <div>

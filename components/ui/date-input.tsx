@@ -3,42 +3,24 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FaCalendarAlt } from "react-icons/fa";
-import { ComponentPropsWithRef, FC, useRef, useEffect, useState } from "react";
-import { filter, map, Observable } from "rxjs"
+import { ComponentPropsWithRef, FC, useRef } from "react";
+import { Observable } from "rxjs";
 import { FormActionResult } from "@/models/form-action-result";
+import { useFormControl } from "@/hooks/useFormControl";
 
-export interface DateInputProps
-  extends ComponentPropsWithRef<"input"> {
-    observable?: Observable<{result: FormActionResult, isPending: boolean}>
+export interface DateInputProps extends ComponentPropsWithRef<"input"> {
+  observable?: Observable<{result: FormActionResult, isPending: boolean}>
 }
 
-export const DateInput : FC<DateInputProps> = ({ className, name, onChange, observable,...props }) => {
+export const DateInput : FC<DateInputProps> = ({ 
+  className, 
+  name, 
+  onChange, 
+  observable,
+  ...props 
+}) => {
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const [localError, setLocalError] = useState<string | undefined>(undefined);
-  const [localValue, setLocalValue] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if(observable){
-      const subscription = observable.pipe(
-        filter(({ isPending }) => isPending === false),
-        map(({ result }) => result.formatErrors?.[name!])
-      ).subscribe(error => {
-        if(error !== undefined){
-          setLocalError(error.error);
-          setLocalValue(error.value);
-        }
-      });
-
-      return () => subscription.unsubscribe();
-    }
-  }, [observable, name])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalError(undefined);
-    setLocalValue(e.target.value);
-    if (onChange) onChange(e);
-  };
+  const { localError, localValue, handleChange } = useFormControl(name, observable, onChange);
 
   const handleIconClick = () => {
     if (inputRef.current) {
@@ -79,4 +61,5 @@ export const DateInput : FC<DateInputProps> = ({ className, name, onChange, obse
     </div>
   );
 };
+
 DateInput.displayName = "DateInput";

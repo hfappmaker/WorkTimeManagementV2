@@ -11,13 +11,16 @@ const ValidationForm: React.FC<{
     children: React.ReactNode,
 }> = ({ action, children }) => {
     // Subject の作成
-    const formSubject = React.useMemo(() => new Subject<{
+    const formSubject = React.useMemo(() => {
+        console.log("Creating new Subject");
+        return new Subject<{
         result: FormActionResult;
         isPending: boolean;
-    }>(), []);
+    }>()}, []);
 
     // FormTrigger コンポーネントを探して設定を取得
     React.useEffect(() => {
+        console.log("Setting up FormTrigger subscriptions");
         const subscriptions: Subscription[] = [];
 
         React.Children.forEach(children, child => {
@@ -27,6 +30,7 @@ const ValidationForm: React.FC<{
                 
                 // 変換されたストリームを購読
                 const subscription = transformed$.subscribe(value => {
+                    console.log("FormTrigger subscription triggered with value:", value);
                     triggerProps.action(value);
                 });
 
@@ -34,8 +38,11 @@ const ValidationForm: React.FC<{
             }
         });
 
-        return () => subscriptions.forEach(subscription => subscription.unsubscribe());
-    }, [children, formSubject]);
+        return () => {
+            console.log("Cleaning up FormTrigger subscriptions");
+            subscriptions.forEach(subscription => subscription.unsubscribe());
+        }
+    }, [formSubject]);
 
     // カスタムバリデーションを組み込んだ dispatch 関数
     const customDispatch = async (prevResult: FormActionResult, formData: FormData): Promise<FormActionResult> => {
@@ -111,31 +118,47 @@ const ValidationForm: React.FC<{
         {}
     );
 
-    const injectObservable = (children: React.ReactNode): React.ReactNode =>
-        React.Children.map(children, (child) => {
+    const injectObservable = (children: React.ReactNode): React.ReactNode =>{
+        console.log("injectObservable called");
+        return React.Children.map(children, (child) => {
             if (!React.isValidElement(child)) return child;
             const element = child as React.ReactElement<any>;
+            console.log("Before Injecting observable to:", typeof element.type + ':' + element.props.name || 'Unknown Component');
             if (typeof element.type !== 'string') {
+                console.log("Injecting observable to:", element.type.name + ':' + element.props.name || 'Unknown Component');
                 return React.cloneElement(element, {
-                    ...element.props,
+                    ...element.props, // 既存のpropsを保持
                     observable: formSubject.asObservable(),
                     children: element.props.children 
                         ? injectObservable(element.props.children)
                         : null
                 });
             }
+            else if (element.props.children){
+                return React.cloneElement(element, {
+                    ...element.props, // 既存のpropsを保持
+                    children: injectObservable(element.props.children)
+                });
+            }
             return element;
         });
+    }
 
+        
+    const content = React.useMemo(() => {
+        console.log("Recalculating content");
+        return injectObservable(children);
+    }, [children, injectObservable]);
 
     // 状態が変更されたら Subject に通知
     React.useEffect(() => {
+        console.log("Emitting new state:", state);
         formSubject.next({ result: state, isPending });
     }, [state, isPending]);
 
     return (
         <Form.Root action={formDispatch} noValidate>
-            {injectObservable(children)}
+            {content}
         </Form.Root>
     );
 };
