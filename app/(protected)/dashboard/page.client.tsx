@@ -11,9 +11,9 @@ import { DateInput } from '@/components/ui/date-input';
 import { TextBox } from '@/components/ui/textBox';
 import { User } from '@prisma/client';
 import { toast } from 'sonner';
-import FormTrigger from '@/components/ui/form-trigger';
 import { FormActionResult } from '@/models/form-action-result';
 import { filter, map, Observable } from 'rxjs';
+import ValidationFormBehavior from '@/components/ui/validation-form-behavior';
 
 type Record = {
   id: string;
@@ -89,7 +89,7 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
             options={getOptions(unassignedProjects)} />}
           <Button type="submit">Assign User to Project</Button>
         </div>
-        <FormTrigger trigger={trigger} action={action} />
+        <ValidationFormBehavior trigger={trigger} action={action} />
       </ValidationForm>
       <ValidationForm key={`createProject-${updateCount}`} action={createProjectAction}>
         <TextBox name="projectName"
@@ -107,7 +107,7 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
           placeholder="Select a Start Date"
         />
         <Button type="submit">Create New Project</Button>
-        <FormTrigger trigger={trigger} action={action} />
+        <ValidationFormBehavior trigger={trigger} action={action} />
       </ValidationForm>
       <ValidationForm key={`deleteProject-${updateCount}`} action={deleteProjectAction}>
         <div className="flex flex-col gap-4">
@@ -119,7 +119,7 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
             options={getOptions(unassignedProjects)} />}
           <Button type="submit">Delete Project</Button>
         </div>
-        <FormTrigger trigger={trigger} action={action} />
+        <ValidationFormBehavior trigger={trigger} action={action} />
       </ValidationForm>
       <ValidationForm key={`unassignUserFromProject-${updateCount}`} action={UnassignUserFromProjectAction}>
         <div className="flex flex-col gap-4">
@@ -139,7 +139,7 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
             options={getOptions(assignedProjects)} />}
           <Button type="submit">Unassign User from Project</Button>
         </div>
-        <FormTrigger trigger={trigger} action={action} />
+        <ValidationFormBehavior trigger={trigger} action={action} />
       </ValidationForm>
       <ValidationForm key={`generateOllama-${updateCount}`} action={generateOllamaAction}>
         <ComboBox name="aiModel"
@@ -154,7 +154,7 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
           data-required-message="DeepSeek Prompt is required"
         />
         <Button type="submit">Generate with Ollama</Button>
-        <FormTrigger trigger={trigger} action={action} />
+        <ValidationFormBehavior trigger={trigger} action={action} />
       </ValidationForm>
     </>
   );

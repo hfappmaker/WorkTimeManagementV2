@@ -4,7 +4,7 @@ import React, { useActionState } from 'react';
 import * as Form from '@radix-ui/react-form';
 import { FormActionResult } from '@/models/form-action-result';
 import { Subject, Subscription } from 'rxjs';
-import FormTrigger, { FormTriggerProps } from './form-trigger';
+import ValidationFormBehavior ,{ ValidationFormBehaviorProps } from './validation-form-behavior';
 
 const ValidationForm: React.FC<{
     action: (prevResult: FormActionResult, data: FormData) => Promise<FormActionResult>,
@@ -24,8 +24,8 @@ const ValidationForm: React.FC<{
         const subscriptions: Subscription[] = [];
 
         React.Children.forEach(children, child => {
-            if (React.isValidElement(child) && child.type === FormTrigger) {
-                const triggerProps = child.props as FormTriggerProps<any>;
+            if (React.isValidElement(child) && child.type === ValidationFormBehavior) {
+                const triggerProps = child.props as ValidationFormBehaviorProps<any>;
                 const transformed$ = triggerProps.trigger(formSubject.asObservable());
                 
                 // 変換されたストリームを購読
@@ -124,6 +124,7 @@ const ValidationForm: React.FC<{
             if (!React.isValidElement(child)) return child;
             const element = child as React.ReactElement<any>;
             console.log("Before Injecting observable to:", typeof element.type + ':' + element.props.name || 'Unknown Component');
+            // Componentの場合
             if (typeof element.type !== 'string') {
                 console.log("Injecting observable to:", element.type.name + ':' + element.props.name || 'Unknown Component');
                 return React.cloneElement(element, {
@@ -134,6 +135,7 @@ const ValidationForm: React.FC<{
                         : null
                 });
             }
+            // childrenがある場合
             else if (element.props.children){
                 return React.cloneElement(element, {
                     ...element.props, // 既存のpropsを保持
