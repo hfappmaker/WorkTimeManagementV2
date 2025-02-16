@@ -8,7 +8,7 @@ interface FormControlState {
   localValue: string;
   setLocalError: (error: string | undefined) => void;
   setLocalValue: (value: string) => void;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string) => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> | string) => void;
 }
 
 export const useFormControl = (
@@ -33,11 +33,11 @@ export const useFormControl = (
           console.log("Mapping result for:", name, result);
           return result.formatErrors?.[name];
         })
-      ).subscribe(error => {
-        console.log("Received error for:", name, error);
-        if (error !== undefined) {
-          setLocalError(error.error);
-          setLocalValue(error.value);
+      ).subscribe(formatError => {
+        console.log("Received error for:", name, formatError);
+        if (formatError !== undefined) {
+          setLocalError(formatError.error);
+          setLocalValue(formatError.value);
         }
       });
 
@@ -52,13 +52,13 @@ export const useFormControl = (
     setLocalValue(initialValue);
   }, [initialValue]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> | string) => {
     setLocalError(undefined);
     const value = typeof e === 'string' ? e : e.target.value;
     setLocalValue(value);
     if (onChange) {
       if (typeof e === 'string') {
-        onChange(value);
+      onChange(value);
       } else {
         onChange(e);
       }
