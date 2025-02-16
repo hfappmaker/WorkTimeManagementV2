@@ -4,7 +4,7 @@ import { addDays, differenceInCalendarDays, addHours } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import NewForm from '@/components/ui/new-form';
+import ValidationFrom from '@/components/ui/validation-form';
 import { FormActionResult } from '@/models/form-action-result';
 
 function areDatesEqual(date1: Date, date2: Date): boolean {
@@ -66,7 +66,7 @@ export default async function ProjectPage(props: { params: Promise<{ projectId: 
     }
 
     return (
-        <NewForm action={handleAction}>
+        <ValidationFrom action={handleAction}>
             <div className="grid grid-cols-1">
                 {workTimesByDay.map(({ day, workTimes }) => (
                     <div className="grid grid-cols-2 gap-4" key={day.toLocaleDateString('ja-JP')}>
@@ -95,7 +95,7 @@ export default async function ProjectPage(props: { params: Promise<{ projectId: 
                     Update
                 </Button>
             </div>
-        </NewForm>
+        </ValidationFrom>
     );
 };
 

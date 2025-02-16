@@ -3,21 +3,29 @@
 import { Button } from '@/components/ui/button';
 import { ComboBox } from '@/components/ui/select';
 import { generateOllamaAction, createProjectAction, assignUserToProjectAction, getUnassignedProjectsAction, getAssignedProjectsAction, UnassignUserFromProjectAction, deleteProjectAction } from '../../../actions/formAction';
-import NewForm from '@/components/ui/new-form';
+import ValidationForm from '@/components/ui/validation-form';
 import { TextArea } from '@/components/ui/textarea';
 import { startTransition, useActionState, useEffect, useState } from 'react';
 import Spinner from '@/components/spinner';
 import { DateInput } from '@/components/ui/date-input';
 import { TextBox } from '@/components/ui/textBox';
 import { User } from '@prisma/client';
+import { toast } from 'sonner';
+import FormTrigger from '@/components/ui/form-trigger';
 import { FormActionResult } from '@/models/form-action-result';
+import { filter, map, Observable } from 'rxjs';
 
 type Record = {
   id: string;
   name: string | null;
-}
+};
 
-export default function DashboardPageClient({ userId, users }: { userId: string, users: User[] }) {
+type DashboardPageProps = {
+  userId: string;
+  users: User[];
+};
+
+export default function DashboardPageClient({ userId, users }: DashboardPageProps) {
   const ollamaOptions = [
     { value: "deepseek-coder:latest", label: "deepseek-coder" },
     { value: "hf.co/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF", label: "DeepSeek-R1-Distill-Llama-8B" },
@@ -36,28 +44,34 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
     []
   );
 
-  const [forceUpdate, setForceUpdate] = useState(0);
+  const [updateCount, setUpdateCount] = useState(0);
 
   useEffect(() => {
     startTransition(() => {
       getUnassignedProjects(userId);
       getAssignedProjects(userId);
     });
-  }, [userId, forceUpdate]);
-
-  const forceUpdateOnSuccess = (result: FormActionResult) => {
-    if (result.success) {
-      setForceUpdate(forceUpdate + 1);
-    }
-  }
+  }, [userId, updateCount]);
 
   const getOptions = (records: Record[]) => {
     return records.map((record) => ({ value: record.id, label: record.name ?? "" }));
   }
 
+  const trigger = (obs: Observable<{result: FormActionResult, isPending: boolean}>) => {
+    return obs.pipe(
+      filter(({result, isPending}) => result.success !== undefined && isPending === false),
+      map(({result}) => result.success ?? "")
+    );
+  }
+
+  const action = (message: string) => {
+    toast.success(message);
+    setUpdateCount(prev => prev + 1);
+  }
+
   return (
     <>
-      <NewForm key={`assignUserToProject-${forceUpdate}`} action={assignUserToProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
+      <ValidationForm key ={`assignUserToProject-${updateCount}`} action={assignUserToProjectAction}>
         <div className="flex flex-col gap-4">
           <ComboBox name="userId"
             required
@@ -75,8 +89,9 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
             options={getOptions(unassignedProjects)} />}
           <Button type="submit">Assign User to Project</Button>
         </div>
-      </NewForm>
-      <NewForm key={`createProject-${forceUpdate}`} action={createProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
+        <FormTrigger trigger={trigger} action={action} />
+      </ValidationForm>
+      <ValidationForm key={`createProject-${updateCount}`} action={createProjectAction}>
         <TextBox name="projectName"
           required
           data-required-message="Project Name is required"
@@ -92,8 +107,9 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
           placeholder="Select a Start Date"
         />
         <Button type="submit">Create New Project</Button>
-      </NewForm>
-      <NewForm key={`deleteProject-${forceUpdate}`} action={deleteProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
+        <FormTrigger trigger={trigger} action={action} />
+      </ValidationForm>
+      <ValidationForm key={`deleteProject-${updateCount}`} action={deleteProjectAction}>
         <div className="flex flex-col gap-4">
           {isPendingUnassignedProjects ? <Spinner /> : <ComboBox name="projectId"
             required
@@ -103,8 +119,9 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
             options={getOptions(unassignedProjects)} />}
           <Button type="submit">Delete Project</Button>
         </div>
-      </NewForm>
-      <NewForm key={`unassignUserFromProject-${forceUpdate}`} action={UnassignUserFromProjectAction} noValidate onSuccess={forceUpdateOnSuccess}>
+        <FormTrigger trigger={trigger} action={action} />
+      </ValidationForm>
+      <ValidationForm key={`unassignUserFromProject-${updateCount}`} action={UnassignUserFromProjectAction}>
         <div className="flex flex-col gap-4">
           <ComboBox name="userId"
             required
@@ -122,8 +139,9 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
             options={getOptions(assignedProjects)} />}
           <Button type="submit">Unassign User from Project</Button>
         </div>
-      </NewForm>
-      <NewForm key={`generateOllama-${forceUpdate}`} action={generateOllamaAction} noValidate>
+        <FormTrigger trigger={trigger} action={action} />
+      </ValidationForm>
+      <ValidationForm key={`generateOllama-${updateCount}`} action={generateOllamaAction}>
         <ComboBox name="aiModel"
           required
           placeholder="Select AI Model"
@@ -136,7 +154,8 @@ export default function DashboardPageClient({ userId, users }: { userId: string,
           data-required-message="DeepSeek Prompt is required"
         />
         <Button type="submit">Generate with Ollama</Button>
-      </NewForm>
+        <FormTrigger trigger={trigger} action={action} />
+      </ValidationForm>
     </>
   );
 }

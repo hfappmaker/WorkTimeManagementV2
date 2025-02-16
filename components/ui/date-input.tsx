@@ -1,29 +1,42 @@
 'use client'
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FaCalendarAlt } from "react-icons/fa";
-import { ComponentPropsWithRef, FC, useRef, useState, useEffect } from "react";
+import { ComponentPropsWithRef, FC, useRef, useEffect, useState } from "react";
+import { filter, map, Observable } from "rxjs"
+import { FormActionResult } from "@/models/form-action-result";
 
 export interface DateInputProps
   extends ComponentPropsWithRef<"input"> {
-  error?: string;
-  /** フォームの送信中かどうか */
-  isPending?: boolean;
+    observable?: Observable<{result: FormActionResult, isPending: boolean}>
 }
 
-export const DateInput : FC<DateInputProps> = ({ className, error, name, isPending, onChange, ...props }) => {
-  const [localError, setLocalError] = useState(error);
+export const DateInput : FC<DateInputProps> = ({ className, name, onChange, observable,...props }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const [localError, setLocalError] = useState<string | undefined>(undefined);
+  const [localValue, setLocalValue] = useState<string | undefined>(undefined);
+
   useEffect(() => {
-    if(!isPending){
-      setLocalError(error);
+    if(observable){
+      const subscription = observable.pipe(
+        filter(({ isPending }) => isPending === false),
+        map(({ result }) => result.formatErrors?.[name!])
+      ).subscribe(error => {
+        if(error !== undefined){
+          setLocalError(error.error);
+          setLocalValue(error.value);
+        }
+      });
+
+      return () => subscription.unsubscribe();
     }
-  }, [error, isPending]);
+  }, [observable, name])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value !== "") {
-      setLocalError(undefined);
-    }
+    setLocalError(undefined);
+    setLocalValue(e.target.value);
     if (onChange) onChange(e);
   };
 
@@ -53,6 +66,7 @@ export const DateInput : FC<DateInputProps> = ({ className, error, name, isPendi
           )}
           {...props}
           ref={inputRef}
+          value={localValue}
         />
         <FaCalendarAlt
           className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10 cursor-pointer"

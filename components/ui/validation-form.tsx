@@ -1,17 +1,43 @@
 "use client"
 
-import React, { useActionState, useEffect, useRef } from 'react';
+import React, { useActionState } from 'react';
 import * as Form from '@radix-ui/react-form';
 import { FormActionResult } from '@/models/form-action-result';
-import { toast } from 'sonner';
+import { Subject, Subscription } from 'rxjs';
+import FormTrigger, { FormTriggerProps } from './form-trigger';
 
-const NewForm: React.FC<{
+const ValidationForm: React.FC<{
     action: (prevResult: FormActionResult, data: FormData) => Promise<FormActionResult>,
     children: React.ReactNode,
-    noValidate?: boolean,
-    onSuccess?: (result: FormActionResult) => void
-}> = ({ action, children, noValidate, onSuccess }) => {
-    // カスタムバリデーションを組み込んだ独自の dispatch 関数
+}> = ({ action, children }) => {
+    // Subject の作成
+    const formSubject = React.useMemo(() => new Subject<{
+        result: FormActionResult;
+        isPending: boolean;
+    }>(), []);
+
+    // FormTrigger コンポーネントを探して設定を取得
+    React.useEffect(() => {
+        const subscriptions: Subscription[] = [];
+
+        React.Children.forEach(children, child => {
+            if (React.isValidElement(child) && child.type === FormTrigger) {
+                const triggerProps = child.props as FormTriggerProps<any>;
+                const transformed$ = triggerProps.trigger(formSubject.asObservable());
+                
+                // 変換されたストリームを購読
+                const subscription = transformed$.subscribe(value => {
+                    triggerProps.action(value);
+                });
+
+                subscriptions.push(subscription);
+            }
+        });
+
+        return () => subscriptions.forEach(subscription => subscription.unsubscribe());
+    }, [children, formSubject]);
+
+    // カスタムバリデーションを組み込んだ dispatch 関数
     const customDispatch = async (prevResult: FormActionResult, formData: FormData): Promise<FormActionResult> => {
         const customErrors: Record<string, { error: string | undefined, value: string }> = {};
         
@@ -24,7 +50,7 @@ const NewForm: React.FC<{
             return Object.values(errors).every(field => field.error === undefined);
         };
 
-        // 再帰的に子要素を走査する関数
+        // 再帰的に子要素を走査しバリデーションを実行
         const validateChildren = (children: React.ReactNode) => {
             React.Children.forEach(children, (child) => {
                 if (!React.isValidElement(child)) return;
@@ -68,12 +94,12 @@ const NewForm: React.FC<{
         // バリデーション開始
         validateChildren(children);
 
-        // カスタムエラーがある場合、action の実行を中断し、エラー結果を返す
+        // カスタムエラーがある場合、action は実行せずエラー結果を返す
         if (!hasNoErrors(customErrors)) {
-            return Promise.resolve({ errors: customErrors });
+            return Promise.resolve({ formatErrors: customErrors });
         }
 
-        if (action){
+        if (action) {
             return await action(prevResult, formData);
         }
 
@@ -85,61 +111,33 @@ const NewForm: React.FC<{
         {}
     );
 
-    // 子要素に対して再帰的に error を注入する
-    const injectErrors = (children: React.ReactNode): React.ReactNode => {
-        return React.Children.map(children, (child) => {
+    const injectObservable = (children: React.ReactNode): React.ReactNode =>
+        React.Children.map(children, (child) => {
             if (!React.isValidElement(child)) return child;
-            
-            const childProps = child.props as {
-                name?: string;
-                children?: React.ReactNode;
-            };
-
-            let updatedChild = child;
-
-            // 現在の要素にエラーを注入
-            if (childProps.name !== undefined) {
-                const fieldError = state.errors 
-                    ? (state.errors as Record<string, { error: string | undefined, value: string }>)[childProps.name]
-                    : undefined;
-                if (fieldError) {
-                    updatedChild = React.cloneElement(child as React.ReactElement<any>, { 
-                        error: fieldError.error,
-                        defaultValue: fieldError.value,
-                        isPending: isPending,
-                    });
-                }
+            const element = child as React.ReactElement<any>;
+            if (typeof element.type !== 'string') {
+                return React.cloneElement(element, {
+                    ...element.props,
+                    observable: formSubject.asObservable(),
+                    children: element.props.children 
+                        ? injectObservable(element.props.children)
+                        : null
+                });
             }
-
-            // 子要素が存在する場合、再帰的に処理
-            if (childProps.children) {
-                return React.cloneElement(
-                    updatedChild as React.ReactElement<any>,
-                    {},
-                    injectErrors(childProps.children)
-                );
-            }
-
-            return updatedChild;
+            return element;
         });
-    };
 
-    const content = injectErrors(children);
 
-    useEffect(() => {
-        if (state.success) {
-            toast.success(state.success);
-            if (onSuccess) {
-                onSuccess(state);
-            }
-        }
-    }, [state]);
+    // 状態が変更されたら Subject に通知
+    React.useEffect(() => {
+        formSubject.next({ result: state, isPending });
+    }, [state, isPending]);
 
     return (
-        <Form.Root action={formDispatch} noValidate={noValidate}>
-            {content}
+        <Form.Root action={formDispatch} noValidate>
+            {injectObservable(children)}
         </Form.Root>
     );
 };
 
-export default NewForm;
+export default ValidationForm;

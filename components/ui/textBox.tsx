@@ -1,27 +1,39 @@
 'use client'
+
 import React, { ComponentPropsWithRef, FC, useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
-
-
-export interface TextBox extends ComponentPropsWithRef<"input"> {
-  error?: string;
-  /** フォームの送信中かどうか */
-  isPending?: boolean;
+import { Observable, filter, map } from "rxjs";
+import { FormActionResult } from "@/models/form-action-result";
+export interface TextBoxProps extends ComponentPropsWithRef<"input"> {
+  observable?: Observable<{result: FormActionResult, isPending: boolean}>
 }
 
-
-export const TextBox: FC<TextBox> = ({ className, error, name, isPending, onChange, ...props }) => {
-  const [localError, setLocalError] = useState(error);
+export const TextBox: FC<TextBoxProps> = ({ className, name, onChange, placeholder, observable,...props }) => {
+  const [localError, setLocalError] = useState<string | undefined>(undefined);
+  const [localValue, setLocalValue] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if(!isPending){
-      setLocalError(error);
+    if(observable){
+      const subscription = observable.pipe(
+        filter(({ isPending }) => isPending === false),
+        map(({ result }) => result.formatErrors?.[name!])
+      ).subscribe(error => {
+        if(error !== undefined){
+          setLocalError(error.error);
+          setLocalValue(error.value); 
+        }
+      });
+
+      return () => subscription.unsubscribe();
     }
-  }, [error, isPending]);
+  }, [observable, name])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalError(undefined)
-    if (onChange) onChange(e);
+    setLocalError(undefined);
+    setLocalValue(e.target.value);
+    if (onChange) {
+      onChange(e);
+    }
   };
 
   return (
@@ -29,6 +41,7 @@ export const TextBox: FC<TextBox> = ({ className, error, name, isPending, onChan
       <input
         type='text'
         name={name}
+        placeholder={placeholder}
         className={cn(
           "flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           localError 
@@ -37,6 +50,7 @@ export const TextBox: FC<TextBox> = ({ className, error, name, isPending, onChan
           className
         )}
         onChange={handleChange}
+        value={localValue}
         {...props}
       />
       {localError && <div className="mt-1 text-sm text-red-500">{localError}</div>}

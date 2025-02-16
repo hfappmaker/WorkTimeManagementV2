@@ -1,26 +1,38 @@
 'use client'
+
 import React, { ComponentPropsWithRef, FC, useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
-
+import { Observable, filter, map } from "rxjs";
+import { FormActionResult } from "@/models/form-action-result";
 
 export interface InputProps extends ComponentPropsWithRef<"input"> {
-  error?: string;
-  /** フォームの送信中かどうか */
-  isPending?: boolean;
+  observable?: Observable<{ result: FormActionResult, isPending: boolean }>
 }
 
 
-export const Input: FC<InputProps> = ({ className, type, error, name, isPending, onChange, ...props }) => {
-  const [localError, setLocalError] = useState(error);
+export const Input: FC<InputProps> = ({ className, type, name, onChange, observable, ...props }) => {
+  const [localError, setLocalError] = useState<string | undefined>(undefined);
+  const [localValue, setLocalValue] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if(!isPending){
-      setLocalError(error);
+    if (observable) {
+      const subscription = observable.pipe(
+        filter(({ isPending }) => isPending === false),
+        map(({ result }) => result.formatErrors?.[name!])
+      ).subscribe(error => {
+        if (error !== undefined) {
+          setLocalError(error.error);
+          setLocalValue(error.value);
+        }
+      });
+
+      return () => subscription.unsubscribe();
     }
-  }, [error, isPending]);
+  }, [observable, name]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalError(undefined);
+    setLocalValue(e.target.value);
     if (onChange) onChange(e);
   };
 
@@ -31,12 +43,13 @@ export const Input: FC<InputProps> = ({ className, type, error, name, isPending,
         name={name}
         className={cn(
           "flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-          localError 
+          localError
             ? "border border-red-500 focus-visible:ring-red-500"
             : "border border-input focus-visible:ring-ring",
           className
         )}
         onChange={handleChange}
+        value={localValue}
         {...props}
       />
       {localError && <div className="mt-1 text-sm text-red-500">{localError}</div>}
