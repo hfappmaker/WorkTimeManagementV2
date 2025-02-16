@@ -153,7 +153,7 @@ const ValidationForm: React.FC<{
     }, [children, injectObservable]);
 
     // 状態が変更されたら Subject に通知
-    React.useEffect(() => {
+    React.useLayoutEffect(() => {
         console.log("Emitting new state:", state);
         formSubject.next({ result: state, isPending });
     }, [state, isPending]);

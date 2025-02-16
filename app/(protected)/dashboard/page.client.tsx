@@ -12,7 +12,7 @@ import { TextBox } from '@/components/ui/textBox';
 import { User } from '@prisma/client';
 import { toast } from 'sonner';
 import { FormActionResult } from '@/models/form-action-result';
-import { filter, map, Observable } from 'rxjs';
+import { debounceTime, filter, map, Observable } from 'rxjs';
 import ValidationFormBehavior from '@/components/ui/validation-form-behavior';
 
 type Record = {
@@ -46,6 +46,8 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
 
   const [updateCount, setUpdateCount] = useState(0);
 
+  const [isPending, setIsPending] = useState(false);
+
   useEffect(() => {
     startTransition(() => {
       getUnassignedProjects(userId);
@@ -57,14 +59,26 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
     return records.map((record) => ({ value: record.id, label: record.name ?? "" }));
   }
 
-  const trigger = (obs: Observable<{result: FormActionResult, isPending: boolean}>) => {
+  const successTrigger = (obs: Observable<{result: FormActionResult, isPending: boolean}>) => {
     return obs.pipe(
       filter(({result, isPending}) => result.success !== undefined && isPending === false),
       map(({result}) => result.success ?? "")
     );
   }
 
-  const action = (message: string) => {
+  const isPendingTrigger = (obs: Observable<{result: FormActionResult, isPending: boolean}>) => {
+    return obs.pipe(
+      map(({isPending}) => isPending),
+      debounceTime(100)
+    );
+  }
+
+  const isPendingAction = (isPending: boolean) => {
+    console.log('isPendingAction:' + isPending);
+    setIsPending(isPending)
+  }
+
+  const successAction = (message: string) => {
     toast.success(message);
     setUpdateCount(prev => prev + 1);
   }
@@ -87,9 +101,10 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
             placeholder="Select Project"
             data-required-message="Project is required"
             options={getOptions(unassignedProjects)} />}
-          <Button type="submit">Assign User to Project</Button>
+          <Button type="submit" disabled={unassignedProjects.length === 0 || isPendingUnassignedProjects || isPending}>Assign User to Project</Button>
         </div>
-        <ValidationFormBehavior trigger={trigger} action={action} />
+        <ValidationFormBehavior trigger={successTrigger} action={successAction} />
+        <ValidationFormBehavior trigger={isPendingTrigger} action={isPendingAction} />
       </ValidationForm>
       <ValidationForm key={`createProject-${updateCount}`} action={createProjectAction}>
         <TextBox name="projectName"
@@ -106,8 +121,9 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
           data-required-message="Start Date is required"
           placeholder="Select a Start Date"
         />
-        <Button type="submit">Create New Project</Button>
-        <ValidationFormBehavior trigger={trigger} action={action} />
+        <Button type="submit" disabled={isPending}>Create New Project</Button>
+        <ValidationFormBehavior trigger={successTrigger} action={successAction} />
+        <ValidationFormBehavior trigger={isPendingTrigger} action={isPendingAction} />
       </ValidationForm>
       <ValidationForm key={`deleteProject-${updateCount}`} action={deleteProjectAction}>
         <div className="flex flex-col gap-4">
@@ -117,9 +133,10 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
             placeholder="Select Project"
             defaultValue={unassignedProjects[0]?.id}
             options={getOptions(unassignedProjects)} />}
-          <Button type="submit">Delete Project</Button>
+          <Button type="submit" disabled={unassignedProjects.length === 0 || isPendingUnassignedProjects || isPending}>Delete Project</Button>
         </div>
-        <ValidationFormBehavior trigger={trigger} action={action} />
+        <ValidationFormBehavior trigger={successTrigger} action={successAction} />
+        <ValidationFormBehavior trigger={isPendingTrigger} action={isPendingAction} />
       </ValidationForm>
       <ValidationForm key={`unassignUserFromProject-${updateCount}`} action={UnassignUserFromProjectAction}>
         <div className="flex flex-col gap-4">
@@ -137,9 +154,10 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
             placeholder="Select Project"
             data-required-message="Project is required"
             options={getOptions(assignedProjects)} />}
-          <Button type="submit">Unassign User from Project</Button>
+          <Button type="submit" disabled={assignedProjects.length === 0 || isPendingAssignedProjects || isPending}>Unassign User from Project</Button>
         </div>
-        <ValidationFormBehavior trigger={trigger} action={action} />
+        <ValidationFormBehavior trigger={successTrigger} action={successAction} />
+        <ValidationFormBehavior trigger={isPendingTrigger} action={isPendingAction} />
       </ValidationForm>
       <ValidationForm key={`generateOllama-${updateCount}`} action={generateOllamaAction}>
         <ComboBox name="aiModel"
@@ -153,8 +171,9 @@ export default function DashboardPageClient({ userId, users }: DashboardPageProp
           placeholder="Ask DeepSeek"
           data-required-message="DeepSeek Prompt is required"
         />
-        <Button type="submit">Generate with Ollama</Button>
-        <ValidationFormBehavior trigger={trigger} action={action} />
+        <Button type="submit" disabled={isPending}>Generate with Ollama</Button>
+        <ValidationFormBehavior trigger={successTrigger} action={successAction} />
+        <ValidationFormBehavior trigger={isPendingTrigger} action={isPendingAction} />
       </ValidationForm>
     </>
   );
