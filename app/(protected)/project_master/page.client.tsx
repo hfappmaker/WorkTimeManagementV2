@@ -11,11 +11,13 @@ import { Button } from "@/components/ui/button";
 import { createProjectAction, searchProjectsAction, deleteProjectAction, updateProjectAction } from "@/actions/formAction";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
+import Spinner from "@/components/spinner";
 
 export default function ProjectMasterClient() {
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [loading, setLoading] = useState(false);
 
     type Project = {
       id: string;
@@ -36,12 +38,19 @@ export default function ProjectMasterClient() {
     });
 
     const loadProjects = async () => {
+      setLoading(true);
       try {
           const results = await searchProjectsAction("");
-          setProjects(results);
+          setProjects(results.map(result => ({
+            id: result.id,
+            projectName: result.name,
+            assigned: result.userProjects.length > 0
+          })));
       } catch (error) {
           setError("Failed to fetch projects");
           setTimeout(() => setError(""), 3000);
+      } finally {
+          setLoading(false);
       }
     };
 
@@ -54,7 +63,7 @@ export default function ProjectMasterClient() {
             try {
                 await createProjectAction(values.projectName);
                 form.reset();
-                setSuccess("Project created successfully");
+                setSuccess(`Project ${values.projectName} created successfully`);
                 setTimeout(() => setSuccess(""), 3000);
                 loadProjects();
             } catch (error) {
@@ -65,12 +74,19 @@ export default function ProjectMasterClient() {
     };
 
     const handleSearch = async () => {
+      setLoading(true);
       try {
           const results = await searchProjectsAction(searchQuery);
-          setProjects(results);
+          setProjects(results.map(result => ({
+            id: result.id,
+            projectName: result.name,
+            assigned: result.userProjects.length > 0
+          })));
       } catch (error) {
           setError("Failed to search projects");
           setTimeout(() => setError(""), 3000);
+      } finally {
+          setLoading(false);
       }
     };
 
@@ -79,6 +95,8 @@ export default function ProjectMasterClient() {
              try {
                  await deleteProjectAction(id);
                  setProjects(prev => prev.filter(project => project.id !== id));
+                 setSuccess(`Project ${projects.find(p => p.id === id)?.projectName} deleted successfully`);
+                 setTimeout(() => setSuccess(""), 3000);
              } catch (error) {
                  setError("Failed to delete project");
                  setTimeout(() => setError(""), 3000);
@@ -115,85 +133,91 @@ export default function ProjectMasterClient() {
     };
 
     return (
-        <>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormField
-                        control={form.control}
-                        name="projectName"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Project Name</FormLabel>
-                                <FormControl>
-                                    <Input {...field} placeholder="Enter Project Name" />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    {error && <FormError message={error} />}
-                    {success && <FormSuccess message={success} />}
-                    <Button type="submit" disabled={isPending}>
-                        {isPending ? "Creating..." : "Create Project"}
-                    </Button>
-                </form>
-            </Form>
+        <div className="relative">
+            <div className={`flex flex-col gap-6 ${isPending ? "pointer-events-none opacity-50" : ""}`}>
+                {error && <FormError message={error} />}
+                {success && <FormSuccess message={success} />}
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <FormField
+                            control={form.control}
+                            name="projectName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Project Name</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} placeholder="Enter Project Name" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <Button type="submit">
+                            Create Project
+                        </Button>
+                    </form>
+                </Form>
 
-            <div style={{ marginTop: "20px" }}>
-              <h2>Search Projects</h2>
-              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                <Input 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search Projects"
-                />
-                <Button onClick={handleSearch}>Search</Button>
-              </div>
-            </div>
+                <div>
+                    <h2>Search Projects</h2>
+                    <div className="flex gap-2 items-center">
+                        <Input 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search Projects"
+                        />
+                        <Button onClick={handleSearch}>Search</Button>
+                    </div>
+                </div>
 
-            <div style={{ marginTop: "20px" }}>
-              <h2>Project List</h2>
-              {projects.length === 0 ? (
-                  <p>No projects found.</p>
-              ) : (
-                  <ul style={{ listStyle: "none", padding: 0 }}>
-                      {projects.map((project) => (
-                          <li
-                              key={project.id}
-                              style={{
-                                  marginBottom: "10px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "10px",
-                              }}
-                          >
-                              {editProjectId === project.id ? (
-                                  <>
-                                      <Input
-                                          value={editProjectName}
-                                          onChange={(e) => setEditProjectName(e.target.value)}
-                                      />
-                                      <Button onClick={() => handleEditSave(project.id)}>Save</Button>
-                                      <Button onClick={handleEditCancel}>Cancel</Button>
-                                  </>
-                              ) : (
-                                  <>
-                                      <span>{project.projectName}</span>
-                                      <Button onClick={() => handleEdit(project)}>Edit</Button>
-                                      {project.assigned ? (
-                                          <Button disabled title="Cannot delete assigned project">
-                                              Delete
-                                          </Button>
-                                      ) : (
-                                          <Button onClick={() => handleDelete(project.id)}>Delete</Button>
-                                      )}
-                                  </>
-                              )}
-                          </li>
-                      ))}
-                  </ul>
-              )}
+                <div>
+                    <h2>Project List</h2>
+                    {loading ? (
+                        <div className="flex items-center justify-center h-20">
+                            <Spinner />
+                        </div>
+                    ) : projects.length === 0 ? (
+                        <p>No projects found.</p>
+                    ) : (
+                        <ul className="list-none p-0">
+                            {projects.map((project) => (
+                                <li
+                                    key={project.id}
+                                    className="mb-2 flex items-center gap-2"
+                                >
+                                    {editProjectId === project.id ? (
+                                        <>
+                                            <Input
+                                                value={editProjectName}
+                                                onChange={(e) => setEditProjectName(e.target.value)}
+                                            />
+                                            <Button onClick={() => handleEditSave(project.id)}>Save</Button>
+                                            <Button onClick={handleEditCancel}>Cancel</Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>{project.projectName}</span>
+                                            <Button onClick={() => handleEdit(project)}>Edit</Button>
+                                            {project.assigned ? (
+                                                <Button disabled title="Cannot delete assigned project">
+                                                    Delete
+                                                </Button>
+                                            ) : (
+                                                <Button onClick={() => handleDelete(project.id)}>Delete</Button>
+                                            )}
+                                        </>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </div>
-        </>
+            {isPending && (
+                <div className="absolute inset-0 flex items-center justify-center bg-opacity-40 z-10">
+                    <Spinner />
+                </div>
+            )}
+        </div>
     );
 }

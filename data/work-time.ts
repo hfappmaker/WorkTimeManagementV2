@@ -147,3 +147,32 @@ export async function getAssignedProjects(userId: string) {
 
   return userProjects.map((userProject) => userProject.project);
 }
+
+export const searchProjects = async (searchQuery: string) => {
+  const projects = await db.project.findMany({
+    where: {
+      name: {
+        contains: searchQuery,
+        mode: "insensitive",
+      },
+    },
+    include: {
+      userProjects: true,
+    },
+  });
+  return projects;
+};
+
+export async function updateProject(projectId: string, projectName: string) {
+  await db.project.update({
+    where: { id: projectId },
+    data: { name: projectName },
+  });
+}
+
+export async function getProjectById(projectId: string) {
+  const project = await db.project.findUnique({
+    where: { id: projectId },
+  });
+  return project;
+}

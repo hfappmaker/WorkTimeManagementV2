@@ -1,4 +1,5 @@
 "use server";
+
 import {
   createProject,
   assignUserToProject,
@@ -6,6 +7,9 @@ import {
   unassignUserFromProject,
   getAssignedProjects,
   deleteProject,
+  searchProjects,
+  updateProject,
+  getProjectById,
 } from "@/data/work-time";
 import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
@@ -32,6 +36,15 @@ const generateOllamaAction = async (
   return await generateWithOllama(deepSeekPrompt, config);
 };
 
+const assignUserToProjectAction = async (
+  userId: string,
+  projectId: string
+): Promise<FormActionResult> => {
+  await assignUserToProject(userId, projectId);
+  revalidatePath("/dashboard");
+  return { success: "User assigned to project successfully" };
+};
+
 const unassignUserFromProjectAction = async (
   userId: string,
   projectId: string
@@ -52,21 +65,15 @@ const createProjectAction = async (
 };
 
 const deleteProjectAction = async (
-  projectId: string,
-  projectName: string
+  projectId: string 
 ): Promise<FormActionResult> => {
+  const project = await getProjectById(projectId);
+  if (!project) {
+    return { error: "Project not found" };
+  }
   await deleteProject(projectId);
   revalidatePath("/dashboard");
-  return { success: `Project '${projectName}' deleted successfully` };
-};
-
-const assignUserToProjectAction = async (
-  userId: string,
-  projectId: string
-): Promise<FormActionResult> => {
-  await assignUserToProject(userId, projectId);
-  revalidatePath("/dashboard");
-  return { success: "User assigned to project successfully" };
+  return { success: `Project '${project.name}' deleted successfully` };
 };
 
 const getUnassignedProjectsAction = async (
@@ -83,6 +90,21 @@ const getAssignedProjectsAction = async (
   return assignedProjects;
 };
 
+const searchProjectsAction = async (
+  searchQuery: string
+) => {
+  const projects = await searchProjects(searchQuery);
+  return projects;
+};
+
+const updateProjectAction = async (
+  projectId: string,
+  projectName: string
+) => {
+  await updateProject(projectId, projectName);
+  revalidatePath("/dashboard");
+};
+
 export { 
   generateOllamaAction, 
   createProjectAction, 
@@ -91,4 +113,6 @@ export {
   getAssignedProjectsAction,
   getUnassignedProjectsAction,
   unassignUserFromProjectAction,
+  searchProjectsAction,
+  updateProjectAction,
 };
