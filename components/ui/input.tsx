@@ -1,44 +1,22 @@
-'use client'
+import * as React from "react"
 
-import React, { ComponentPropsWithRef, FC } from "react"
 import { cn } from "@/lib/utils"
-import { Observable } from "rxjs";
-import { FormActionResult } from "@/models/form-action-result";
-import { useFormControl } from "@/hooks/useFormControl";
+import { FC } from "react"
 
-export interface InputProps extends ComponentPropsWithRef<"input"> {
-  observable?: Observable<{ result: FormActionResult, isPending: boolean }>
-}
-
-export const Input: FC<InputProps> = ({ 
-  className, 
-  type, 
-  name, 
-  onChange, 
-  observable, 
-  ...props 
-}) => {
-  const { localError, localValue, handleChange } = useFormControl(name, observable, onChange);
-
-  return (
-    <div>
+const Input : FC<React.ComponentPropsWithRef<"input">> = 
+  ({ className, type, ...props }) => {
+    return (
       <input
         type={type}
-        name={name}
         className={cn(
-          "flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-          localError
-            ? "border border-red-500 focus-visible:ring-red-500"
-            : "border border-input focus-visible:ring-ring",
+          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
-        onChange={handleChange}
-        value={localValue}
         {...props}
       />
-      {localError && <div className="mt-1 text-sm text-red-500">{localError}</div>}
-    </div>
-  );
-};
+    )
+  }
 
 Input.displayName = "Input"
+
+export { Input }

@@ -32,25 +32,19 @@ const generateOllamaAction = async (
   return await generateWithOllama(deepSeekPrompt, config);
 };
 
-const UnassignUserFromProjectAction = async (
-  _prevResult: FormActionResult,
-  formData: FormData
-): Promise<FormActionResult> => {
-  const userId = getFormDataValue(formData, "userId");
-  const projectId = getFormDataValue(formData, "projectId");
-
+const unassignUserFromProjectAction = async (
+  userId: string,
+  projectId: string
+) => {  
   await unassignUserFromProject(userId, projectId);
   revalidatePath("/dashboard");
   return { success: "User unassigned from project successfully" };
 };
 
 const createProjectAction = async (
-  _prevResult: FormActionResult,
-  formData: FormData
+  projectName: string
 ): Promise<FormActionResult> => {
-  const projectName = getFormDataValue(formData, "projectName");
-  const startDate = new Date(getFormDataValue(formData, "startDate"));
-
+  const startDate = new Date();
   console.log("Creating project:", projectName, "with start date:", startDate);
   const project = await createProject(projectName, startDate, null);
   revalidatePath("/dashboard");
@@ -58,30 +52,24 @@ const createProjectAction = async (
 };
 
 const deleteProjectAction = async (
-  _prevResult: FormActionResult,
-  formData: FormData
+  projectId: string,
+  projectName: string
 ): Promise<FormActionResult> => {
-  const projectId = getFormDataValue(formData, "projectId");
-  const projectName = getFormDataValue(formData, "projectIdLabel");
   await deleteProject(projectId);
   revalidatePath("/dashboard");
   return { success: `Project '${projectName}' deleted successfully` };
 };
 
 const assignUserToProjectAction = async (
-  _prevResult: FormActionResult,
-  formData: FormData
+  userId: string,
+  projectId: string
 ): Promise<FormActionResult> => {
-  const userId = getFormDataValue(formData, "userId");
-  const projectId = getFormDataValue(formData, "projectId");
-
   await assignUserToProject(userId, projectId);
   revalidatePath("/dashboard");
   return { success: "User assigned to project successfully" };
 };
 
 const getUnassignedProjectsAction = async (
-  _prevResult: Project[],
   userId: string
 ) => {
   const unassignedProjects: Project[] = await getUnassignedProjects(userId);
@@ -89,7 +77,6 @@ const getUnassignedProjectsAction = async (
 };
 
 const getAssignedProjectsAction = async (
-  _prevResult: Project[],
   userId: string
 ) => {
   const assignedProjects: Project[] = await getAssignedProjects(userId);
@@ -99,9 +86,9 @@ const getAssignedProjectsAction = async (
 export { 
   generateOllamaAction, 
   createProjectAction, 
-  assignUserToProjectAction, 
-  getUnassignedProjectsAction, 
-  UnassignUserFromProjectAction, 
+  deleteProjectAction,
+  assignUserToProjectAction,
   getAssignedProjectsAction,
-  deleteProjectAction
+  getUnassignedProjectsAction,
+  unassignUserFromProjectAction,
 };

@@ -120,3 +120,21 @@ export const RegisterSchema = z
   export const MonthlyAttendanceSchema = z.object({
     days: z.array(DaySchema),
   });
+
+  export const UserProjectSchema = z.object({
+    userId: z.string().min(1, {
+      message: "Please select a user, required.",
+    }),
+    projectId: z.string().min(1, {
+      message: "Please select a project, required.",
+    }),
+  });
+
+  export const ProjectMasterSchema = z.object({
+    projectName: z.string().min(1, {
+      message: "Please enter a project name, required.",
+    }),
+  });
+  
+  
+

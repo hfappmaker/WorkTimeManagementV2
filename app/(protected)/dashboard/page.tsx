@@ -1,18 +1,16 @@
 import { User } from "@prisma/client";
 import { currentUser } from "@/lib/auth";
 import { Stack } from "@mui/material";
-import { db } from "@/lib/db";
 import { Suspense } from "react";
-import DashboardPageClient from "./page.client";
 import Spinner from "@/components/spinner";
 import { getAssignedProjects } from "@/data/work-time";
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Button } from "@/components/ui/button";
 export default async function DashboardPage() {
     const user = await currentUser() as User;
     const userId = user?.id ?? "";
-    const users = await db.user.findMany();
     const projects = await getAssignedProjects(userId);
 
     return (
@@ -36,7 +34,12 @@ export default async function DashboardPage() {
                     ))}
                 </div>
             </Suspense>
-            <DashboardPageClient userId={userId} users={users} />
+            <Link href={`/user_project`}>
+                <Button className='align-middle'>ユーザー割り当て</Button>
+            </Link>
+            <Link href={`/project_master`}>
+                <Button className='align-middle'>プロジェクトマスター</Button>
+            </Link>
         </Stack>
     )
 }

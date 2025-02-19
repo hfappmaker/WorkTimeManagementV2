@@ -10,11 +10,9 @@ import {
 import * as SelectPrimitive from "@radix-ui/react-select"
 
 import { cn } from "@/lib/utils"
-import { ComponentPropsWithRef, FC, useEffect, useState } from "react"
+import { ComponentPropsWithRef, FC } from "react"
 import { SelectProps } from "@radix-ui/react-select"
-import { map, filter, Observable, tap } from "rxjs"
-import { FormActionResult } from "@/models/form-action-result";
-import { useFormControl } from "@/hooks/useFormControl";
+import { ControllerRenderProps, FieldValues } from "react-hook-form"
 
 const Select = SelectPrimitive.Root
 
@@ -145,62 +143,52 @@ export type Option = {
   value: string;
 };
 
-export interface ComboBoxProps extends SelectProps {
+export interface ComboBoxProps
+  extends Omit<SelectProps, "name" | "value">,
+    ControllerRenderProps<FieldValues> {
   /** 選択肢の配列 */
   options: Option[];
   /** プレースホルダー（未選択時に表示される文字） */
   placeholder?: string;
-  /** 選択肢の変更時に呼び出されるコールバック関数 */
-  onChange?: (value: string) => void;
-  /** コンボボックスのobservable */
-  observable?: Observable<{result: FormActionResult, isPending: boolean}>
 }
 
 export const ComboBox: React.FC<ComboBoxProps> = ({
   name,
   options,
   placeholder = 'Select an option',
+  defaultValue,
+  onValueChange,
   onChange,
-  observable,
+  value,
   ...props
 }) => {
-  const { 
-    localError, 
-    localValue, 
-    handleChange,
-  } = useFormControl(name, observable, onChange, props.defaultValue);
 
-  const handleSelectChange = (value: string) => {
-    handleChange(value);
-  };
+  const handleChange = (value: string) => {
+    onValueChange?.(value);
+    onChange?.(value);
+  }
 
   return (
-    <div className="flex flex-col">
-      <Select name={name} onValueChange={handleSelectChange} {...props}>
-        <SelectTrigger
-          className={`w-[400px] truncate border rounded-md py-2 px-3 ${
-            localError ? 'border-red-500' : 'border-gray-300'
-          }`}
-        >
-          <SelectValue placeholder={placeholder} className="truncate" />
-        </SelectTrigger>
-        <SelectContent defaultValue={localValue}>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {localError && (
-        <p className="mt-1 text-xs text-red-500">{localError}</p>
-      )}
-      <input 
-        type="hidden" 
-        name={`${name}Label`} 
-        value={options.find(opt => opt.value === localValue)?.label || ''} 
-      />
-    </div>
+      <div className="flex flex-col">
+        <Select name={name} {...props} onValueChange={handleChange} value={value}>
+          <SelectTrigger
+            className={`w-[400px] truncate border rounded-md py-2 px-3 border-gray-300`}>
+            <SelectValue placeholder={placeholder} className="truncate"/>
+          </SelectTrigger>
+          <SelectContent defaultValue={defaultValue}>
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <input 
+          type="hidden" 
+          name={`${name}Label`} 
+          value={options.find(opt => opt.value === value)?.label || ''} 
+        />
+      </div>
   );
 };
 
