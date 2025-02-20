@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useTransition } from 'react';
+import React, { TransitionFunction } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UserProjectSchema } from '@/schemas';
@@ -8,11 +8,8 @@ import { z } from 'zod';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { ComboBox } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import FormError from '@/components/form-error';
-import FormSuccess from '@/components/form-success';
-import Spinner from '@/components/spinner';
 import { useAtom } from 'jotai';
-import { projectsUpdateAtom } from './atoms';
+import { projectsUpdateAtom, errorAtom, successAtom } from './atoms';
 
 type Record = {
   id: string;
@@ -25,6 +22,7 @@ interface ProjectAssignmentFormProps {
   submitAction: (userId: string, projectId: string) => Promise<any>;
   submitButtonLabel: string;
   successMessage: string;
+  startTransition: (scope: TransitionFunction) => void;
 }
 
 export default function ProjectAssignmentForm({
@@ -33,12 +31,12 @@ export default function ProjectAssignmentForm({
   submitAction,
   submitButtonLabel,
   successMessage,
+  startTransition,
 }: ProjectAssignmentFormProps) {
   const [projectOptions, setProjectOptions] = React.useState<Record[]>([]);
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = React.useState<string>("");
-  const [success, setSuccess] = React.useState<string>("");
   const [update, setUpdate] = useAtom(projectsUpdateAtom);
+  const [error, setError] = useAtom(errorAtom);
+  const [success, setSuccess] = useAtom(successAtom);
 
   const form = useForm<z.infer<typeof UserProjectSchema>>({
     resolver: zodResolver(UserProjectSchema),
@@ -55,10 +53,10 @@ export default function ProjectAssignmentForm({
       setSuccess(successMessage);
       // Trigger update via jotai
       setUpdate((prev) => prev + 1);
-      setTimeout(() => setSuccess(""), 3000);
+      // setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(`Something went wrong! Error: ${err}`);
-      setTimeout(() => setError(""), 3000);
+      // setTimeout(() => setError(""), 3000);
     }
   };
 
@@ -75,7 +73,6 @@ export default function ProjectAssignmentForm({
 
   return (
     <Form {...form}>
-      {isPending && <Spinner />}
       <form
         onSubmit={form.handleSubmit((values) => {
           startTransition(async () => {
@@ -133,9 +130,7 @@ export default function ProjectAssignmentForm({
             )}
           />
         </div>
-        {error && <FormError message={error} />}
-        {success && <FormSuccess message={success} />}
-        <Button type="submit" disabled={isPending} className="w-full hover:bg-sky-400">
+        <Button type="submit" className="w-full hover:bg-sky-400">
           {submitButtonLabel}
         </Button>
       </form>

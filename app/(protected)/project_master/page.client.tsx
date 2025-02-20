@@ -196,7 +196,7 @@ export default function ProjectMasterClient() {
                                         </>
                                     ) : (
                                         <>
-                                            <span>{project.projectName}</span>
+                                            <span className="overflow-hidden text-ellipsis whitespace-nowrap w-200">{project.projectName}</span>
                                             <Button onClick={() => handleEdit(project)}>Edit</Button>
                                             {project.assigned ? (
                                                 <Button disabled title="Cannot delete assigned project">
