@@ -10,11 +10,24 @@ import {
   searchProjects,
   updateProject,
   getProjectById,
+  createWorkReport,
+  getUserProjects,
+  updateWorkReport,
+  getUserProjectWorkReports,
 } from "@/data/work-time";
 import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
 import { generateWithOllama } from '@/lib/ai';
 import { Project } from "@prisma/client";
+
+interface AttendanceEntry {
+  start: string;
+  end: string;
+}
+
+interface AttendanceFormValues {
+  [day: string]: AttendanceEntry;
+}
 
 function getFormDataValue(formData: FormData, key: string): string {
   return formData.get(key)?.toString() ?? "";
@@ -39,10 +52,9 @@ const generateOllamaAction = async (
 const assignUserToProjectAction = async (
   userId: string,
   projectId: string
-): Promise<FormActionResult> => {
+) => {
   await assignUserToProject(userId, projectId);
   revalidatePath("/dashboard");
-  return { success: "User assigned to project successfully" };
 };
 
 const unassignUserFromProjectAction = async (
@@ -51,29 +63,26 @@ const unassignUserFromProjectAction = async (
 ) => {  
   await unassignUserFromProject(userId, projectId);
   revalidatePath("/dashboard");
-  return { success: "User unassigned from project successfully" };
 };
 
 const createProjectAction = async (
   projectName: string
-): Promise<FormActionResult> => {
+) => {
   const startDate = new Date();
   console.log("Creating project:", projectName, "with start date:", startDate);
-  const project = await createProject(projectName, startDate, null);
-  revalidatePath("/dashboard");
-  return { success: `Project '${projectName}' created successfully` };
+  await createProject(projectName, startDate, null);
+  revalidatePath("/projectMaster");
 };
 
 const deleteProjectAction = async (
   projectId: string 
-): Promise<FormActionResult> => {
+) => {
   const project = await getProjectById(projectId);
   if (!project) {
     return { error: "Project not found" };
   }
   await deleteProject(projectId);
-  revalidatePath("/dashboard");
-  return { success: `Project '${project.name}' deleted successfully` };
+  revalidatePath("/projectMaster");
 };
 
 const getUnassignedProjectsAction = async (
@@ -105,6 +114,39 @@ const updateProjectAction = async (
   revalidatePath("/dashboard");
 };
 
+const createWorkReportAction = async (
+  userProjectId: string,
+  startDate: Date,
+  endDate: Date
+) => {
+  await createWorkReport(userProjectId, startDate, endDate);
+  revalidatePath("/workTimeReport/[userProjectId]");
+};
+
+const getUserProjectWorkReportsAction = async (
+  userProjectId: string
+) => {
+  const workReports = await getUserProjectWorkReports(userProjectId);
+  return workReports;
+};
+
+const updateWorkReportAction = async (
+  userProjectId: string,
+  workReportId: string,
+  attendance: AttendanceFormValues
+) => {
+  await updateWorkReport(workReportId, attendance);
+  revalidatePath("/workTimeReport/[userProjectId]/[workReportId]");
+};
+
+const getUserProjectsAction = async (
+  userId: string
+) => {
+  const userProjects = await getUserProjects(userId);
+  return userProjects;
+};
+
+
 export { 
   generateOllamaAction, 
   createProjectAction, 
@@ -115,4 +157,8 @@ export {
   unassignUserFromProjectAction,
   searchProjectsAction,
   updateProjectAction,
+  createWorkReportAction,
+  updateWorkReportAction,
+  getUserProjectsAction,
+  getUserProjectWorkReportsAction,
 };

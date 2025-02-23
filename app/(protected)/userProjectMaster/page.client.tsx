@@ -19,7 +19,7 @@ type Props = {
   users: User[];
 };
 
-export default function UserProjectClient({ users }: Props) {
+export default function UserProjectMasterClient({ users }: Props) {
   const error = useAtomValue(errorAtom);
   const success = useAtomValue(successAtom);
   const [isPending, startTransition] = useTransition();

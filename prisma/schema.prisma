@@ -70,7 +70,7 @@ model UserProject {
   settlementMax        Decimal?
   upperRate            Decimal?
   middleRate           Decimal?
-  workReportPeriodUnit WorkReportPeriodUnit @default(WEEK) // WorkReport作成期間の単位
+  workReportPeriodUnit WorkReportPeriodUnit @default(MONTH) // WorkReport作成期間の単位
 
   @@unique([userId, projectId])
 }
@@ -82,11 +82,11 @@ model WorkReport {
   userProject   UserProject      @relation(fields: [userProjectId], references: [id])
   userProjectId String
   memo          String?
-  workTimes     WorkTime[]
+  attendances   Attendance[]
   status        WorkReportStatus @default(DRAFT)
 }
 
-model WorkTime {
+model Attendance {
   id           String     @id @default(cuid())
   startTime    DateTime
   endTime      DateTime

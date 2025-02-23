@@ -1,9 +1,9 @@
 import { db } from '@/lib/db';
-import UserProjectClient from './page.client';
+import UserProjectMasterClient from './page.client';
 
-export default async function UserProjectPage() {
+export default async function UserProjectMaster() {
   // サーバー側でデータを非同期に取得
   const users = await db.user.findMany();
   // クライアントコンポーネントにデータを渡す
-  return <UserProjectClient users={users} />;
+  return <UserProjectMasterClient users={users} />;
 }

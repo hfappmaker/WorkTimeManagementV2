@@ -1,17 +1,26 @@
 import { db } from "@/lib/db";
 import { WorkReportStatus } from "@prisma/client";
 
-export async function getWorkTimesByWorkTimeReportId(workTimeReportId: string) {
-  const workTimes = await db.workTime.findMany({
+interface AttendanceEntry {
+  start: string;
+  end: string;
+}
+
+interface AttendanceFormValues {
+  [day: string]: AttendanceEntry;
+}
+
+export async function getAttendancesByWorkReportId(workReportId: string) {
+  const attendances = await db.attendance.findMany({
     where: {
-      workReportId: workTimeReportId,
+      workReportId: workReportId,
     },
   });
 
-  return workTimes;
+  return attendances;
 }
 
-export async function getOpenedWorkTimeReport(
+export async function getOpenedWorkReport(
   userProjectId: string
 ) {
   const workReport = await db.workReport.findFirst({
@@ -42,7 +51,7 @@ export async function createProject(
   return project;
 }
 
-export async function createWorkTimeReport(
+export async function createWorkReport(
   userProjectId: string,
   startDate: Date,
   endDate: Date
@@ -52,40 +61,52 @@ export async function createWorkTimeReport(
       userProjectId: userProjectId,
       startDate: startDate,
       endDate: endDate,
-
     },
   });
 
   return workReport;
 }
 
+export async function updateWorkReport(
+  workReportId: string,
+  attendance: AttendanceFormValues
+) {
+  const workReport = await db.workReport.update({
+    where: {
+      id: workReportId,
+    },
+    data: {
+      attendances: attendance,
+    },
+  });
+
+  return workReport;
+}
 
 export async function createWorkTime(
   startTime: Date,
   endTime: Date,
   workReportId: string
 ) {
-  const workTime = await db.workTime.create({
+  const attendance = await db.attendance.create({
     data: {
       startTime: startTime,
-
       endTime: endTime,
       workReportId: workReportId,
-
     },
   });
 
-  return workTime;
+  return attendance;
 }
 
-export async function updateWorkTime(
+export async function updateAttendance(
   id: string,
   startTime: Date,
   endTime: Date,
   workReportId: string
 
 ) {
-  const updatedWorkTime = await db.workTime.update({
+  const updatedAttendance = await db.attendance.update({
     where: {
       id: id,
     },
@@ -96,7 +117,7 @@ export async function updateWorkTime(
 
     },
   });
-  return updatedWorkTime;
+  return updatedAttendance;
 }
 
 export async function deleteProject(projectId: string) {
@@ -176,3 +197,20 @@ export async function getProjectById(projectId: string) {
   });
   return project;
 }
+
+export async function getUserProjects(userId: string) {
+  const userProjects = await db.userProject.findMany({
+    where: { userId },
+    include: { project: true },
+  });
+  return userProjects;
+}
+
+export async function getUserProjectWorkReports(userProjectId: string) {
+  const workReports = await db.workReport.findMany({
+    where: { userProjectId },
+    include: { attendances: true },
+  });
+  return workReports;
+}
+

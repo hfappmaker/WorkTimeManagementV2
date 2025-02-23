@@ -1,44 +1,58 @@
-import { User } from "@prisma/client";
+import { User, Project } from "@prisma/client";
 import { currentUser } from "@/lib/auth";
 import { Stack } from "@mui/material";
 import { Suspense } from "react";
 import Spinner from "@/components/spinner";
-import { getAssignedProjects } from "@/data/work-time";
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from "@/components/ui/button";
+import { truncate } from "@/lib/utils";
+import { getUserProjectsAction } from "@/actions/formAction";
+
 export default async function DashboardPage() {
     const user = await currentUser() as User;
     const userId = user?.id ?? "";
-    const projects = await getAssignedProjects(userId);
+    const userProjects = await getUserProjectsAction(userId);
 
-    return (
+    return (    
         <Stack spacing={3}>
             <Suspense fallback={<Spinner />}>
-                <div className='grid grid-cols-1'>
-                    {projects.map((project) => (
-                        <Card key={project.id}>
-                            <CardContent className='grid grid-cols-2 gap-4'>
-                                <Link href={`/project/${project.id}`}>
-                                    <Label className='align-middle'>{project.name}</Label>
-                                </Link>
-                                <div className="grid grid-cols-2 grid-rows-2">
-                                    <Label className="text-right">Start Date:</Label>
-                                    <Label className="ml-0.5">{project.startDate.toLocaleDateString('ja-JP')}</Label>
-                                    <Label className="text-right">End Date:</Label>
-                                    <Label className="ml-0.5">{project.endDate?.toLocaleDateString('ja-JP')}</Label>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                <div className="p-4">
+                    {userProjects.length === 0 ? (
+                        <p>No projects found.</p>
+                    ) : (
+                        <ul className="divide-y divide-gray-200">
+                            {userProjects.map((userProject: {project: Project, id: string}) => (
+                                <li
+                                    key={userProject.id}
+                                    className="py-4 cursor-pointer hover:text-blue-500"
+                                >
+                                    <Link href={`/workReport/${userProject.id}`}>
+                                        <div className="flex flex-col">
+                                            {/* プロジェクト名が長い場合は省略表示 (例: 最大30文字) */}
+                                            <Label className="truncate max-w-[300px]">
+                                                {truncate(userProject.project.name, 30)}
+                                            </Label>
+                                            {/* プロジェクト名の右下に日付情報を表示 */}
+                                            <div className="self-end text-right text-xs mt-1 flex justify-end">
+                                                <span className="font-semibold">Start Date:</span>{' '}
+                                                {userProject.project.startDate.toLocaleDateString('ja-JP')}
+                                                <span className="font-semibold ml-2">End Date:</span>{' '}
+                                                {userProject.project.endDate ? userProject.project.endDate.toLocaleDateString('ja-JP') : 'N/A'}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             </Suspense>
-            <Link href={`/user_project`}>
+            <Link href={`/userProjectMaster`}>
                 <Button className='align-middle'>ユーザー割り当て</Button>
             </Link>
-            <Link href={`/project_master`}>
-                <Button className='align-middle'>プロジェクトマスター</Button>
+            <Link href={`/projectMaster`}>
+                <Button className='align-middle'>プロジェクトマスタ</Button>
             </Link>
         </Stack>
     )

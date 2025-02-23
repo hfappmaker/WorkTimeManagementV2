@@ -44,7 +44,7 @@ CREATE TABLE "UserProject" (
     "settlementMax" DECIMAL(65,30),
     "upperRate" DECIMAL(65,30),
     "middleRate" DECIMAL(65,30),
-    "workReportPeriodUnit" "WorkReportPeriodUnit" NOT NULL DEFAULT 'WEEK',
+    "workReportPeriodUnit" "WorkReportPeriodUnit" NOT NULL DEFAULT 'MONTH',
 
     CONSTRAINT "UserProject_pkey" PRIMARY KEY ("id")
 );
@@ -62,14 +62,14 @@ CREATE TABLE "WorkReport" (
 );
 
 -- CreateTable
-CREATE TABLE "WorkTime" (
+CREATE TABLE "Attendance" (
     "id" TEXT NOT NULL,
     "startTime" TIMESTAMP(3) NOT NULL,
     "endTime" TIMESTAMP(3) NOT NULL,
     "memo" TEXT,
     "workReportId" TEXT NOT NULL,
 
-    CONSTRAINT "WorkTime_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Attendance_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -181,7 +181,7 @@ ALTER TABLE "UserProject" ADD CONSTRAINT "UserProject_projectId_fkey" FOREIGN KE
 ALTER TABLE "WorkReport" ADD CONSTRAINT "WorkReport_userProjectId_fkey" FOREIGN KEY ("userProjectId") REFERENCES "UserProject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "WorkTime" ADD CONSTRAINT "WorkTime_workReportId_fkey" FOREIGN KEY ("workReportId") REFERENCES "WorkReport"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_workReportId_fkey" FOREIGN KEY ("workReportId") REFERENCES "WorkReport"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
