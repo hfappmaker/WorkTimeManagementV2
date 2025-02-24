@@ -87,12 +87,15 @@ model WorkReport {
 }
 
 model Attendance {
-  id           String     @id @default(cuid())
-  startTime    DateTime
-  endTime      DateTime
-  memo         String?
-  workReport   WorkReport @relation(fields: [workReportId], references: [id], onDelete: Cascade)
-  workReportId String
+  id            String     @id @default(cuid())
+  date          DateTime
+  startTime     DateTime?  @db.Time    // 時刻のみ（例：HH:mm:ss）, 入力がない場合は null
+  endTime       DateTime?  @db.Time    // 時刻のみ（例：HH:mm:ss）, 入力がない場合は null
+  breakDuration Int        @default(0) // 休憩時間（分）
+  memo          String?
+  workReport    WorkReport @relation(fields: [workReportId], references: [id], onDelete: Cascade)
+  workReportId  String
+  @@unique([date, workReportId])
 }
 
 model Account {

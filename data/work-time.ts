@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { WorkReportStatus } from "@prisma/client";
+import { WorkReportStatus, Prisma } from "@prisma/client";
 
 interface AttendanceEntry {
   start: string;
@@ -18,6 +18,16 @@ export async function getAttendancesByWorkReportId(workReportId: string) {
   });
 
   return attendances;
+}
+
+export async function getWorkReportById(workReportId: string) {
+  const workReport = await db.workReport.findUnique({
+    where: {
+      id: workReportId,
+    },
+  });
+
+  return workReport;
 }
 
 export async function getOpenedWorkReport(
@@ -67,57 +77,31 @@ export async function createWorkReport(
   return workReport;
 }
 
-export async function updateWorkReport(
+export async function updateWorkReportAttendances(
   workReportId: string,
   attendance: AttendanceFormValues
 ) {
+  const attendanceUpserts = Object.entries(attendance).map(([date, { start, end }]) => {
+    const parsedDate = new Date(date);
+    const startTime = start ? new Date(`${date}T${start}:00.000Z`) : null;
+    const endTime = end ? new Date(`${date}T${end}:00.000Z`) : null;
+    return {
+      where: { date_workReportId: { date: parsedDate, workReportId } },
+      update: { startTime , endTime },
+      create: { date: parsedDate, startTime, endTime }
+    };
+  });
+
   const workReport = await db.workReport.update({
-    where: {
-      id: workReportId,
-    },
+    where: { id: workReportId },
     data: {
-      attendances: attendance,
+      attendances: {
+        upsert: attendanceUpserts,
+      },
     },
   });
 
   return workReport;
-}
-
-export async function createWorkTime(
-  startTime: Date,
-  endTime: Date,
-  workReportId: string
-) {
-  const attendance = await db.attendance.create({
-    data: {
-      startTime: startTime,
-      endTime: endTime,
-      workReportId: workReportId,
-    },
-  });
-
-  return attendance;
-}
-
-export async function updateAttendance(
-  id: string,
-  startTime: Date,
-  endTime: Date,
-  workReportId: string
-
-) {
-  const updatedAttendance = await db.attendance.update({
-    where: {
-      id: id,
-    },
-    data: {
-      startTime: startTime,
-      endTime: endTime,
-      workReportId: workReportId,
-
-    },
-  });
-  return updatedAttendance;
 }
 
 export async function deleteProject(projectId: string) {

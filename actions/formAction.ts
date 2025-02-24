@@ -12,7 +12,7 @@ import {
   getProjectById,
   createWorkReport,
   getUserProjects,
-  updateWorkReport,
+  updateWorkReportAttendances,
   getUserProjectWorkReports,
 } from "@/data/work-time";
 import { revalidatePath } from "next/cache";
@@ -135,7 +135,7 @@ const updateWorkReportAction = async (
   workReportId: string,
   attendance: AttendanceFormValues
 ) => {
-  await updateWorkReport(workReportId, attendance);
+  await updateWorkReportAttendances(workReportId, attendance);
   revalidatePath("/workTimeReport/[userProjectId]/[workReportId]");
 };
 
