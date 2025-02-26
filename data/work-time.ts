@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
 import { WorkReportStatus, Prisma } from "@prisma/client";
+import { UserProjectSchema } from "@/schemas";
+import { z } from "zod";
 
 interface AttendanceEntry {
   start: string;
@@ -120,11 +122,17 @@ export async function unassignUserFromProject(userId: string, projectId: string)
   });
 } 
 
-export async function assignUserToProject(userId: string, projectId: string) {
+export async function assignUserToProject(values: z.infer<typeof UserProjectSchema>) {
   await db.userProject.create({
     data: {
-      userId: userId,
-      projectId: projectId, 
+      userId: values.userId,
+      projectId: values.projectId, 
+      unitPrice: values.unitPrice ? new Prisma.Decimal(values.unitPrice) : null,
+      settlementMin: values.settlementMin ? new Prisma.Decimal(values.settlementMin) : null,
+      settlementMax: values.settlementMax ? new Prisma.Decimal(values.settlementMax) : null,
+      upperRate: values.upperRate ? new Prisma.Decimal(values.upperRate) : null,
+      middleRate: values.middleRate ? new Prisma.Decimal(values.middleRate) : null,
+      workReportPeriodUnit: values.workReportPeriodUnit,
     },
   });
 }

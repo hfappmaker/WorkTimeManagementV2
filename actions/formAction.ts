@@ -19,6 +19,10 @@ import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
 import { generateWithOllama } from '@/lib/ai';
 import { Project } from "@prisma/client";
+import { z } from 'zod';
+import { Prisma } from '@prisma/client';
+import { UserProjectSchema } from '@/schemas';
+import { db } from "@/lib/db";
 
 interface AttendanceEntry {
   start: string;
@@ -49,11 +53,8 @@ const generateOllamaAction = async (
   return await generateWithOllama(deepSeekPrompt, config);
 };
 
-const assignUserToProjectAction = async (
-  userId: string,
-  projectId: string
-) => {
-  await assignUserToProject(userId, projectId);
+const assignUserToProjectAction = async (values: z.infer<typeof UserProjectSchema>) => {
+  await assignUserToProject(values);
   revalidatePath("/dashboard");
 };
 
@@ -151,7 +152,6 @@ export {
   generateOllamaAction, 
   createProjectAction, 
   deleteProjectAction,
-  assignUserToProjectAction,
   getAssignedProjectsAction,
   getUnassignedProjectsAction,
   unassignUserFromProjectAction,
@@ -161,4 +161,5 @@ export {
   updateWorkReportAction,
   getUserProjectsAction,
   getUserProjectWorkReportsAction,
+  assignUserToProjectAction
 };

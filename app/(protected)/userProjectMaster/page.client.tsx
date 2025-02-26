@@ -14,6 +14,8 @@ import React, { useTransition } from 'react';
 import { useAtomValue } from 'jotai';
 import { errorAtom, successAtom } from './atoms';
 import Spinner from '@/components/spinner';
+import { UserProjectSchema } from "@/schemas";
+import { z } from "zod";
 
 type Props = {
   users: User[];
@@ -31,7 +33,7 @@ export default function UserProjectMasterClient({ users }: Props) {
       <ProjectAssignmentForm
         users={users}
         fetchProjects={getUnassignedProjectsAction} 
-        submitAction={assignUserToProjectAction}
+        submitAction={(values: z.infer<typeof UserProjectSchema>) => assignUserToProjectAction(values)}
         submitButtonLabel="Assign User to Project"
         successMessage="User successfully assigned"
         startTransition={startTransition}
@@ -39,7 +41,7 @@ export default function UserProjectMasterClient({ users }: Props) {
       <ProjectAssignmentForm
         users={users}
         fetchProjects={getAssignedProjectsAction}
-        submitAction={unassignUserFromProjectAction}
+        submitAction={(values: z.infer<typeof UserProjectSchema>) => unassignUserFromProjectAction(values.userId, values.projectId)}
         submitButtonLabel="Unassign User from Project"
         successMessage="User unassigned from project successfully"
         startTransition={startTransition}

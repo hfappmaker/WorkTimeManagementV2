@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,8 @@ import Link from 'next/link';
 import ModalDialog from '@/components/ModalDialog';
 import { DateInput } from '@/components/ui/date-input';
 import { WorkReport } from '@prisma/client';
-
+import LoadingOverlay from '@/components/LoadingOverlay';
+import { useIsClient } from '@/hooks/use-is-client';
 interface ReportFormValues {
   startDate: string;
   endDate: string;
@@ -20,6 +21,8 @@ export default function WorkTimeReportClient({ userProjectId }: { userProjectId:
   const [message, setMessage] = useState('');
   const [workReports, setWorkReports] = useState<WorkReport[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const isClient = useIsClient();
+  const [isPending, startTransition] = useTransition();
 
   const reportForm = useForm<ReportFormValues>({
     defaultValues: {
@@ -48,12 +51,16 @@ export default function WorkTimeReportClient({ userProjectId }: { userProjectId:
 
   // Load the reports on initial render
   useEffect(() => {
-    fetchReports();
+    startTransition(async () => {
+      await fetchReports();
+    });
   }, [userProjectId]);
 
   // Handle submission of the search form
   const onSearchSubmit = (data: { searchQuery: string }) => {
-    fetchReports();
+    startTransition(async () => {
+      await fetchReports();
+    });
   };
 
   // Handle creation of a new work time report
@@ -77,9 +84,10 @@ export default function WorkTimeReportClient({ userProjectId }: { userProjectId:
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">
-        Work Time Reports for Project {userProjectId}
+    <LoadingOverlay isClient={isClient} isPending={isPending}>
+      <div className="p-4">
+        <h1 className="text-xl font-bold mb-4">
+          Work Time Reports for Project {userProjectId}
       </h1>
       {message && <p className="mb-4 text-red-500">{message}</p>}
 
@@ -168,7 +176,8 @@ export default function WorkTimeReportClient({ userProjectId }: { userProjectId:
           </Form>
         </ModalDialog>
       )}
-    </div>
+      </div>
+    </LoadingOverlay>
   );
 }
 

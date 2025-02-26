@@ -110,31 +110,31 @@ export const RegisterSchema = z
     path: ["passwordConfirmation"],
   });
 
-  const DaySchema = z.object({
-    userId: z.string(),
-    projectId: z.string(),
-    startTime: z.string().datetime(),
-    endTime: z.string().datetime(),
-  });
-  
-  export const MonthlyAttendanceSchema = z.object({
-    days: z.array(DaySchema),
-  });
+const DaySchema = z.object({
+  userId: z.string(),
+  projectId: z.string(),
+  startTime: z.string().datetime(),
+  endTime: z.string().datetime(),
+});
 
-  export const UserProjectSchema = z.object({
-    userId: z.string().min(1, {
-      message: "Please select a user, required.",
-    }),
-    projectId: z.string().min(1, {
-      message: "Please select a project, required.",
-    }),
-  });
+export const MonthlyAttendanceSchema = z.object({
+  days: z.array(DaySchema),
+});
 
-  export const ProjectMasterSchema = z.object({
-    projectName: z.string().min(1, {
-      message: "Please enter a project name, required.",
-    }),
-  });
-  
-  
+export const UserProjectSchema = z.object({
+  userId: z.string().min(1, { message: "User is required" }),
+  projectId: z.string().min(1, { message: "Project is required" }),
+  unitPrice: z.string().optional().transform(val => val === '' ? null : val),
+  settlementMin: z.string().optional().transform(val => val === '' ? null : val),
+  settlementMax: z.string().optional().transform(val => val === '' ? null : val),
+  upperRate: z.string().optional().transform(val => val === '' ? null : val),
+  middleRate: z.string().optional().transform(val => val === '' ? null : val),
+  workReportPeriodUnit: z.enum(["DAY", "WEEK", "MONTH"]).default("MONTH"),
+});
+
+export const ProjectMasterSchema = z.object({
+  projectName: z.string().min(1, {
+    message: "Please enter a project name, required.",
+  }),
+});
 
