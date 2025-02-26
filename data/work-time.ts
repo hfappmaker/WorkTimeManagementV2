@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { WorkReportStatus, Prisma } from "@prisma/client";
-import { UserProjectSchema } from "@/schemas";
+import { ContractSchema } from "@/schemas";
 import { z } from "zod";
 
 interface AttendanceEntry {
@@ -33,11 +33,11 @@ export async function getWorkReportById(workReportId: string) {
 }
 
 export async function getOpenedWorkReport(
-  userProjectId: string
+  contractId: string
 ) {
   const workReport = await db.workReport.findFirst({
     where: {
-      userProjectId: userProjectId,
+      contractId: contractId,
       status: {
         notIn: [WorkReportStatus.COMPLETED, WorkReportStatus.APPROVED, WorkReportStatus.REJECTED],
       },
@@ -47,30 +47,14 @@ export async function getOpenedWorkReport(
   return workReport;
 }
 
-export async function createProject(
-  name: string,
-  startDate: Date,
-  endDate: Date | null
-) {
-  const project = await db.project.create({
-    data: {
-      name: name,
-      startDate: startDate,
-      endDate: endDate,
-    },
-  });
-
-  return project;
-}
-
 export async function createWorkReport(
-  userProjectId: string,
+  contractId: string,
   startDate: Date,
   endDate: Date
 ) {
   const workReport = await db.workReport.create({
     data: {
-      userProjectId: userProjectId,
+      contractId: contractId,
       startDate: startDate,
       endDate: endDate,
     },
@@ -106,103 +90,47 @@ export async function updateWorkReportAttendances(
   return workReport;
 }
 
-export async function deleteProject(projectId: string) {
-  await db.project.delete({
-    where: {
-      id: projectId,
-    },
-  });
-}
-
-export async function unassignUserFromProject(userId: string, projectId: string) {
-  await db.userProject.delete({
-    where: {
-      userId_projectId: { userId, projectId },
-    },
+export async function createContract(values: z.infer<typeof ContractSchema>) {
+  await db.contract.create({
+    data: values,
   });
 } 
 
-export async function assignUserToProject(values: z.infer<typeof UserProjectSchema>) {
-  await db.userProject.create({
-    data: {
-      userId: values.userId,
-      projectId: values.projectId, 
-      unitPrice: values.unitPrice ? new Prisma.Decimal(values.unitPrice) : null,
-      settlementMin: values.settlementMin ? new Prisma.Decimal(values.settlementMin) : null,
-      settlementMax: values.settlementMax ? new Prisma.Decimal(values.settlementMax) : null,
-      upperRate: values.upperRate ? new Prisma.Decimal(values.upperRate) : null,
-      middleRate: values.middleRate ? new Prisma.Decimal(values.middleRate) : null,
-      workReportPeriodUnit: values.workReportPeriodUnit,
-    },
-  });
-}
-
-export async function getUnassignedProjects(userId: string) {
-  const userProjects = await db.userProject.findMany({
-    where: { userId },
-  });
-  const assignedProjectIds = userProjects.map((userProject) => userProject.projectId);
-  const unassignedProjects = await db.project.findMany({  
+export async function searchContracts(userId: string, searchQuery: string) {
+  const contracts = await db.contract.findMany({
     where: {
-      NOT: {
-        id: { in: assignedProjectIds },
-      },
+      AND: [ 
+        { name: { contains: searchQuery, mode: 'insensitive' } },
+        { userId: userId },
+      ],
     },
   });
-  return unassignedProjects;
+  return contracts;
 }
 
-export async function getAssignedProjects(userId: string) {
-  const userProjects = await db.userProject.findMany({
-    where: { userId },
-    include: { project: true },
+export async function updateContract(id: string, values: z.infer<typeof ContractSchema>) {
+  await db.contract.update({
+    where: { id },
+    data: values,
   });
+} 
 
-  return userProjects.map((userProject) => userProject.project);
-}
-
-export const searchProjects = async (searchQuery: string) => {
-  const projects = await db.project.findMany({
-    where: {
-      name: {
-        contains: searchQuery,
-        mode: "insensitive",
-      },
-    },
-    include: {
-      userProjects: true,
-    },
+export async function deleteContract(id: string) {
+  await db.contract.delete({
+    where: { id },
   });
-  return projects;
-};
+} 
 
-export async function updateProject(projectId: string, projectName: string) {
-  await db.project.update({
-    where: { id: projectId },
-    data: { name: projectName },
-  });
-}
-
-export async function getProjectById(projectId: string) {
-  const project = await db.project.findUnique({
-    where: { id: projectId },
-  });
-  return project;
-}
-
-export async function getUserProjects(userId: string) {
-  const userProjects = await db.userProject.findMany({
-    where: { userId },
-    include: { project: true },
-  });
-  return userProjects;
-}
-
-export async function getUserProjectWorkReports(userProjectId: string) {
+export async function getWorkReportsByContractId(contractId: string) {
   const workReports = await db.workReport.findMany({
-    where: { userProjectId },
-    include: { attendances: true },
+    where: { contractId },
   });
   return workReports;
 }
 
+export async function getContractsByUserId(userId: string) {
+  const contracts = await db.contract.findMany({
+    where: { userId },
+  });
+  return contracts;
+}

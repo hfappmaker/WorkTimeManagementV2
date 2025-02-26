@@ -33,7 +33,7 @@ enum AuditAction {
   DELETE
 }
 
-// ADMINは契約の作成、Projectの作成、支払いの作成、Userの割り当てとUSERで出来ることが全て可能
+// ADMINは契約の作成、支払いの作成、Userの割り当てとUSERで出来ることが全て可能
 // USERは契約の閲覧、WorkReportの作成が可能
 model User {
   id                    String                 @id @default(cuid())
@@ -46,24 +46,18 @@ model User {
   accounts              Account[]
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
-  userProjects          UserProject[]
+  contracts             Contract[]            // 変更: userProjects → contracts
   auditLogs             AuditLog[]
 }
 
-model Project {
-  id           String        @id @default(cuid())
-  name         String
-  startDate    DateTime
-  endDate      DateTime?
-  userProjects UserProject[]
-}
-
-model UserProject {
+// Project情報を含む Contract モデル
+model Contract {
   id                   String               @id @default(cuid())
+  name                 String               // Project から移行
+  startDate            DateTime             // Project から移行
+  endDate              DateTime?            // Project から移行
   userId               String
   user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project              Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId            String
   workReports          WorkReport[]
   unitPrice            Decimal?
   settlementMin        Decimal?
@@ -71,16 +65,14 @@ model UserProject {
   upperRate            Decimal?
   middleRate           Decimal?
   workReportPeriodUnit WorkReportPeriodUnit @default(MONTH) // WorkReport作成期間の単位
-
-  @@unique([userId, projectId])
 }
 
 model WorkReport {
   id            String           @id @default(cuid())
   startDate     DateTime
   endDate       DateTime
-  userProject   UserProject      @relation(fields: [userProjectId], references: [id])
-  userProjectId String
+  contract      Contract         @relation(fields: [contractId], references: [id])
+  contractId    String           // 変更: userProjectId → contractId
   memo          String?
   attendances   Attendance[]
   status        WorkReportStatus @default(DRAFT)
@@ -155,7 +147,7 @@ model TwoFactorConfirmation {
 
 model AuditLog {
   id            String      @id @default(cuid())
-  tableName     String // 変更対象のテーブル名（例："User", "Project", 等）
+  tableName     String // 変更対象のテーブル名（例："User", "Contract", 等）
   recordId      String // 対象レコードのID
   action        AuditAction // 操作の種別
   // 変更内容の詳細を JSON 形式で格納（必要に応じて）

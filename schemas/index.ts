@@ -121,9 +121,11 @@ export const MonthlyAttendanceSchema = z.object({
   days: z.array(DaySchema),
 });
 
-export const UserProjectSchema = z.object({
+export const ContractSchema = z.object({
   userId: z.string().min(1, { message: "User is required" }),
-  projectId: z.string().min(1, { message: "Project is required" }),
+  name: z.string().min(1, { message: "Contract name is required" }),
+  startDate: z.date({ required_error: "Start date is required" }),
+  endDate: z.date().optional(),
   unitPrice: z.string().optional().transform(val => val === '' ? null : val),
   settlementMin: z.string().optional().transform(val => val === '' ? null : val),
   settlementMax: z.string().optional().transform(val => val === '' ? null : val),

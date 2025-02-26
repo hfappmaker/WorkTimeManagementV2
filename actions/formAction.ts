@@ -1,28 +1,20 @@
 "use server";
 
 import {
-  createProject,
-  assignUserToProject,
-  getUnassignedProjects,
-  unassignUserFromProject,
-  getAssignedProjects,
-  deleteProject,
-  searchProjects,
-  updateProject,
-  getProjectById,
+  createContract,
+  updateContract,
+  deleteContract,
   createWorkReport,
-  getUserProjects,
+  searchContracts,
   updateWorkReportAttendances,
-  getUserProjectWorkReports,
+  getWorkReportsByContractId,
+  getContractsByUserId,
 } from "@/data/work-time";
 import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
 import { generateWithOllama } from '@/lib/ai';
-import { Project } from "@prisma/client";
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
-import { UserProjectSchema } from '@/schemas';
-import { db } from "@/lib/db";
+import { ContractSchema } from '@/schemas';
 
 interface AttendanceEntry {
   start: string;
@@ -53,66 +45,25 @@ const generateOllamaAction = async (
   return await generateWithOllama(deepSeekPrompt, config);
 };
 
-const assignUserToProjectAction = async (values: z.infer<typeof UserProjectSchema>) => {
-  await assignUserToProject(values);
+const createContractAction = async (values: z.infer<typeof ContractSchema>) => {
+  await createContract(values);
+  console.log("Contract created successfully");
   revalidatePath("/dashboard");
 };
 
-const unassignUserFromProjectAction = async (
-  userId: string,
-  projectId: string
-) => {  
-  await unassignUserFromProject(userId, projectId);
-  revalidatePath("/dashboard");
+const updateContractAction = async (id: string, values: z.infer<typeof ContractSchema>) => {
+  await updateContract(id, values);
+  revalidatePath("/contractMaster");
+};  
+
+const deleteContractAction = async (id: string) => {
+  await deleteContract(id);
+  revalidatePath("/contractMaster");
 };
 
-const createProjectAction = async (
-  projectName: string
-) => {
-  const startDate = new Date();
-  console.log("Creating project:", projectName, "with start date:", startDate);
-  await createProject(projectName, startDate, null);
-  revalidatePath("/projectMaster");
-};
-
-const deleteProjectAction = async (
-  projectId: string 
-) => {
-  const project = await getProjectById(projectId);
-  if (!project) {
-    return { error: "Project not found" };
-  }
-  await deleteProject(projectId);
-  revalidatePath("/projectMaster");
-};
-
-const getUnassignedProjectsAction = async (
-  userId: string
-) => {
-  const unassignedProjects: Project[] = await getUnassignedProjects(userId);
-  return unassignedProjects;
-};
-
-const getAssignedProjectsAction = async (
-  userId: string
-) => {
-  const assignedProjects: Project[] = await getAssignedProjects(userId);
-  return assignedProjects;
-};
-
-const searchProjectsAction = async (
-  searchQuery: string
-) => {
-  const projects = await searchProjects(searchQuery);
-  return projects;
-};
-
-const updateProjectAction = async (
-  projectId: string,
-  projectName: string
-) => {
-  await updateProject(projectId, projectName);
-  revalidatePath("/dashboard");
+const searchContractsAction = async (userId: string, searchQuery: string) => {
+  const contracts = await searchContracts(userId, searchQuery);
+  return contracts;
 };
 
 const createWorkReportAction = async (
@@ -124,13 +75,6 @@ const createWorkReportAction = async (
   revalidatePath("/workTimeReport/[userProjectId]");
 };
 
-const getUserProjectWorkReportsAction = async (
-  userProjectId: string
-) => {
-  const workReports = await getUserProjectWorkReports(userProjectId);
-  return workReports;
-};
-
 const updateWorkReportAction = async (
   userProjectId: string,
   workReportId: string,
@@ -140,26 +84,24 @@ const updateWorkReportAction = async (
   revalidatePath("/workTimeReport/[userProjectId]/[workReportId]");
 };
 
-const getUserProjectsAction = async (
-  userId: string
-) => {
-  const userProjects = await getUserProjects(userId);
-  return userProjects;
+const getWorkReportsByContractIdAction = async (userProjectId: string) => {
+  const workReports = await getWorkReportsByContractId(userProjectId);
+  return workReports;
 };
 
+const getContractsByUserIdAction = async (userId: string) => {
+  const contracts = await getContractsByUserId(userId);
+  return contracts;
+};
 
 export { 
   generateOllamaAction, 
-  createProjectAction, 
-  deleteProjectAction,
-  getAssignedProjectsAction,
-  getUnassignedProjectsAction,
-  unassignUserFromProjectAction,
-  searchProjectsAction,
-  updateProjectAction,
+  createContractAction,
   createWorkReportAction,
   updateWorkReportAction,
-  getUserProjectsAction,
-  getUserProjectWorkReportsAction,
-  assignUserToProjectAction
+  updateContractAction,
+  deleteContractAction,
+  searchContractsAction,
+  getWorkReportsByContractIdAction,
+  getContractsByUserIdAction,
 };

@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { createWorkReportAction, getUserProjectWorkReportsAction } from '@/actions/formAction';
+import { createWorkReportAction, getWorkReportsByContractIdAction } from '@/actions/formAction';
 import Link from 'next/link';
 import ModalDialog from '@/components/ModalDialog';
 import { DateInput } from '@/components/ui/date-input';
@@ -17,7 +17,7 @@ interface ReportFormValues {
   endDate: string;
 }
 
-export default function WorkTimeReportClient({ userProjectId }: { userProjectId: string }) {
+export default function WorkTimeReportClient({ contractId }: { contractId: string }) {
   const [message, setMessage] = useState('');
   const [workReports, setWorkReports] = useState<WorkReport[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -38,7 +38,7 @@ export default function WorkTimeReportClient({ userProjectId }: { userProjectId:
   // Fetch work time reports for the project (filtered by memo if provided)
   const fetchReports = async () => {
     try {
-      const data = await getUserProjectWorkReportsAction(userProjectId);
+      const data = await getWorkReportsByContractIdAction(contractId);
       if (data) {
         setWorkReports(data);
       } else {
@@ -54,7 +54,7 @@ export default function WorkTimeReportClient({ userProjectId }: { userProjectId:
     startTransition(async () => {
       await fetchReports();
     });
-  }, [userProjectId]);
+  }, [contractId]);
 
   // Handle submission of the search form
   const onSearchSubmit = (data: { searchQuery: string }) => {
@@ -71,7 +71,7 @@ export default function WorkTimeReportClient({ userProjectId }: { userProjectId:
       return;
     }
     try {
-      await createWorkReportAction(userProjectId, new Date(startDate), new Date(endDate));
+      await createWorkReportAction(contractId, new Date(startDate), new Date(endDate));
       setMessage('');
       // Refresh report list after creation
       await fetchReports();
@@ -87,7 +87,7 @@ export default function WorkTimeReportClient({ userProjectId }: { userProjectId:
     <LoadingOverlay isClient={isClient} isPending={isPending}>
       <div className="p-4">
         <h1 className="text-xl font-bold mb-4">
-          Work Time Reports for Project {userProjectId}
+          Work Time Reports for Contract {contractId}
       </h1>
       {message && <p className="mb-4 text-red-500">{message}</p>}
 
@@ -126,7 +126,7 @@ export default function WorkTimeReportClient({ userProjectId }: { userProjectId:
         <ul className="divide-y divide-gray-200">
           {workReports.map((workReport) => (
             <li key={workReport.id} className="py-2">
-              <Link href={`/workReport/${userProjectId}/${workReport.id}`}>
+              <Link href={`/workReport/${contractId}/${workReport.id}`}>
                 <div className="cursor-pointer hover:text-blue-500">
                   WorkReport: {workReport.startDate.toLocaleDateString()} - {workReport.endDate.toLocaleDateString()} {workReport.memo ? `(${workReport.memo})` : ''}
                 </div>

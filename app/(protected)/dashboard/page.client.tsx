@@ -1,0 +1,670 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Label } from '@/components/ui/label';
+import { Button } from "@/components/ui/button";
+import { truncate } from "@/lib/utils";
+import ModalDialog from "@/components/ModalDialog";
+import { createContractAction, deleteContractAction, getContractsByUserIdAction, updateContractAction } from '@/actions/formAction';
+import { ContractSchema } from '@/schemas';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useIsClient } from "@/hooks/use-is-client";
+import { useTransition } from 'react';
+import { z } from 'zod';
+import LoadingOverlay from '@/components/LoadingOverlay';
+import FormError from '@/components/form-error';
+import FormSuccess from '@/components/form-success';
+import { useForm } from "react-hook-form";
+import { User } from "@prisma/client";
+type Contract = {
+  id: string;
+  name: string;
+  startDate: Date;
+  endDate: Date | null;
+  unitPrice: string | null;
+  settlementMin: string | null;
+  settlementMax: string | null;
+  upperRate: string | null;
+  middleRate: string | null;
+  workReportPeriodUnit: string;
+  userId: string;
+  userName: string | null;
+};
+
+type DialogType = "create" | "edit" | "delete" | "details" | null;
+
+interface DashboardClientProps {
+  user: User;
+}
+
+export default function DashboardClient({ user }: DashboardClientProps) {
+  const [activeContract, setActiveContract] = useState<Contract | null>(null);
+  const [activeDialog, setActiveDialog] = useState<DialogType>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const isClient = useIsClient();
+  const [isPending, startTransition] = useTransition();
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  // 契約行をクリックすると詳細ダイアログを表示する
+  const openDetailsDialog = (contract: Contract) => {
+    setActiveContract(contract);
+    setActiveDialog("details");
+  };
+
+  // Create用フォーム
+  const createForm = useForm<z.infer<typeof ContractSchema>>({
+    resolver: zodResolver(ContractSchema),
+    defaultValues: {
+      userId: user.id,
+      name: "",
+      startDate: new Date(),
+      endDate: undefined,
+      unitPrice: "",
+      settlementMin: "",
+      settlementMax: "",
+      upperRate: "",
+      middleRate: "",
+      workReportPeriodUnit: "MONTH",
+    },
+  });
+
+  // Edit用フォーム
+  const editForm = useForm<z.infer<typeof ContractSchema>>({
+    resolver: zodResolver(ContractSchema),
+    defaultValues: {
+      userId: user.id,
+      name: "",
+      startDate: new Date(),
+      endDate: undefined,
+      unitPrice: "",
+      settlementMin: "",
+      settlementMax: "",
+      upperRate: "",
+      middleRate: "",
+      workReportPeriodUnit: "MONTH",
+    },
+  });
+
+  useEffect(() => {
+    if (activeDialog === "edit" && activeContract) {
+      editForm.reset({
+        userId: activeContract.userId,
+        name: activeContract.name,
+        startDate: activeContract.startDate ? new Date(activeContract.startDate) : new Date(),
+        endDate: activeContract.endDate ? new Date(activeContract.endDate) : undefined,
+        unitPrice: activeContract.unitPrice || "",
+        settlementMin: activeContract.settlementMin || "",
+        settlementMax: activeContract.settlementMax || "",
+        upperRate: activeContract.upperRate || "",
+        middleRate: activeContract.middleRate || "",
+        workReportPeriodUnit: activeContract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
+      });
+    }
+  }, [activeDialog, activeContract, editForm]);
+
+  useEffect(() => {
+    startTransition(async () => {
+      const contracts = await getContractsByUserIdAction(user.id ?? "");
+      setContracts(contracts.map(contract => ({
+        ...contract,
+        startDate: new Date(contract.startDate),
+        endDate: contract.endDate ? new Date(contract.endDate) : null,
+        unitPrice: contract.unitPrice?.toString() || null,
+        settlementMin: contract.settlementMin?.toString() || null,
+        settlementMax: contract.settlementMax?.toString() || null,
+        upperRate: contract.upperRate?.toString() || null,
+        middleRate: contract.middleRate?.toString() || null,
+        workReportPeriodUnit: contract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
+        userName: null,
+      })));
+    });
+  }, []);
+
+  const onCreateContract = (data: z.infer<typeof ContractSchema>) => {
+    startTransition(async () => {
+      try {
+        await createContractAction({...data, userId: user.id});
+        setSuccess(`Contract '${truncate(data.name, 20)}' created successfully`);
+        createForm.reset();
+        setActiveDialog(null);
+        
+        const updatedContracts = await getContractsByUserIdAction(user.id ?? "");
+        setContracts(updatedContracts.map(contract => ({
+          ...contract,
+          startDate: new Date(contract.startDate),
+          endDate: contract.endDate ? new Date(contract.endDate) : null,
+          unitPrice: contract.unitPrice?.toString() || null,
+          settlementMin: contract.settlementMin?.toString() || null,
+          settlementMax: contract.settlementMax?.toString() || null,
+          upperRate: contract.upperRate?.toString() || null,
+          middleRate: contract.middleRate?.toString() || null,
+          workReportPeriodUnit: contract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
+          userName: null,
+        })));
+      } catch (err) {
+        console.error(err);
+        setError("Failed to create contract");
+      }
+    });
+  };
+
+  const onEditContract = (data: z.infer<typeof ContractSchema>) => {
+    if (!activeContract) return;
+    
+    startTransition(async () => {
+      try {
+        await updateContractAction(activeContract.id, {...data, userId: user.id});
+        setSuccess("Contract edited successfully");
+        setActiveDialog(null);
+        setActiveContract(null);
+        editForm.reset();
+        
+        const updatedContracts = await getContractsByUserIdAction(user.id ?? "");
+        setContracts(updatedContracts.map(contract => ({
+          ...contract,
+          startDate: new Date(contract.startDate),
+          endDate: contract.endDate ? new Date(contract.endDate) : null,
+          unitPrice: contract.unitPrice?.toString() || null,
+          settlementMin: contract.settlementMin?.toString() || null,
+          settlementMax: contract.settlementMax?.toString() || null,
+          upperRate: contract.upperRate?.toString() || null,
+          middleRate: contract.middleRate?.toString() || null,
+          workReportPeriodUnit: contract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
+          userName: null,
+        })));
+      } catch (err) {
+        console.error(err);
+        setError("Failed to update contract");
+      }
+    });
+  };
+
+  const onDeleteContract = () => {
+    if (!activeContract) return;
+    startTransition(async () => {
+      try {
+        await deleteContractAction(activeContract.id);
+        setSuccess("Contract deleted successfully");
+        setActiveDialog(null);
+        setActiveContract(null);
+        
+        const updatedContracts = await getContractsByUserIdAction(user.id ?? "");
+        setContracts(updatedContracts.map(contract => ({
+          ...contract,
+          startDate: new Date(contract.startDate),
+          endDate: contract.endDate ? new Date(contract.endDate) : null,
+          unitPrice: contract.unitPrice?.toString() || null,
+          settlementMin: contract.settlementMin?.toString() || null,
+          settlementMax: contract.settlementMax?.toString() || null,
+          upperRate: contract.upperRate?.toString() || null,
+          middleRate: contract.middleRate?.toString() || null,
+          workReportPeriodUnit: contract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
+          userName: null,
+        })));
+      } catch (err) {
+        console.error(err);
+        setError("Failed to delete contract. It might have associated work reports.");
+      }
+    });
+  };
+
+  return (
+    <LoadingOverlay isClient={isClient} isPending={isPending}>
+      {error && <FormError message={error} />}
+      {success && <FormSuccess message={success} />}
+      <div className="p-4">
+        {contracts.length === 0 ? (
+          <p>No contracts found.</p>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {contracts.map((contract) => (
+              <li
+                key={contract.id}
+                className="py-4"
+              >
+                <div className="flex justify-between items-center">
+                  <Link href={`/workReport/${contract.id}`} className="hover:text-blue-500">
+                    <div className="flex flex-col">
+                      <Label className="truncate max-w-[300px]">
+                        {truncate(contract.name, 30)}
+                      </Label>
+                      <div className="self-end text-right text-xs mt-1 flex justify-end">
+                        <span className="font-semibold">Start Date:</span>{' '}
+                        {contract.startDate.toLocaleDateString('ja-JP')}
+                        <span className="font-semibold ml-2">End Date:</span>{' '}
+                        {contract.endDate ? contract.endDate.toLocaleDateString('ja-JP') : 'N/A'}
+                      </div>
+                    </div>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openDetailsDialog(contract);
+                    }}
+                  >
+                    詳細
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <Button onClick={() => setActiveDialog("create")} className="ml-auto">
+          Create Contract
+        </Button>
+        {/* 契約詳細モーダル */}
+        <ModalDialog isOpen={activeDialog === "details"} title="契約詳細">
+          {activeContract && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">基本情報</h3>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className="font-semibold">契約名</div>
+                  <div>{activeContract.name}</div>
+                  <div className="font-semibold">開始日</div>
+                  <div>{activeContract.startDate.toLocaleDateString('ja-JP')}</div>
+                  <div className="font-semibold">終了日</div>
+                  <div>{activeContract.endDate ? activeContract.endDate.toLocaleDateString('ja-JP') : 'なし'}</div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium">単価・精算情報</h3>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className="font-semibold">単価</div>
+                  <div>{activeContract.unitPrice ? `¥${activeContract.unitPrice}` : 'なし'}</div>
+                  <div className="font-semibold">精算下限</div>
+                  <div>{activeContract.settlementMin ? `¥${activeContract.settlementMin}` : 'なし'}</div>
+                  <div className="font-semibold">精算上限</div>
+                  <div>{activeContract.settlementMax ? `¥${activeContract.settlementMax}` : 'なし'}</div>
+                  <div className="font-semibold">上限レート</div>
+                  <div>{activeContract.upperRate || 'なし'}</div>
+                  <div className="font-semibold">中間レート</div>
+                  <div>{activeContract.middleRate || 'なし'}</div>
+                  <div className="font-semibold">作業報告書期間単位</div>
+                  <div>
+                    {activeContract.workReportPeriodUnit === 'DAY' ? '日' :
+                      activeContract.workReportPeriodUnit === 'WEEK' ? '週' : '月'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setActiveDialog(null)}>
+                  閉じる
+                </Button>
+              </div>
+            </div>
+          )}
+        </ModalDialog>
+
+        {/* Create Dialog */}
+        <ModalDialog isOpen={activeDialog === "create"} title="Create Contract">
+          <Form {...createForm}>
+            <form onSubmit={createForm.handleSubmit(onCreateContract)} className="space-y-4">
+              {/* Contract Name */}
+              <FormField
+                control={createForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter contract name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Start Date */}
+              <FormField
+                control={createForm.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date</FormLabel>
+                    <FormControl>
+                      <DateInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* End Date (Optional) */}
+              <FormField
+                control={createForm.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date (Optional)</FormLabel>
+                    <FormControl>
+                      <DateInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select end date (optional)"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Unit Price */}
+              <FormField
+                control={createForm.control}
+                name="unitPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit Price</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 5000" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Settlement Min */}
+              <FormField
+                control={createForm.control}
+                name="settlementMin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Settlement Min</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 100000" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Settlement Max */}
+              <FormField
+                control={createForm.control}
+                name="settlementMax"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Settlement Max</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 500000" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Upper Rate */}
+              <FormField
+                control={createForm.control}
+                name="upperRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Upper Rate</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" step="0.01" placeholder="e.g. 1.5" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Middle Rate */}
+              <FormField
+                control={createForm.control}
+                name="middleRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Middle Rate</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" step="0.01" placeholder="e.g. 1.0" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Work Report Period Unit */}
+              <FormField
+                control={createForm.control}
+                name="workReportPeriodUnit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Report Period Unit</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select period unit" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="DAY">Day</SelectItem>
+                        <SelectItem value="WEEK">Week</SelectItem>
+                        <SelectItem value="MONTH">Month</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end gap-2 mt-4">
+                <Button type="button" variant="outline" onClick={() => setActiveDialog(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Create</Button>
+              </div>
+            </form>
+          </Form>
+        </ModalDialog>
+
+        {/* Edit Dialog */}
+        <ModalDialog isOpen={activeDialog === "edit"} title="Edit Contract">
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditContract)} className="space-y-4">
+              {/* Same form fields as Create Form */}
+              {/* Contract Name */}
+              <FormField
+                control={editForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter contract name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Start Date */}
+              <FormField
+                control={editForm.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date</FormLabel>
+                    <FormControl>
+                      <DateInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* End Date (Optional) */}
+              <FormField
+                control={editForm.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date (Optional)</FormLabel>
+                    <FormControl>
+                      <DateInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select end date (optional)"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Unit Price */}
+              <FormField
+                control={editForm.control}
+                name="unitPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit Price</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 5000" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Settlement Min */}
+              <FormField
+                control={editForm.control}
+                name="settlementMin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Settlement Min</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 100000" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Settlement Max */}
+              <FormField
+                control={editForm.control}
+                name="settlementMax"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Settlement Max</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 500000" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Upper Rate */}
+              <FormField
+                control={editForm.control}
+                name="upperRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Upper Rate</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" step="0.01" placeholder="e.g. 1.5" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Middle Rate */}
+              <FormField
+                control={editForm.control}
+                name="middleRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Middle Rate</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} type="number" step="0.01" placeholder="e.g. 1.0" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Work Report Period Unit */}
+              <FormField
+                control={editForm.control}
+                name="workReportPeriodUnit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Report Period Unit</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select period unit" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="DAY">Day</SelectItem>
+                        <SelectItem value="WEEK">Week</SelectItem>
+                        <SelectItem value="MONTH">Month</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end gap-2 mt-4">
+                <Button type="button" variant="outline" onClick={() => setActiveDialog(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Update</Button>
+              </div>
+            </form>
+          </Form>
+        </ModalDialog>
+
+        {/* Delete Confirmation Dialog */}
+        <ModalDialog isOpen={activeDialog === "delete"} title="Delete Contract">
+          <div>
+            <p>Are you sure you want to delete the contract "{activeContract?.name}"?</p>
+            <p className="text-sm text-gray-500 mt-2">This action cannot be undone.</p>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setActiveDialog(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={onDeleteContract}>
+              Delete
+            </Button>
+          </div>
+        </ModalDialog>
+      </div>
+    </LoadingOverlay>
+  );
+} 
