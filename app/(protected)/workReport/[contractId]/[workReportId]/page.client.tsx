@@ -3,14 +3,14 @@
 import { useForm } from "react-hook-form";
 import { useState, useTransition } from "react";
 import { updateWorkReportAction } from "@/actions/formAction";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormMessage, Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useIsClient } from "@/hooks/use-is-client";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import LoadingOverlay from "@/components/LoadingOverlay";
-import * as XLSX from 'xlsx';
+import ExcelJS, { Worksheet } from 'exceljs';
 import ModalDialog from "@/components/ModalDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -22,6 +22,14 @@ interface AttendanceEntry {
 
 export interface AttendanceFormValues {
     [day: string]: AttendanceEntry;
+}
+
+interface TemplateConfig {
+    yearMonthName: string;
+    rangeName: string;
+    startTimeColumn: string;
+    endTimeColumn: string;
+    breakDurationColumn: string;
 }
 
 // Adjust the types as needed; here we assume workReport contains startDate and endDate as strings
@@ -67,10 +75,10 @@ function mergeAttendances(
 ): AttendanceFormValues {
     attendances.forEach((entry) => {
         if (defaults[entry.date]) {
-            defaults[entry.date] = { 
-                start: entry.start ?? "", 
-                end: entry.end ?? "", 
-                breakDuration: entry.breakDuration?.toString() ?? "0" 
+            defaults[entry.date] = {
+                start: entry.start ?? "",
+                end: entry.end ?? "",
+                breakDuration: entry.breakDuration?.toString() ?? "0"
             };
         }
     });
@@ -92,8 +100,8 @@ export default function WorkReportClient({
     // モーダルの状態管理
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
     // 一括編集用の状態
-    const [bulkStartTime, setBulkStartTime] = useState("");
-    const [bulkEndTime, setBulkEndTime] = useState("");
+    const [bulkStartTime, setBulkStartTime] = useState("09:00");
+    const [bulkEndTime, setBulkEndTime] = useState("18:00");
     const [bulkBreakDuration, setBulkBreakDuration] = useState("60");
     // 曜日選択用の状態（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
     const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]); // デフォルトで平日を選択
@@ -101,6 +109,20 @@ export default function WorkReportClient({
     const [dateRangeMode, setDateRangeMode] = useState<"all" | "weekday" | "custom">("weekday");
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
+
+    // Excelテンプレート関連の状態
+    const [templateFile, setTemplateFile] = useState<File | null>(null);
+    const [templateFileName, setTemplateFileName] = useState<string>("");
+    const [isTemplateConfigModalOpen, setIsTemplateConfigModalOpen] = useState(false);
+    const [templateConfig, setTemplateConfig] = useState<TemplateConfig>({
+        yearMonthName: "",
+        rangeName: "",
+        startTimeColumn: "1",
+        endTimeColumn: "2",
+        breakDurationColumn: "3"
+    });
+    // テンプレートのワークブック
+    const [templateWorkbook, setTemplateWorkbook] = useState<ExcelJS.Workbook | null>(null);
 
     // Compute default attendance values for each day in the range…
     const defaults = generateAttendanceDefaults(workReport.year, workReport.month, closingDay);
@@ -124,78 +146,6 @@ export default function WorkReportClient({
                 setSuccess("");
             }
         });
-    };
-
-    // Function to handle Excel export
-    const exportToExcel = () => {
-        try {
-            const data = attendanceForm.getValues();
-            
-            // Transform data for better Excel format
-            const workSheetData = Object.entries(data).map(([date, value]) => ({
-                Date: date,
-                StartTime: value.start,
-                EndTime: value.end,
-                BreakDuration: `${value.breakDuration} min`,
-                // Calculate duration if both start and end times exist
-                Duration: (value.start && value.end) 
-                    ? calculateDuration(value.start, value.end, value.breakDuration) 
-                    : ''
-            }));
-            
-            // Create worksheet from the transformed data
-            const worksheet = XLSX.utils.json_to_sheet(workSheetData);
-            
-            // Set column widths for better readability
-            const columnWidths = [
-                { wch: 15 }, // Date column
-                { wch: 10 }, // Start Time column
-                { wch: 10 }, // End Time column
-                { wch: 12 }, // Break Duration column
-                { wch: 10 }  // Duration column
-            ];
-            worksheet['!cols'] = columnWidths;
-            
-            // Create workbook and append the worksheet
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
-            
-            // Generate Excel file
-            const fileName = `Work_Report_${contractId}_${workReportId}.xlsx`;
-            XLSX.writeFile(workbook, fileName);
-            
-            setSuccess("Excel export successful.");
-        } catch (err) {
-            console.error("Export to Excel failed:", err);
-            setError("Failed to export to Excel.");
-        }
-    };
-    
-    // Helper function to calculate duration between two times
-    const calculateDuration = (start: string, end: string, breakDuration: string = "0"): string => {
-        if (!start || !end) return '';
-        
-        const [startHours, startMinutes] = start.split(':').map(Number);
-        const [endHours, endMinutes] = end.split(':').map(Number);
-        
-        let durationMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-        
-        // Handle case where end time is on the next day
-        if (durationMinutes < 0) {
-            durationMinutes += 24 * 60;
-        }
-        
-        // Subtract break duration from total time
-        const breakMinutes = parseInt(breakDuration) || 0;
-        durationMinutes -= breakMinutes;
-        
-        // Ensure duration is not negative
-        durationMinutes = Math.max(0, durationMinutes);
-        
-        const hours = Math.floor(durationMinutes / 60);
-        const minutes = durationMinutes % 60;
-        
-        return `${hours}h ${minutes}m`;
     };
 
     // 曜日選択のトグル
@@ -253,27 +203,343 @@ export default function WorkReportClient({
         setSuccess("一括編集を適用しました");
     };
 
+    // テンプレートアップロード関数
+    const uploadTemplate = (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            setError("");
+            setTemplateFile(file);
+            setTemplateFileName(file.name);
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const buffer = e.target?.result as ArrayBuffer;
+                    // Log info for debugging
+                    console.log("File size:", buffer.byteLength, "bytes");
+
+                    const workbook = new ExcelJS.Workbook();
+                    await workbook.xlsx.load(buffer);
+
+                    console.log("Parsed workbook:", workbook);
+                    console.log("Sheet names:", workbook.worksheets.map(sheet => sheet.name));
+
+                    // Validate workbook structure
+                    if (!workbook || workbook.worksheets.length === 0) {
+                        throw new Error("Invalid template format or no sheets found");
+                    }
+
+                    setTemplateWorkbook(workbook);
+                    setSuccess("テンプレートのアップロードが完了しました");
+                } catch (err) {
+                    console.error("Template parsing error:", err);
+                    setError("テンプレートの解析中にエラーが発生しました");
+                    setTemplateFile(null);
+                    setTemplateFileName("");
+                    setTemplateWorkbook(null);
+                }
+            };
+
+            reader.onerror = () => {
+                setError("ファイルの読み込み中にエラーが発生しました");
+                setTemplateFile(null);
+                setTemplateFileName("");
+            };
+
+            reader.readAsArrayBuffer(file);
+        } catch (err) {
+            console.error("Template upload failed:", err);
+            setError("テンプレートのアップロードに失敗しました");
+        } finally {
+            if (event.target) {
+                event.target.value = '';
+            }
+        }
+    };
+
+    // テンプレート設定の更新
+    const updateTemplateConfig = (field: keyof typeof templateConfig, value: string) => {
+        setTemplateConfig({
+            ...templateConfig,
+            [field]: value
+        });
+    };
+
+    // テンプレートからの作業報告書作成
+    const createReportFromTemplate = async () => {
+        if (!templateWorkbook) {
+            setError("テンプレートがアップロードされていません");
+            return;
+        }
+
+        try {
+            // フォームデータを取得
+            const formData = attendanceForm.getValues();
+
+            // 新しいワークブックを作成
+            const workbook = new ExcelJS.Workbook();
+
+            // テンプレートからシートをコピー
+            for (const worksheet of templateWorkbook.worksheets) {
+                // 新しいシートを作成
+                const newSheet = workbook.addWorksheet(worksheet.name);
+
+                // シートのプロパティをコピー
+                newSheet.properties = { ...worksheet.properties };
+
+                // 列の幅をコピー
+                worksheet.columns.forEach((col, index) => {
+                    if (col.width) {
+                        newSheet.getColumn(index + 1).width = col.width;
+                    }
+                });
+
+                // マージセル情報をコピーする
+                if (worksheet.model && worksheet.model.merges) {
+                    worksheet.model.merges.forEach((mergeRange) => {
+                        newSheet.mergeCells(mergeRange);
+                    });
+                }
+
+                // セルのスタイルをコピー
+                worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+                    const newRow = newSheet.getRow(rowNumber);
+                    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                        const newCell = newRow.getCell(colNumber);
+                        newCell.style = { ...cell.style };
+                    }); 
+                });
+            }
+
+            // コピー元のテンプレートに定義された名前付き範囲を新しいワークブックに追加する
+            if (templateWorkbook.definedNames) {
+                for (const definedName of templateWorkbook.definedNames.model) {
+                    // Get the named ranges for "name"
+                    console.log("definedName", definedName);
+                    const ranges = templateWorkbook.definedNames.getRanges(definedName.name);
+                    console.log("ranges", ranges);
+                    if (ranges && ranges.ranges.length > 0) {
+                        for (const range of ranges.ranges) {
+                            workbook.definedNames.add(range, definedName.name);
+                            console.log(`Added named range: ${definedName.name} -> ${range}`);
+                        }
+                    }
+                }
+            }
+
+            // 年月の名前付き範囲を処理
+            if (templateConfig.yearMonthName) {
+                const yearMonthRanges = templateWorkbook.definedNames.getRanges(templateConfig.yearMonthName);
+                if (yearMonthRanges) {
+                    const [sheetName, rangeAddress] = parseRangeReference(yearMonthRanges.ranges[0]);
+                    if (sheetName) {
+                        console.log("sheetName", sheetName);
+                        console.log("rangeAddress", rangeAddress);
+                        const targetYearMonthSheet = workbook.getWorksheet(sheetName) as Worksheet;
+                        console.log("targetYearMonthSheet", targetYearMonthSheet);
+                        if (targetYearMonthSheet && rangeAddress) {
+                            // 年月を設定
+                            const yearMonthCell = targetYearMonthSheet.getCell(rangeAddress);
+                            console.log("yearMonthCell", yearMonthCell);
+                            console.log("yearMonthCell.value", yearMonthCell.value);
+                            const timeValue = new Date(workReport.year, workReport.month);
+                            yearMonthCell.value = timeValue;
+                        }
+                    }
+                }
+            }
+
+            // 勤怠データの名前付き範囲を処理
+            if (templateConfig.rangeName) {
+                const rangeRanges = templateWorkbook.definedNames.getRanges(templateConfig.rangeName);
+                if (rangeRanges) {
+                    const [sheetName, rangeAddress] = parseRangeReference(rangeRanges.ranges[0]);
+                    if (sheetName) {
+                        const targetSheet = workbook.getWorksheet(sheetName) as Worksheet;
+
+                        if (targetSheet && rangeAddress) {
+                            const { startRow, startCol, endRow, endCol } = parseExcelRange(rangeAddress);
+                            const targetRange = {
+                                start: { row: startRow, col: startCol },
+                                end: { row: endRow, col: endCol }
+                            };
+
+                            // フォームデータを埋め込む
+                            let row = 0;
+                            Object.entries(formData).forEach(([date, values]) => {
+                                const currentRow = targetRange!.start.row + row;
+
+                                if (currentRow <= targetRange!.end.row) {
+                                    // 開始時間を設定 (Convert "HH:mm" to a Date object)
+                                    if (values.start && templateConfig.startTimeColumn) {
+                                        const [hours, minutes] = values.start.split(":").map(Number);
+                                        console.log("hours", hours);
+                                        console.log("minutes", minutes);
+                                        // Use a base date (e.g., 1899-12-30) so that Excel recognizes it as a time.
+                                        const timeValue = new Date(1899, 11, 30, hours, minutes);
+                                        const startCol = targetRange!.start.col + (parseInt(templateConfig.startTimeColumn, 10) - 1);
+                                        const cell = targetSheet.getCell(currentRow, startCol);
+                                        console.log("cell:start", cell);
+                                        console.log("timeValue:start", timeValue.toLocaleTimeString());
+                                        cell.value = values.start;
+                                    }
+
+                                    // 終了時間を設定 (Convert "HH:mm" to a Date object)
+                                    if (values.end && templateConfig.endTimeColumn) {
+                                        const [hours, minutes] = values.end.split(":").map(Number);
+                                        console.log("hours", hours);
+                                        console.log("minutes", minutes);
+                                        const timeValue = new Date(1899, 11, 30, hours, minutes);
+                                        const endCol = targetRange!.start.col + (parseInt(templateConfig.endTimeColumn, 10) - 1);
+                                        const cell = targetSheet.getCell(currentRow, endCol);
+                                        console.log("cell:end", cell);
+                                        console.log("timeValue:end", timeValue.toLocaleTimeString());
+                                        cell.value = values.end;
+                                    }
+
+                                    // 休憩時間は数値のままでOK
+                                    if (values.breakDuration && templateConfig.breakDurationColumn) {
+                                        const breakCol = targetRange!.start.col + (parseInt(templateConfig.breakDurationColumn, 10) - 1);
+                                        const cell = targetSheet.getCell(currentRow, breakCol);
+                                        console.log("cell:breakDuration", cell);
+                                        cell.value = parseInt(values.breakDuration, 10);
+                                    }
+
+                                    row++;
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            // ファイルを保存
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${workReport.year}年${workReport.month}月度作業報告書.xlsx`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            setSuccess("テンプレートからの作業報告書作成が完了しました");
+            setIsTemplateConfigModalOpen(false);
+        } catch (err) {
+            console.error("Error creating report from template:", err);
+            setError("テンプレートからの作業報告書作成に失敗しました");
+        }
+    };
+
+    // ヘルパー関数: Excel参照のパース
+    const parseRangeReference = (ref: string | undefined): [string | null, string | null] => {
+        // エクセルの参照をシート名と範囲アドレスに分解
+        // 例: 'Sheet1'!A1:C10 -> ['Sheet1', 'A1:C10']
+        if (!ref) {
+            return [null, null];
+        }
+
+        const match = ref.match(/(?:'([^']+)'|([^!]+))!(.+)/);
+        if (match) {
+            const sheetName = match[1] || match[2];
+            const address = match[3];
+            return [sheetName, address];
+        }
+        return [null, ref]; // シート名が指定されていない場合
+    };
+
+    // ヘルパー関数: Excelの範囲アドレスを解析
+    const parseExcelRange = (range: string) => {
+        // A1:C10や$A$1:$C$10のような形式から行と列の情報を抽出（絶対参照$記号に対応）
+        const match = range.match(/(\$?)([A-Z]+)(\$?)(\d+):(\$?)([A-Z]+)(\$?)(\d+)/);
+        if (match) {
+            const startCol = columnNameToNumber(match[2]); // $記号を除いた列名
+            const startRow = parseInt(match[4], 10);
+            const endCol = columnNameToNumber(match[6]); // $記号を除いた列名
+            const endRow = parseInt(match[8], 10);
+            return { startRow, startCol, endRow, endCol };
+        }
+
+        // 単一セル（例: A1または$A$1）の場合
+        const singleCellMatch = range.match(/(\$?)([A-Z]+)(\$?)(\d+)/);
+        if (singleCellMatch) {
+            const col = columnNameToNumber(singleCellMatch[2]); // $記号を除いた列名
+            const row = parseInt(singleCellMatch[4], 10);
+            return { startRow: row, startCol: col, endRow: row, endCol: col };
+        }
+
+        return { startRow: 1, startCol: 1, endRow: 100, endCol: 10 }; // デフォルト値
+    };
+
+    // ヘルパー関数: 列名を数値に変換 (A -> 1, B -> 2, ...)
+    const columnNameToNumber = (name: string): number => {
+        // $記号が含まれている場合は削除
+        const cleanName = name.replace('$', '');
+        let sum = 0;
+        for (let i = 0; i < cleanName.length; i++) {
+            sum = sum * 26 + (cleanName.charCodeAt(i) - 'A'.charCodeAt(0) + 1);
+        }
+        return sum;
+    };
+
     return (
         <LoadingOverlay isClient={isClient} isPending={isPending}>
             <div className="p-4">
-                <h1 className="text-xl font-bold mb-4">
+                <h1 className="text-xl font-bold mb-4 dark:text-white">
                     {contractName}の作業報告書
                 </h1>
                 {error && <FormError message={error} />}
                 {success && <FormSuccess message={success} />}
+
+                {/* テンプレート情報表示 */}
+                {templateFileName && (
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 mb-4 rounded-md border border-gray-300 dark:border-gray-700">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center">
+                                <span className="font-medium mr-2 dark:text-gray-200">テンプレート:</span>
+                                <span className="text-gray-900 dark:text-gray-200">{templateFileName}</span>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsTemplateConfigModalOpen(true)}
+                            >
+                                テンプレートから作業報告書作成
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
                 <Form {...attendanceForm}>
                     <form onSubmit={attendanceForm.handleSubmit(handleAttendanceSubmit)}>
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-semibold">出勤情報を入力</h2>
-                            <Button 
-                                type="button" 
-                                variant="outline" 
-                                onClick={() => setIsBulkEditModalOpen(true)}
-                            >
-                                一括入力
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsBulkEditModalOpen(true)}
+                                >
+                                    一括入力
+                                </Button>
+                                <div className="relative">
+                                    <input
+                                        type="file"
+                                        id="template-upload"
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        accept=".xltx,.xltm,.xlt,.xlsx,.xls,.xlsm"
+                                        onChange={uploadTemplate}
+                                    />
+                                    <Button type="button" variant="outline">
+                                        テンプレートをアップロード
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
-                        
+
                         {/* 列ヘッダー */}
                         <div className="flex items-center space-x-4 mb-2">
                             <span className="w-32"></span>
@@ -337,16 +603,13 @@ export default function WorkReportClient({
                         ))}
                         <div className="flex flex-col gap-2 mt-4">
                             <Button type="submit">出勤情報を送信</Button>
-                            <Button type="button" onClick={exportToExcel} variant="outline">
-                                出勤情報をExcelにエクスポート
-                            </Button>
                         </div>
                     </form>
                 </Form>
 
                 {/* 一括編集用モーダルダイアログ */}
-                <ModalDialog 
-                    isOpen={isBulkEditModalOpen} 
+                <ModalDialog
+                    isOpen={isBulkEditModalOpen}
                     title="勤怠情報の一括入力"
                 >
                     <div className="space-y-4">
@@ -468,6 +731,85 @@ export default function WorkReportClient({
                                 onClick={applyBulkEdit}
                             >
                                 適用
+                            </Button>
+                        </div>
+                    </div>
+                </ModalDialog>
+
+                {/* テンプレート設定用モーダルダイアログ */}
+                <ModalDialog
+                    isOpen={isTemplateConfigModalOpen}
+                    title="テンプレート設定"
+                >
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">年月の名前</label>
+                            <Input
+                                type="text"
+                                value={templateConfig.yearMonthName}
+                                onChange={(e) => updateTemplateConfig('yearMonthName', e.target.value)}
+                                placeholder="例:yearMonth"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">範囲の名前</label>
+                            <Input
+                                type="text"
+                                value={templateConfig.rangeName}
+                                onChange={(e) => updateTemplateConfig('rangeName', e.target.value)}
+                                placeholder="例: ReportRange"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Excelで定義された範囲の名前。空白の場合はデータが含まれる範囲全体を使用
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">開始時間の列</label>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    value={templateConfig.startTimeColumn}
+                                    onChange={(e) => updateTemplateConfig('startTimeColumn', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">終了時間の列</label>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    value={templateConfig.endTimeColumn}
+                                    onChange={(e) => updateTemplateConfig('endTimeColumn', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">休憩時間の列</label>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    value={templateConfig.breakDurationColumn}
+                                    onChange={(e) => updateTemplateConfig('breakDurationColumn', e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                            列の番号は、範囲の左端を1として相対的に指定してください。
+                        </p>
+
+                        <div className="flex justify-end space-x-2 mt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsTemplateConfigModalOpen(false)}
+                            >
+                                キャンセル
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={createReportFromTemplate}
+                            >
+                                OK
                             </Button>
                         </div>
                     </div>
