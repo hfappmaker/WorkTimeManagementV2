@@ -40,16 +40,15 @@ model User {
   accounts              Account[]
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
-  contracts             Contract[]            // 変更: userProjects → contracts
+  contracts             Contract[]
   auditLogs             AuditLog[]
 }
 
-// Project情報を含む Contract モデル
 model Contract {
   id                   String               @id @default(cuid())
-  name                 String               // Project から移行
-  startDate            DateTime             // Project から移行
-  endDate              DateTime?            // Project から移行
+  name                 String
+  startDate            DateTime
+  endDate              DateTime?
   userId               String
   user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   workReports          WorkReport[]
@@ -58,6 +57,7 @@ model Contract {
   settlementMax        Decimal?
   upperRate            Decimal?
   middleRate           Decimal?
+  closingDay           Int?                // 締め日(1～31)
 }
 
 model WorkReport {

@@ -131,6 +131,7 @@ export const ContractSchema = z.object({
   settlementMax: z.string().optional().transform(val => val === '' ? null : val),
   upperRate: z.string().optional().transform(val => val === '' ? null : val),
   middleRate: z.string().optional().transform(val => val === '' ? null : val),
+  closingDay: z.string().optional().transform(val => val === '' ? null : val),
 });
 
 export const ProjectMasterSchema = z.object({

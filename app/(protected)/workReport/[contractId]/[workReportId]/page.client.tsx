@@ -44,13 +44,14 @@ interface WorkReportClientProps {
     workReport: WorkReportData;
     attendances: AttendanceRecord[];
     contractName: string;
+    closingDay: number | null;
 }
 
 // Helper to generate a key for each day between startDate and endDate (inclusive)
-function generateAttendanceDefaults(year: number, month: number): AttendanceFormValues {
+function generateAttendanceDefaults(year: number, month: number, closingDay: number | null): AttendanceFormValues {
     const defaults: AttendanceFormValues = {};
-    const current = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 1);
+    const current = closingDay ? new Date(year, month - 1, closingDay + 1) : new Date(year, month - 1, 1);
+    const end = closingDay ? new Date(year, month, closingDay + 1) : new Date(year, month, 1);
     while (current < end) {
         const dateKey = current.toLocaleDateString('ja-JP');
         defaults[dateKey] = { start: "", end: "", breakDuration: "0" };
@@ -81,7 +82,8 @@ export default function WorkReportClient({
     workReportId,
     workReport,
     attendances,
-    contractName
+    contractName,
+    closingDay
 }: WorkReportClientProps) {
     const isClient = useIsClient();
     const [error, setError] = useState("");
@@ -101,7 +103,7 @@ export default function WorkReportClient({
     const [endDate, setEndDate] = useState<string>("");
 
     // Compute default attendance values for each day in the range…
-    const defaults = generateAttendanceDefaults(workReport.year, workReport.month);
+    const defaults = generateAttendanceDefaults(workReport.year, workReport.month, closingDay);
     // … then overwrite with attendance records fetched from the server.
     const initialAttendance = mergeAttendances(defaults, attendances);
 

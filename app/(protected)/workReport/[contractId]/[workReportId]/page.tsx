@@ -33,10 +33,11 @@ export default async function WorkReport({ params: { contractId, workReportId } 
       workReportId={workReportId}
       workReport={{
         year: workReport.year,
-        month: workReport.month
+        month: workReport.month,
       }}
       attendances={attendances}
       contractName={contract.name}
+      closingDay={contract.closingDay}
     />
   );
 }

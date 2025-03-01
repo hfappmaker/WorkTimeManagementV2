@@ -116,7 +116,10 @@ export async function updateWorkReportAttendances(
 
 export async function createContract(values: z.infer<typeof ContractSchema>) {
   await db.contract.create({
-    data: values,
+    data: {
+      ...values,
+      closingDay: values.closingDay ? parseInt(values.closingDay as string) : null,
+    },
   });
 } 
 
@@ -135,7 +138,10 @@ export async function searchContracts(userId: string, searchQuery: string) {
 export async function updateContract(id: string, values: z.infer<typeof ContractSchema>) {
   await db.contract.update({
     where: { id },
-    data: values,
+    data: {
+      ...values,
+      closingDay: values.closingDay ? parseInt(values.closingDay as string) : null,
+    },
   });
 } 
 

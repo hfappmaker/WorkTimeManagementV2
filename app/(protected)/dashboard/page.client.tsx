@@ -27,6 +27,7 @@ import FormError from '@/components/form-error';
 import FormSuccess from '@/components/form-success';
 import { useForm, UseFormReturn } from "react-hook-form";
 import { User } from "@prisma/client";
+import { useRouter } from 'next/navigation';
 
 // 型定義
 type Contract = {
@@ -41,6 +42,7 @@ type Contract = {
   middleRate: string | null;
   userId: string;
   userName: string | null;
+  closingDay: string | null;
 };
 
 type DialogType = "create" | "edit" | "delete" | "details" | null;
@@ -60,6 +62,7 @@ const formatContract = (contract: any): Contract => ({
   upperRate: contract.upperRate?.toString() || null,
   middleRate: contract.middleRate?.toString() || null,
   userName: null,
+  closingDay: contract.closingDay?.toString() || null,
 });
 
 // 共通のContractFormコンポーネント
@@ -80,9 +83,9 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Contract Name</FormLabel>
+              <FormLabel>契約名</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Enter contract name" />
+                <Input {...field} placeholder="契約名を入力" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -95,7 +98,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="startDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Start Date</FormLabel>
+              <FormLabel>開始日</FormLabel>
               <FormControl>
                 <DateInput
                   value={field.value}
@@ -113,12 +116,12 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="endDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>End Date (Optional)</FormLabel>
+              <FormLabel>終了日</FormLabel>
               <FormControl>
                 <DateInput
                   value={field.value}
                   onChange={field.onChange}
-                  placeholder="Select end date (optional)"
+                  placeholder="終了日を選択（任意）"
                 />
               </FormControl>
               <FormMessage />
@@ -132,7 +135,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="unitPrice"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Unit Price</FormLabel>
+              <FormLabel>単価</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 5000" />
               </FormControl>
@@ -147,7 +150,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="settlementMin"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Settlement Min</FormLabel>
+              <FormLabel>精算下限</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 100000" />
               </FormControl>
@@ -162,7 +165,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="settlementMax"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Settlement Max</FormLabel>
+              <FormLabel>精算上限</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 500000" />
               </FormControl>
@@ -177,7 +180,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="upperRate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Upper Rate</FormLabel>
+              <FormLabel>上限レート</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} type="number" step="0.01" placeholder="e.g. 1.5" />
               </FormControl>
@@ -192,7 +195,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="middleRate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Middle Rate</FormLabel>
+              <FormLabel>中間レート</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} type="number" step="0.01" placeholder="e.g. 1.0" />
               </FormControl>
@@ -201,9 +204,24 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           )}
         />
 
+        {/* Closing Day */}
+        <FormField
+          control={form.control}
+          name="closingDay"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>締め日</FormLabel>
+              <FormControl>
+                <Input {...field} value={field.value || ""} type="number" placeholder="e.g. 1" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="flex justify-end gap-2 mt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+            キャンセル
           </Button>
           <Button type="submit">{submitButtonText}</Button>
         </div>
@@ -221,6 +239,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   const isClient = useIsClient();
   const [isPending, startTransition] = useTransition();
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const router = useRouter();
 
   // ダイアログ管理
   const closeDialog = () => {
@@ -250,6 +269,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     settlementMax: "",
     upperRate: "",
     middleRate: "",
+    closingDay: undefined,
   };
 
   // Create用フォーム
@@ -277,6 +297,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         settlementMax: activeContract.settlementMax || "",
         upperRate: activeContract.upperRate || "",
         middleRate: activeContract.middleRate || "",
+        closingDay: activeContract.closingDay || undefined,
       });
     }
   }, [activeDialog, activeContract, editForm]);
@@ -292,7 +313,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   const onCreateContract = (data: z.infer<typeof ContractSchema>) => {
     startTransition(async () => {
       try {
-        await createContractAction({...data, userId: user.id});
+        await createContractAction({ ...data, userId: user.id });
         setSuccess(`契約 '${truncate(data.name, 20)}' を作成しました`);
         createForm.reset(defaultFormValues);
         closeDialog();
@@ -307,17 +328,17 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   // 契約編集処理
   const onEditContract = (data: z.infer<typeof ContractSchema>) => {
     if (!activeContract) return;
-    
+
     startTransition(async () => {
       try {
-        await updateContractAction(activeContract.id, {...data, userId: user.id});
-        setSuccess("Contract edited successfully");
+        await updateContractAction(activeContract.id, { ...data, userId: user.id });
+        setSuccess("契約を編集しました");
         closeDialog();
         editForm.reset(defaultFormValues);
         await refreshContracts();
       } catch (err) {
         console.error(err);
-        setError("Failed to update contract");
+        setError("契約の更新に失敗しました");
       }
     });
   };
@@ -328,13 +349,20 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     startTransition(async () => {
       try {
         await deleteContractAction(activeContract.id);
-        setSuccess("Contract deleted successfully");
+        setSuccess("契約を削除しました");
         closeDialog();
         await refreshContracts();
       } catch (err) {
         console.error(err);
-        setError("Failed to delete contract. It might have associated work reports.");
+        setError("契約の削除に失敗しました。関連する勤怠情報が存在する可能性があります。");
       }
+    });
+  };
+
+  // Link クリック時の遷移処理
+  const handleNavigation = (contractId: string) => {
+    startTransition(() => {
+      router.push(`/workReport/${contractId}`);
     });
   };
 
@@ -353,8 +381,8 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                 className="py-4"
               >
                 <div className="flex justify-between items-center">
-                  <Link href={`/workReport/${contract.id}`} className="hover:text-blue-500">
-                    <div className="flex flex-col">
+                    <div className="flex flex-col cursor-pointer hover:text-blue-500"
+                    onClick={(e) => handleNavigation(contract.id)}>
                       <Label className="truncate max-w-[300px]">
                         {truncate(contract.name, 30)}
                       </Label>
@@ -365,10 +393,10 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                         {contract.endDate ? contract.endDate.toLocaleDateString('ja-JP') : 'N/A'}
                       </div>
                     </div>
-                  </Link>
                   <Button
                     variant="outline"
                     size="sm"
+                    className="ml-4"
                     onClick={(e) => {
                       e.preventDefault();
                       openDetailsDialog(contract);
@@ -417,6 +445,9 @@ export default function DashboardClient({ user }: DashboardClientProps) {
               </div>
 
               <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setActiveDialog("edit")}>
+                  編集
+                </Button>
                 <Button variant="outline" onClick={closeDialog}>
                   閉じる
                 </Button>
