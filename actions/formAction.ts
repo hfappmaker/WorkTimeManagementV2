@@ -20,6 +20,7 @@ import { ContractSchema } from '@/schemas';
 interface AttendanceEntry {
   start: string;
   end: string;
+  breakDuration: string;
 }
 
 interface AttendanceFormValues {
@@ -63,8 +64,13 @@ export const deleteContractAction = async (id: string) => {
 };
 
 export const searchContractsAction = async (userId: string, searchQuery: string) => {
-  const contracts = await searchContracts(userId, searchQuery);
-  return contracts;
+  try {
+    const contracts = await searchContracts(userId, searchQuery);
+    return contracts ? JSON.parse(JSON.stringify(contracts)) : [];
+  } catch (error) {
+    console.error("Error searching contracts:", error);
+    throw new Error("Failed to search contracts");
+  }
 };
 
 export const createWorkReportAction = async (
@@ -96,8 +102,13 @@ export const getWorkReportsByContractIdAction = async (contractId: string) => {
 };
 
 export const getContractsByUserIdAction = async (userId: string) => {
-  const contracts = await getContractsByUserId(userId);
-  return contracts;
+  try {
+    const contracts = await getContractsByUserId(userId);
+    return contracts ? JSON.parse(JSON.stringify(contracts)) : [];
+  } catch (error) {
+    console.error("Error fetching contracts:", error);
+    throw new Error("Failed to fetch contracts");
+  }
 };
 
 export const getContractByIdAction = async (contractId: string) => {

@@ -1,3 +1,4 @@
+/// <reference types="react" />
 "use client";
 
 import React from "react";
@@ -9,7 +10,7 @@ interface LoadingOverlayProps {
   children: React.ReactNode;
 }
 
-export default function LoadingOverlay({ isClient, isPending, children }: LoadingOverlayProps) {
+const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isClient, isPending, children }) => {
   if (!isClient) return <Spinner />;
   return (
     <div className={`relative p-4 ${isPending ? "pointer-events-none opacity-50" : ""}`}>
@@ -21,4 +22,6 @@ export default function LoadingOverlay({ isClient, isPending, children }: Loadin
       )}
     </div>
   );
-}
+};
+
+export default LoadingOverlay;

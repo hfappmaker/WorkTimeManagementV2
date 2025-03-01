@@ -23,7 +23,8 @@ export default async function WorkReport({ params: { contractId, workReportId } 
   const attendances = rawAttendances.map(att => ({
     date: att.date.toISOString().split('T')[0],
     start: att.startTime ? att.startTime.toISOString().split('T')[1].substring(0, 5) : null,
-    end: att.endTime ? att.endTime.toISOString().split('T')[1].substring(0, 5) : null
+    end: att.endTime ? att.endTime.toISOString().split('T')[1].substring(0, 5) : null,
+    breakDuration: att.breakDuration ? att.breakDuration : null
   }));
   
   return (
