@@ -49,14 +49,14 @@ export async function getOpenedWorkReport(
 
 export async function createWorkReport(
   contractId: string,
-  startDate: Date,
-  endDate: Date
+  year: number,
+  month: number
 ) {
   const workReport = await db.workReport.create({
     data: {
       contractId: contractId,
-      startDate: startDate,
-      endDate: endDate,
+      year: year,
+      month: month,
     },
   });
 
@@ -134,3 +134,11 @@ export async function getContractsByUserId(userId: string) {
   });
   return contracts;
 }
+
+export async function getContractById(contractId: string) {
+  const contract = await db.contract.findUnique({
+    where: { id: contractId },
+  });
+  return contract;
+}
+

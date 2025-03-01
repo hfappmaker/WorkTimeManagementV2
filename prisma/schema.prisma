@@ -21,12 +21,6 @@ enum WorkReportStatus {
   REQUEST_REVISION // 修正依頼
 }
 
-enum WorkReportPeriodUnit {
-  DAY
-  WEEK
-  MONTH
-}
-
 enum AuditAction {
   CREATE
   UPDATE
@@ -64,15 +58,14 @@ model Contract {
   settlementMax        Decimal?
   upperRate            Decimal?
   middleRate           Decimal?
-  workReportPeriodUnit WorkReportPeriodUnit @default(MONTH) // WorkReport作成期間の単位
 }
 
 model WorkReport {
   id            String           @id @default(cuid())
-  startDate     DateTime
-  endDate       DateTime
+  year          Int
+  month         Int
   contract      Contract         @relation(fields: [contractId], references: [id])
-  contractId    String           // 変更: userProjectId → contractId
+  contractId    String           
   memo          String?
   attendances   Attendance[]
   status        WorkReportStatus @default(DRAFT)

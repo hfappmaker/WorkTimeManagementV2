@@ -24,8 +24,8 @@ export interface AttendanceFormValues {
 // Adjust the types as needed; here we assume workReport contains startDate and endDate as strings
 // and attendances is an array of records with a "date" field.
 interface WorkReportData {
-    startDate: string; // For example, in ISO format "2023-09-01"
-    endDate: string;
+    year: number;
+    month: number;
 }
 
 interface AttendanceRecord {
@@ -35,19 +35,20 @@ interface AttendanceRecord {
 }
 
 interface WorkReportClientProps {
-    userProjectId: string;
+    contractId: string;
     workReportId: string;
     workReport: WorkReportData;
     attendances: AttendanceRecord[];
+    contractName: string;
 }
 
 // Helper to generate a key for each day between startDate and endDate (inclusive)
-function generateAttendanceDefaults(startDate: string, endDate: string): AttendanceFormValues {
+function generateAttendanceDefaults(year: number, month: number): AttendanceFormValues {
     const defaults: AttendanceFormValues = {};
-    const current = new Date(startDate);
-    const end = new Date(endDate);
-    while (current <= end) {
-        const dateKey = current.toISOString().split("T")[0];
+    const current = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+    while (current < end) {
+        const dateKey = current.toLocaleDateString('ja-JP');
         defaults[dateKey] = { start: "", end: "" };
         current.setDate(current.getDate() + 1);
     }
@@ -68,10 +69,11 @@ function mergeAttendances(
 }
 
 export default function WorkReportClient({
-    userProjectId,
+    contractId,
     workReportId,
     workReport,
-    attendances
+    attendances,
+    contractName
 }: WorkReportClientProps) {
     const isClient = useIsClient();
     const [error, setError] = useState("");
@@ -79,7 +81,7 @@ export default function WorkReportClient({
     const [isPending, startTransition] = useTransition();
 
     // Compute default attendance values for each day in the range…
-    const defaults = generateAttendanceDefaults(workReport.startDate, workReport.endDate);
+    const defaults = generateAttendanceDefaults(workReport.year, workReport.month);
     // … then overwrite with attendance records fetched from the server.
     const initialAttendance = mergeAttendances(defaults, attendances);
 
@@ -91,7 +93,7 @@ export default function WorkReportClient({
     const handleAttendanceSubmit = (data: AttendanceFormValues) => {
         startTransition(async () => {
             try {
-                await updateWorkReportAction(userProjectId, workReportId, data);
+                await updateWorkReportAction(contractId, workReportId, data);
                 setSuccess("Attendance submitted successfully.");
                 setError("");
             } catch (err) {
@@ -135,7 +137,7 @@ export default function WorkReportClient({
             XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
             
             // Generate Excel file
-            const fileName = `Work_Report_${userProjectId}_${workReportId}.xlsx`;
+            const fileName = `Work_Report_${contractId}_${workReportId}.xlsx`;
             XLSX.writeFile(workbook, fileName);
             
             setSuccess("Excel export successful.");
@@ -169,13 +171,13 @@ export default function WorkReportClient({
         <LoadingOverlay isClient={isClient} isPending={isPending}>
             <div className="p-4">
                 <h1 className="text-xl font-bold mb-4">
-                    Work Report for Project {userProjectId}
+                    {contractName}の作業報告書
                 </h1>
                 {error && <FormError message={error} />}
                 {success && <FormSuccess message={success} />}
                 <Form {...attendanceForm}>
                     <form onSubmit={attendanceForm.handleSubmit(handleAttendanceSubmit)}>
-                        <h2 className="text-lg font-semibold mb-2">Enter Your Attendance</h2>
+                        <h2 className="text-lg font-semibold mb-2">出勤情報を入力</h2>
                         {Object.keys(attendanceForm.getValues()).map((day) => (
                             <div key={day} className="flex items-center space-x-4 mb-2">
                                 <span className="w-32">{day}</span>
@@ -184,7 +186,7 @@ export default function WorkReportClient({
                                     name={`${day}.start`}
                                     render={({ field, fieldState }) => (
                                         <FormItem>
-                                            <FormLabel>Start</FormLabel>
+                                            <FormLabel>出勤時間</FormLabel>
                                             <FormControl>
                                                 <Input {...field} type="time" id={`start-${day}`} />
                                             </FormControl>
@@ -197,7 +199,7 @@ export default function WorkReportClient({
                                     name={`${day}.end`}
                                     render={({ field, fieldState }) => (
                                         <FormItem>
-                                            <FormLabel>End</FormLabel>
+                                            <FormLabel>退勤時間</FormLabel>
                                             <FormControl>
                                                 <Input {...field} type="time" id={`end-${day}`} />
                                             </FormControl>
@@ -208,9 +210,9 @@ export default function WorkReportClient({
                             </div>
                         ))}
                         <div className="flex flex-col gap-2 mt-4">
-                            <Button type="submit">Submit Attendance</Button>
+                            <Button type="submit">出勤情報を送信</Button>
                             <Button type="button" onClick={exportToExcel} variant="outline">
-                                Export to Excel
+                                出勤情報をExcelにエクスポート
                             </Button>
                         </div>
                     </form>

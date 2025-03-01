@@ -44,7 +44,6 @@ type Contract = {
   settlementMax: string | null;
   upperRate: string | null;
   middleRate: string | null;
-  workReportPeriodUnit: string;
   userId: string;
   userName: string | null;
 };
@@ -82,7 +81,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
       settlementMax: "",
       upperRate: "",
       middleRate: "",
-      workReportPeriodUnit: "MONTH",
     },
   });
 
@@ -99,7 +97,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
       settlementMax: "",
       upperRate: "",
       middleRate: "",
-      workReportPeriodUnit: "MONTH",
     },
   });
 
@@ -115,7 +112,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         settlementMax: activeContract.settlementMax || "",
         upperRate: activeContract.upperRate || "",
         middleRate: activeContract.middleRate || "",
-        workReportPeriodUnit: activeContract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
       });
     }
   }, [activeDialog, activeContract, editForm]);
@@ -132,7 +128,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         settlementMax: contract.settlementMax?.toString() || null,
         upperRate: contract.upperRate?.toString() || null,
         middleRate: contract.middleRate?.toString() || null,
-        workReportPeriodUnit: contract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
         userName: null,
       })));
     });
@@ -156,7 +151,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
           settlementMax: contract.settlementMax?.toString() || null,
           upperRate: contract.upperRate?.toString() || null,
           middleRate: contract.middleRate?.toString() || null,
-          workReportPeriodUnit: contract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
           userName: null,
         })));
       } catch (err) {
@@ -187,7 +181,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
           settlementMax: contract.settlementMax?.toString() || null,
           upperRate: contract.upperRate?.toString() || null,
           middleRate: contract.middleRate?.toString() || null,
-          workReportPeriodUnit: contract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
           userName: null,
         })));
       } catch (err) {
@@ -216,7 +209,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
           settlementMax: contract.settlementMax?.toString() || null,
           upperRate: contract.upperRate?.toString() || null,
           middleRate: contract.middleRate?.toString() || null,
-          workReportPeriodUnit: contract.workReportPeriodUnit as "DAY" | "WEEK" | "MONTH",
           userName: null,
         })));
       } catch (err) {
@@ -301,11 +293,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                   <div>{activeContract.upperRate || 'なし'}</div>
                   <div className="font-semibold">中間レート</div>
                   <div>{activeContract.middleRate || 'なし'}</div>
-                  <div className="font-semibold">作業報告書期間単位</div>
-                  <div>
-                    {activeContract.workReportPeriodUnit === 'DAY' ? '日' :
-                      activeContract.workReportPeriodUnit === 'WEEK' ? '週' : '月'}
-                  </div>
                 </div>
               </div>
 
@@ -449,30 +436,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                 )}
               />
 
-              {/* Work Report Period Unit */}
-              <FormField
-                control={createForm.control}
-                name="workReportPeriodUnit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Report Period Unit</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select period unit" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="DAY">Day</SelectItem>
-                        <SelectItem value="WEEK">Week</SelectItem>
-                        <SelectItem value="MONTH">Month</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="flex justify-end gap-2 mt-4">
                 <Button type="button" variant="outline" onClick={() => setActiveDialog(null)}>
                   Cancel
@@ -610,30 +573,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                     <FormControl>
                       <Input {...field} value={field.value || ""} type="number" step="0.01" placeholder="e.g. 1.0" />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Work Report Period Unit */}
-              <FormField
-                control={editForm.control}
-                name="workReportPeriodUnit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Report Period Unit</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select period unit" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="DAY">Day</SelectItem>
-                        <SelectItem value="WEEK">Week</SelectItem>
-                        <SelectItem value="MONTH">Month</SelectItem>
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

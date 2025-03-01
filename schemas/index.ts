@@ -131,7 +131,6 @@ export const ContractSchema = z.object({
   settlementMax: z.string().optional().transform(val => val === '' ? null : val),
   upperRate: z.string().optional().transform(val => val === '' ? null : val),
   middleRate: z.string().optional().transform(val => val === '' ? null : val),
-  workReportPeriodUnit: z.enum(["DAY", "WEEK", "MONTH"]).default("MONTH"),
 });
 
 export const ProjectMasterSchema = z.object({

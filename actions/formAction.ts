@@ -9,6 +9,7 @@ import {
   updateWorkReportAttendances,
   getWorkReportsByContractId,
   getContractsByUserId,
+  getContractById,
 } from "@/data/work-time";
 import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
@@ -29,7 +30,7 @@ function getFormDataValue(formData: FormData, key: string): string {
   return formData.get(key)?.toString() ?? "";
 }
 
-const generateOllamaAction = async (
+export const generateOllamaAction = async (
   _prevResult: FormActionResult,
   formData: FormData
 ): Promise<FormActionResult> => {
@@ -45,63 +46,66 @@ const generateOllamaAction = async (
   return await generateWithOllama(deepSeekPrompt, config);
 };
 
-const createContractAction = async (values: z.infer<typeof ContractSchema>) => {
+export const createContractAction = async (values: z.infer<typeof ContractSchema>) => {
   await createContract(values);
   console.log("Contract created successfully");
   revalidatePath("/dashboard");
 };
 
-const updateContractAction = async (id: string, values: z.infer<typeof ContractSchema>) => {
+export const updateContractAction = async (id: string, values: z.infer<typeof ContractSchema>) => {
   await updateContract(id, values);
   revalidatePath("/contractMaster");
 };  
 
-const deleteContractAction = async (id: string) => {
+export const deleteContractAction = async (id: string) => {
   await deleteContract(id);
   revalidatePath("/contractMaster");
 };
 
-const searchContractsAction = async (userId: string, searchQuery: string) => {
+export const searchContractsAction = async (userId: string, searchQuery: string) => {
   const contracts = await searchContracts(userId, searchQuery);
   return contracts;
 };
 
-const createWorkReportAction = async (
-  userProjectId: string,
-  startDate: Date,
-  endDate: Date
+export const createWorkReportAction = async (
+  contractId: string,
+  year: number,
+  month: number
 ) => {
-  await createWorkReport(userProjectId, startDate, endDate);
-  revalidatePath("/workTimeReport/[userProjectId]");
+  await createWorkReport(contractId, year, month);
+  revalidatePath("/workReport/[contractId]");
 };
 
-const updateWorkReportAction = async (
-  userProjectId: string,
+export const updateWorkReportAction = async (
+  contractId: string,
   workReportId: string,
   attendance: AttendanceFormValues
 ) => {
   await updateWorkReportAttendances(workReportId, attendance);
-  revalidatePath("/workTimeReport/[userProjectId]/[workReportId]");
+  revalidatePath("/workReport/[contractId]/[workReportId]");
 };
 
-const getWorkReportsByContractIdAction = async (userProjectId: string) => {
-  const workReports = await getWorkReportsByContractId(userProjectId);
-  return workReports;
+export const getWorkReportsByContractIdAction = async (contractId: string) => {
+  try {
+    const reports = await getWorkReportsByContractId(contractId);
+    return reports ? JSON.parse(JSON.stringify(reports)) : [];
+  } catch (error) {
+    console.error("Error fetching work reports:", error);
+    throw new Error("Failed to fetch work reports");
+  }
 };
 
-const getContractsByUserIdAction = async (userId: string) => {
+export const getContractsByUserIdAction = async (userId: string) => {
   const contracts = await getContractsByUserId(userId);
   return contracts;
 };
 
-export { 
-  generateOllamaAction, 
-  createContractAction,
-  createWorkReportAction,
-  updateWorkReportAction,
-  updateContractAction,
-  deleteContractAction,
-  searchContractsAction,
-  getWorkReportsByContractIdAction,
-  getContractsByUserIdAction,
+export const getContractByIdAction = async (contractId: string) => {
+  try {
+    const contract = await getContractById(contractId);
+    return contract ? JSON.parse(JSON.stringify(contract)) : null;
+  } catch (error) {
+    console.error("Error fetching contract:", error);
+    throw new Error("Failed to fetch contract details");
+  }
 };

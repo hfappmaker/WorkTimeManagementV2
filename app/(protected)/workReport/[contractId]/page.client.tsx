@@ -5,29 +5,40 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { createWorkReportAction, getWorkReportsByContractIdAction } from '@/actions/formAction';
-import Link from 'next/link';
+import { createWorkReportAction, getWorkReportsByContractIdAction, getContractByIdAction } from '@/actions/formAction';
 import ModalDialog from '@/components/ModalDialog';
-import { DateInput } from '@/components/ui/date-input';
-import { WorkReport } from '@prisma/client';
+import { Contract, WorkReport } from '@prisma/client';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import { useIsClient } from '@/hooks/use-is-client';
+import { ComboBox } from '@/components/ui/select';
+import FormError from "@/components/form-error";
+import FormSuccess from "@/components/form-success";
+import { useRouter } from 'next/navigation';
+
 interface ReportFormValues {
-  startDate: string;
-  endDate: string;
+  year: string;
+  month: string;
 }
 
 export default function WorkTimeReportClient({ contractId }: { contractId: string }) {
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [workReports, setWorkReports] = useState<WorkReport[]>([]);
+  const [contract, setContract] = useState<Contract | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const isClient = useIsClient();
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  // 現在の年月を取得
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear().toString();
+  const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, '0');
 
   const reportForm = useForm<ReportFormValues>({
     defaultValues: {
-      startDate: '',
-      endDate: '',
+      year: currentYear,
+      month: currentMonth,
     },
   });
 
@@ -35,17 +46,33 @@ export default function WorkTimeReportClient({ contractId }: { contractId: strin
     defaultValues: { searchQuery: '' }
   });
 
-  // Fetch work time reports for the project (filtered by memo if provided)
+  // コントラクト情報を取得
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        let contractData = await getContractByIdAction(contractId);
+        if (contractData) {
+          // 念のための保険：クライアント側でも変換処理を行う
+          contractData = JSON.parse(JSON.stringify(contractData));
+          setContract(contractData);
+        }
+      } catch (error: any) {
+        setError(error.message || '契約情報の取得に失敗しました');
+      }
+    });
+  }, [contractId]);
+
+  // Fetch work time reports for the project
   const fetchReports = async () => {
     try {
       const data = await getWorkReportsByContractIdAction(contractId);
       if (data) {
         setWorkReports(data);
       } else {
-        setMessage('Failed to fetch reports');
+        setError('作業報告書の取得に失敗しました');
       }
     } catch (error: any) {
-      setMessage(error.message || 'Failed to fetch reports');
+      setError(error.message || '作業報告書の取得に失敗しました');
     }
   };
 
@@ -64,118 +91,177 @@ export default function WorkTimeReportClient({ contractId }: { contractId: strin
   };
 
   // Handle creation of a new work time report
-  const handleCreateReport = async (data: ReportFormValues) => {
-    const { startDate, endDate } = data;
-    if (new Date(startDate) > new Date(endDate)) {
-      setMessage('Start date cannot be after End date.');
-      return;
-    }
+  const handleCreateReport = async (values: ReportFormValues) => {
     try {
-      await createWorkReportAction(contractId, new Date(startDate), new Date(endDate));
-      setMessage('');
-      // Refresh report list after creation
-      await fetchReports();
-      // Close dialog and reset the creation form
-      setShowCreateDialog(false);
-      reportForm.reset();
+      if (!contract) {
+        setError('契約情報がありません');
+        return;
+      }
+
+      // 年と月が文字列の場合は数値に変換する
+      const yearInt = parseInt(values.year);
+      const monthInt = parseInt(values.month);
+
+      startTransition(async () => {
+        await createWorkReportAction(contractId, yearInt, monthInt);
+        setSuccess('作業報告書を作成しました');
+        // Refresh report list after creation
+        await fetchReports();
+        // Close dialog and reset the creation form
+        setShowCreateDialog(false);
+        reportForm.reset({
+          year: currentYear,
+          month: currentMonth,
+        });
+      });
     } catch (error: any) {
-      setMessage(error.message || 'Failed to create report');
+      setError(error.message || '作業報告書の作成に失敗しました');
     }
+  };
+
+  // 年の選択肢を生成 (現在年から前後2年) - ComboBox用のフォーマットに変更
+  const yearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 5 }, (_, i) => ({
+      value: (currentYear - 2 + i).toString(),
+      label: `${currentYear - 2 + i}年`
+    }));
+  };
+
+  // 月の選択肢を生成（ComboBox用にオブジェクト形式で）
+  const monthOptions = [
+    { value: '01', label: '1月' },
+    { value: '02', label: '2月' },
+    { value: '03', label: '3月' },
+    { value: '04', label: '4月' },
+    { value: '05', label: '5月' },
+    { value: '06', label: '6月' },
+    { value: '07', label: '7月' },
+    { value: '08', label: '8月' },
+    { value: '09', label: '9月' },
+    { value: '10', label: '10月' },
+    { value: '11', label: '11月' },
+    { value: '12', label: '12月' },
+  ];
+
+  // Link クリック時の遷移処理
+  const handleNavigation = (workReportId: string) => {
+    startTransition(() => {
+      router.push(`/workReport/${contractId}/${workReportId}`);
+    });
   };
 
   return (
     <LoadingOverlay isClient={isClient} isPending={isPending}>
       <div className="p-4">
         <h1 className="text-xl font-bold mb-4">
-          Work Time Reports for Contract {contractId}
-      </h1>
-      {message && <p className="mb-4 text-red-500">{message}</p>}
+          作業報告書一覧（{contract?.name}）
+        </h1>
+        {error && <FormError message={error} />}
+        {success && <FormSuccess message={success} />}
+        <div className="flex items-center mb-4">
+          <Form {...searchForm}>
+            <form
+              onSubmit={searchForm.handleSubmit(onSearchSubmit)}
+              className="flex-grow flex items-center"
+            >
+              <FormField
+                control={searchForm.control}
+                name="searchQuery"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="作業報告書を検索"
+                        className="mr-2"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">検索</Button>
+            </form>
+          </Form>
+          <Button onClick={() => setShowCreateDialog(true)} className="ml-4">
+            作業報告書を作成
+          </Button>
+        </div>
 
-      <div className="flex items-center mb-4">
-        <Form {...searchForm}>
-          <form
-            onSubmit={searchForm.handleSubmit(onSearchSubmit)}
-            className="flex-grow flex items-center"
-          >
-            <FormField
-              control={searchForm.control}
-              name="searchQuery"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Search work reports"
-                      className="mr-2"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <Button type="submit">Search</Button>
-          </form>
-        </Form>
-        <Button onClick={() => setShowCreateDialog(true)} className="ml-4">
-          Create Work Time Report
-        </Button>
-      </div>
-
-      {workReports.length === 0 ? (
-        <p>No work reports found.</p>
-      ) : (
-        <ul className="divide-y divide-gray-200">
-          {workReports.map((workReport) => (
-            <li key={workReport.id} className="py-2">
-              <Link href={`/workReport/${contractId}/${workReport.id}`}>
-                <div className="cursor-pointer hover:text-blue-500">
-                  WorkReport: {workReport.startDate.toLocaleDateString()} - {workReport.endDate.toLocaleDateString()} {workReport.memo ? `(${workReport.memo})` : ''}
+        {workReports.length === 0 ? (
+          <p>作業報告書がありません</p>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {workReports.map((workReport) => (
+              <li key={workReport.id} className="py-2">
+                <div 
+                  onClick={() => handleNavigation(workReport.id)} 
+                  className="cursor-pointer hover:text-blue-500"
+                >
+                  {workReport.year}年{workReport.month}月分
                 </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+              </li>
+            ))}
+          </ul>
+        )}
 
-      {showCreateDialog && (
-        <ModalDialog isOpen={showCreateDialog} title="Create Work Time Report">
+        <ModalDialog isOpen={showCreateDialog} title="作業報告書を作成">
           <Form {...reportForm}>
             <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
-              <FormField
-                control={reportForm.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="start-date">Start Date</FormLabel>
-                    <FormControl>
-                      <DateInput id="start-date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={reportForm.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="end-date">End Date</FormLabel>
-                    <FormControl>
-                      <DateInput id="end-date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={reportForm.control}
+                  name="year"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>年</FormLabel>
+                      <FormControl>
+                        <ComboBox
+                          {...field}
+                          name="year"
+                          options={yearOptions()}
+                          defaultValue={currentYear}
+                          placeholder="年を選択"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={reportForm.control}
+                  name="month"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>月</FormLabel>
+                      <FormControl>
+                        <ComboBox
+                          {...field}
+                          name="month"
+                          options={monthOptions}
+                          defaultValue={currentMonth}
+                          placeholder="月を選択"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <div className="flex justify-end gap-2">
                 <Button type="button" onClick={() => setShowCreateDialog(false)}>
-                  Cancel
+                  キャンセル
                 </Button>
-                <Button type="submit">Create</Button>
+                <Button type="submit">作成</Button>
               </div>
             </form>
           </Form>
         </ModalDialog>
-      )}
       </div>
     </LoadingOverlay>
   );
