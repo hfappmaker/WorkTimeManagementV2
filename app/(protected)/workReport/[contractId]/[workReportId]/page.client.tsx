@@ -309,7 +309,7 @@ export default function WorkReportClient({
                     row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                         const newCell = newRow.getCell(colNumber);
                         newCell.style = { ...cell.style };
-                    }); 
+                    });
                 });
             }
 
@@ -428,6 +428,8 @@ export default function WorkReportClient({
 
             setSuccess("テンプレートからの作業報告書作成が完了しました");
             setIsTemplateConfigModalOpen(false);
+            // 関数の最後で、生成したExcelファイルのBlobを返す
+            return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         } catch (err) {
             console.error("Error creating report from template:", err);
             setError("テンプレートからの作業報告書作成に失敗しました");
@@ -485,6 +487,52 @@ export default function WorkReportClient({
         return sum;
     };
 
+    // メール送信用の関数を追加
+    const createReportAndSendEmail = async () => {
+        try {
+
+            startTransition(async () => {
+                // テンプレートから作業報告書を作成
+                const blob = await createReportFromTemplate();
+                if (!blob) {
+                    setError("作業報告書の作成に失敗しました");
+                    return;
+                }
+
+                // 作成したファイルを保存
+                const fileName = `作業報告書_${workReport.year}年${workReport.month}月_${contractName}.xlsx`;
+                const url = URL.createObjectURL(blob);
+
+                // ファイルのダウンロード
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                // メーラーを起動
+                setTimeout(() => {
+                    const recipient = "example@example.com"; // 送信先
+                    const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${contractName}`);
+                    const body = encodeURIComponent(`
+${contractName} 様
+
+お疲れ様です。
+
+${workReport.year}年${workReport.month}月分の作業報告書を添付いたします。
+ご確認のほど、よろしくお願いいたします。
+
+`);
+                    window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+                }, 1000); // ダウンロードが完了するのを少し待ってからメーラーを起動
+            });
+        } catch (error) {
+            console.error("作業報告書の作成に失敗しました", error);
+            setError("作業報告書の作成に失敗しました");
+        }
+    };
+
     return (
         <LoadingOverlay isClient={isClient} isPending={isPending}>
             <div className="p-4">
@@ -502,16 +550,28 @@ export default function WorkReportClient({
                                 <span className="font-medium mr-2 dark:text-gray-200">テンプレート:</span>
                                 <span className="text-gray-900 dark:text-gray-200">{templateFileName}</span>
                             </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsTemplateConfigModalOpen(true)}
-                            >
-                                テンプレートから作業報告書作成
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsTemplateConfigModalOpen(true)}
+                                >
+                                    テンプレートから作業報告書作成
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={createReportAndSendEmail}
+                                    disabled={!templateFileName}
+                                >
+                                    作業報告書をメールで送信
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 )}
+
+
 
                 <Form {...attendanceForm}>
                     <form onSubmit={attendanceForm.handleSubmit(handleAttendanceSubmit)}>

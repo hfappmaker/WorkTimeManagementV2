@@ -4,18 +4,20 @@ import {
   createContract,
   updateContract,
   deleteContract,
-  createWorkReport,
   searchContracts,
-  updateWorkReportAttendances,
-  getWorkReportsByContractId,
   getContractsByUserId,
   getContractById,
-} from "@/data/work-time";
+} from "@/data/contract";
+import { createWorkReport, 
+  updateWorkReportAttendances, 
+  getWorkReportsByContractId } from "@/data/work-report";
+
 import { revalidatePath } from "next/cache";
 import { FormActionResult } from '@/models/form-action-result';
 import { generateWithOllama } from '@/lib/ai';
 import { z } from 'zod';
-import { ContractSchema } from '@/schemas';
+import { ClientSchema, ContractSchema } from '@/schemas';
+import { getClientById, getClientsByUserId, createClient, updateClient, deleteClient } from "@/data/client";
 
 interface AttendanceEntry {
   start: string;
@@ -120,3 +122,43 @@ export const getContractByIdAction = async (contractId: string) => {
     throw new Error("Failed to fetch contract details");
   }
 };
+
+export const getClientByIdAction = async (clientId: string) => {
+  try {
+    const client = await getClientById(clientId);
+    return client ? JSON.parse(JSON.stringify(client)) : null;
+  } catch (error) {
+    console.error("Error fetching client:", error);
+    throw new Error("Failed to fetch client details");
+  }
+};
+
+export const getClientsByUserIdAction = async (userId: string) => {
+  try {
+    const clients = await getClientsByUserId(userId);
+    return clients ? JSON.parse(JSON.stringify(clients)) : [];
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+    throw new Error("Failed to fetch clients");
+  }
+};
+
+export const createClientAction = async (values: z.infer<typeof ClientSchema>) => {
+  await createClient(values);
+  revalidatePath("/client");
+};
+
+export const updateClientAction = async (id: string, values: z.infer<typeof ClientSchema>) => {
+  await updateClient(id, values);
+  revalidatePath("/client");
+};
+
+export const deleteClientAction = async (id: string) => {
+  await deleteClient(id);
+  revalidatePath("/client");
+};
+
+
+
+
+

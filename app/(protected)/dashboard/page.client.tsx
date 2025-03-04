@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Button } from "@/components/ui/button";
 import { truncate } from "@/lib/utils";
 import ModalDialog from "@/components/ModalDialog";
-import { createContractAction, deleteContractAction, getContractsByUserIdAction, updateContractAction } from '@/actions/formAction';
+import { createContractAction, 
+  deleteContractAction, 
+  getContractsByUserIdAction, 
+  updateContractAction } from '@/actions/formAction';
 import { ContractSchema } from '@/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -381,18 +383,18 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                 className="py-4"
               >
                 <div className="flex justify-between items-center">
-                    <div className="flex flex-col cursor-pointer hover:text-blue-500"
+                  <div className="flex flex-col cursor-pointer hover:text-blue-500"
                     onClick={(e) => handleNavigation(contract.id)}>
-                      <Label className="truncate max-w-[300px]">
-                        {truncate(contract.name, 30)}
-                      </Label>
-                      <div className="self-end text-right text-xs mt-1 flex justify-end">
-                        <span className="font-semibold">開始日:</span>{' '}
-                        {contract.startDate.toLocaleDateString('ja-JP')}
-                        <span className="font-semibold ml-2">終了日:</span>{' '}
-                        {contract.endDate ? contract.endDate.toLocaleDateString('ja-JP') : 'N/A'}
-                      </div>
+                    <Label className="truncate max-w-[300px]">
+                      {truncate(contract.name, 30)}
+                    </Label>
+                    <div className="self-end text-right text-xs mt-1 flex justify-end">
+                      <span className="font-semibold">開始日:</span>{' '}
+                      {contract.startDate.toLocaleDateString('ja-JP')}
+                      <span className="font-semibold ml-2">終了日:</span>{' '}
+                      {contract.endDate ? contract.endDate.toLocaleDateString('ja-JP') : 'N/A'}
                     </div>
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"

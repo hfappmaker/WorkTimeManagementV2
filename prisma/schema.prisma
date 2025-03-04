@@ -41,45 +41,58 @@ model User {
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
   contracts             Contract[]
+  clients               Client[]
   auditLogs             AuditLog[]
 }
 
+model Client {
+  id           String     @id @default(cuid())
+  name         String
+  createUserId String
+  createUser   User       @relation(fields: [createUserId], references: [id], onDelete: Cascade)
+  contracts    Contract[]
+}
+
 model Contract {
-  id                   String               @id @default(cuid())
-  name                 String
-  startDate            DateTime
-  endDate              DateTime?
-  userId               String
-  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workReports          WorkReport[]
-  unitPrice            Decimal?
-  settlementMin        Decimal?
-  settlementMax        Decimal?
-  upperRate            Decimal?
-  middleRate           Decimal?
-  closingDay           Int?                // 締め日(1～31)
+  id            String       @id @default(cuid())
+  name          String
+  startDate     DateTime
+  endDate       DateTime?
+  clientId      String
+  client        Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workReports   WorkReport[]
+  unitPrice     Decimal? // 月単価
+  settlementMin Decimal? // 精算幅下限
+  settlementMax Decimal? // 精算幅上限
+  upperRate     Decimal? // 超過時間単価
+  lowerRate     Decimal? // 控除時間単価
+  middleRate    Decimal? // 中間割の時間単価
+  closingDay    Int? // 締め日(1～31)
 }
 
 model WorkReport {
-  id            String           @id @default(cuid())
-  year          Int
-  month         Int
-  contract      Contract         @relation(fields: [contractId], references: [id])
-  contractId    String           
-  memo          String?
-  attendances   Attendance[]
-  status        WorkReportStatus @default(DRAFT)
+  id          String           @id @default(cuid())
+  year        Int
+  month       Int
+  contract    Contract         @relation(fields: [contractId], references: [id])
+  contractId  String
+  memo        String?
+  attendances Attendance[]
+  status      WorkReportStatus @default(DRAFT)
 }
 
 model Attendance {
   id            String     @id @default(cuid())
   date          DateTime
-  startTime     DateTime?  @db.Time    // 時刻のみ（例：HH:mm:ss）, 入力がない場合は null
-  endTime       DateTime?  @db.Time    // 時刻のみ（例：HH:mm:ss）, 入力がない場合は null
+  startTime     DateTime?  @db.Time // 時刻のみ（例：HH:mm:ss）, 入力がない場合は null
+  endTime       DateTime?  @db.Time // 時刻のみ（例：HH:mm:ss）, 入力がない場合は null
   breakDuration Int        @default(0) // 休憩時間（分）
   memo          String?
   workReport    WorkReport @relation(fields: [workReportId], references: [id], onDelete: Cascade)
   workReportId  String
+
   @@unique([date, workReportId])
 }
 

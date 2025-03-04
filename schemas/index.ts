@@ -123,6 +123,7 @@ export const MonthlyAttendanceSchema = z.object({
 
 export const ContractSchema = z.object({
   userId: z.string().min(1, { message: "User is required" }),
+  clientId: z.string().min(1, { message: "Client is required" }),
   name: z.string().min(1, { message: "Contract name is required" }),
   startDate: z.date({ required_error: "Start date is required" }),
   endDate: z.date().optional(),
@@ -134,9 +135,8 @@ export const ContractSchema = z.object({
   closingDay: z.string().optional().transform(val => val === '' ? null : val),
 });
 
-export const ProjectMasterSchema = z.object({
-  projectName: z.string().min(1, {
-    message: "Please enter a project name, required.",
-  }),
+export const ClientSchema = z.object({
+  userId: z.string().min(1, { message: "User is required" }),
+  name: z.string().min(1, { message: "Client name is required" }),
 });
 

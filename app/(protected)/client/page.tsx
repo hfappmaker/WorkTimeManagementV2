@@ -1,17 +1,11 @@
-"use client";
+import ClientClient from "./page.client";
+import { redirect } from "next/navigation";
+import { currentUser } from "@/lib/auth";
 
-import UserInfo from "@/components/user-info";
-import { useCurrentUser } from "@/hooks/use-current-user";
-
-const ClientPage = () => {
-  const user = useCurrentUser();
-
-  return (
-    <UserInfo
-      user={user}
-      label="Client Page Example"
-    />
-  );
-};
-
-export default ClientPage;
+export default async function Client() {
+  const user = await currentUser();
+  if (!user) {
+    redirect("/sign-in");
+  }
+  return <ClientClient userId={user.id} />;
+}
