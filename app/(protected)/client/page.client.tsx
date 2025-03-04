@@ -50,7 +50,7 @@ export default function ClientClient({ userId }: { userId: string }) {
       console.error(error); 
     } finally {
       setLoading(false);
-    }
+    } 
   };
 
   const handleCreateClient = async () => {
@@ -60,7 +60,7 @@ export default function ClientClient({ userId }: { userId: string }) {
     }
 
     try {
-      await createClientAction({ userId, name: newClientName });
+      await createClientAction({ createUserId: userId, name: newClientName });
       
       toast.success("クライアントを作成しました");
       fetchClients();
@@ -83,7 +83,7 @@ export default function ClientClient({ userId }: { userId: string }) {
     }
 
     try {
-      await updateClientAction(selectedClient.id, { userId, name: editClientName });
+      await updateClientAction(selectedClient.id, { createUserId: userId, name: editClientName });
       
       toast.success("クライアント情報を更新しました");
       fetchClients();

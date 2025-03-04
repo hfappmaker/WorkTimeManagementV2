@@ -136,7 +136,7 @@ export const ContractSchema = z.object({
 });
 
 export const ClientSchema = z.object({
-  userId: z.string().min(1, { message: "User is required" }),
+  createUserId: z.string().min(1, { message: "User is required" }),
   name: z.string().min(1, { message: "Client name is required" }),
 });
 
