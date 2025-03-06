@@ -131,6 +131,7 @@ export const ContractSchema = z.object({
   settlementMin: z.string().optional().transform(val => val === '' ? null : val),
   settlementMax: z.string().optional().transform(val => val === '' ? null : val),
   upperRate: z.string().optional().transform(val => val === '' ? null : val),
+  lowerRate: z.string().optional().transform(val => val === '' ? null : val),
   middleRate: z.string().optional().transform(val => val === '' ? null : val),
   closingDay: z.string().optional().transform(val => val === '' ? null : val),
 });

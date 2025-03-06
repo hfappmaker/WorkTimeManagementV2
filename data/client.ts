@@ -12,9 +12,6 @@ export async function getClientsByUserId(userId: string) {
 export async function getClientById(clientId: string) {
   const client = await db.client.findUnique({
     where: { id: clientId },
-    include: {
-      contracts: true,
-    },
   });
   return client;
 }

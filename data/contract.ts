@@ -9,6 +9,13 @@ export async function getContractsByUserId(userId: string) {
   return contracts;
 }
 
+export async function getContractsByClientId(clientId: string) {
+  const contracts = await db.contract.findMany({
+    where: { clientId: clientId },
+  });
+  return contracts;
+}
+
 export async function getContractById(contractId: string) {
   const contract = await db.contract.findUnique({
     where: { id: contractId },

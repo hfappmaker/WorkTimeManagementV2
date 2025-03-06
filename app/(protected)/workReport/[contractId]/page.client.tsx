@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { createWorkReportAction, getWorkReportsByContractIdAction, getContractByIdAction } from '@/actions/formAction';
-import ModalDialog from '@/components/ModalDialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Contract, WorkReport } from '@prisma/client';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import { useIsClient } from '@/hooks/use-is-client';
@@ -205,63 +205,66 @@ export default function WorkTimeReportClient({ contractId }: { contractId: strin
           </ul>
         )}
 
-        <ModalDialog isOpen={showCreateDialog} title="作業報告書を作成">
-          <Form {...reportForm}>
-            <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={reportForm.control}
-                  name="year"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>年</FormLabel>
-                      <FormControl>
-                        <ComboBox
-                          {...field}
-                          name="year"
-                          options={yearOptions()}
-                          defaultValue={currentYear}
-                          placeholder="年を選択"
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={reportForm.control}
-                  name="month"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>月</FormLabel>
-                      <FormControl>
-                        <ComboBox
-                          {...field}
-                          name="month"
-                          options={monthOptions}
-                          defaultValue={currentMonth}
-                          placeholder="月を選択"
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent>
+            <DialogTitle>作業報告書を作成</DialogTitle>
+            <Form {...reportForm}>
+              <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={reportForm.control}
+                    name="year"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>年</FormLabel>
+                        <FormControl>
+                          <ComboBox
+                            {...field}
+                            name="year"
+                            options={yearOptions()}
+                            defaultValue={currentYear}
+                            placeholder="年を選択"
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={reportForm.control}
+                    name="month"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>月</FormLabel>
+                        <FormControl>
+                          <ComboBox
+                            {...field}
+                            name="month"
+                            options={monthOptions}
+                            defaultValue={currentMonth}
+                            placeholder="月を選択"
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              <div className="flex justify-end gap-2">
-                <Button type="button" onClick={() => setShowCreateDialog(false)}>
-                  キャンセル
-                </Button>
-                <Button type="submit">作成</Button>
-              </div>
-            </form>
-          </Form>
-        </ModalDialog>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" onClick={() => setShowCreateDialog(false)}>
+                    キャンセル
+                  </Button>
+                  <Button type="submit">作成</Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </LoadingOverlay>
   );

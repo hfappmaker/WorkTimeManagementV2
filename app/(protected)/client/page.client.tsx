@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { getClientsByUserIdAction, createClientAction, updateClientAction, deleteClientAction } from "@/actions/formAction";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import { useIsClient } from "@/hooks/use-is-client";
+import { useRouter } from "next/navigation";
+import { truncate } from "@/lib/utils";
 interface Client {
   id: string;
   name: string;
@@ -37,6 +39,7 @@ export default function ClientClient({ userId }: { userId: string }) {
 
   const [newClientName, setNewClientName] = useState("");
   const [editClientName, setEditClientName] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     startTransition(async () => {
@@ -138,6 +141,13 @@ export default function ClientClient({ userId }: { userId: string }) {
     setShowDetailsModal(false);
   };
 
+  // Link クリック時の遷移処理
+  const handleNavigation = (clientId: string) => {
+    startTransition(() => {
+      router.push(`/client/${clientId}`);
+    });
+  };
+
   return (
     <LoadingOverlay isClient={isClient} isPending={isPending}>
       <div className="p-6 space-y-6">
@@ -146,11 +156,7 @@ export default function ClientClient({ userId }: { userId: string }) {
             <CardTitle>クライアント一覧</CardTitle>
           </CardHeader>
           <CardContent>
-            {isPending ? (
-              <div className="flex justify-center p-4">
-                <p>読み込み中...</p>
-              </div>
-            ) : clients.length === 0 ? (
+            {clients.length === 0 ? (
               <div className="text-center p-4">
                 <p className="text-muted-foreground">クライアントがありません</p>
               </div>
@@ -161,9 +167,11 @@ export default function ClientClient({ userId }: { userId: string }) {
                     key={client.id}
                     className="flex items-center justify-between p-3 border rounded-md"
                   >
-                    <Link href={`/client/${client.id}`} className="font-medium hover:underline">
-                      {client.name}
-                    </Link>
+                    <div className="font-medium hover:underline" onClick={() => handleNavigation(client.id)}>
+                      <Label className="truncate max-w-[300px]">
+                        {truncate(client.name, 30)}
+                      </Label>
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"

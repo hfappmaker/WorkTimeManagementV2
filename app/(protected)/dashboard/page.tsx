@@ -1,11 +1,14 @@
-import { User } from "@prisma/client";
-import { currentUser } from "@/lib/auth";
-import DashboardClient from "./page.client";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import { useIsClient } from "@/hooks/use-is-client";
 
-export default async function DashboardPage() {
-    const user = await currentUser() as User;
+export default function DashboardPage() {
+    const isClient = useIsClient();
 
-    return (    
-        <DashboardClient user={user} />
+    return (
+        <LoadingOverlay isClient={isClient} isPending={false}>
+            <div>
+                <h1>Dashboard</h1>
+            </div>
+        </LoadingOverlay>
     )
 }

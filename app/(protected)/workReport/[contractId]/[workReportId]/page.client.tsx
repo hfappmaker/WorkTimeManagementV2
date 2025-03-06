@@ -5,13 +5,14 @@ import { useState, useTransition } from "react";
 import { updateWorkReportAction } from "@/actions/formAction";
 import { FormControl, FormField, FormItem, FormMessage, Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useIsClient } from "@/hooks/use-is-client";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import ExcelJS, { Worksheet } from 'exceljs';
-import ModalDialog from "@/components/ModalDialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface AttendanceEntry {
@@ -137,7 +138,7 @@ export default function WorkReportClient({
     const handleAttendanceSubmit = (data: AttendanceFormValues) => {
         startTransition(async () => {
             try {
-                await updateWorkReportAction(contractId, workReportId, data);
+                await updateWorkReportAction(workReportId, data);
                 setSuccess("Attendance submitted successfully.");
                 setError("");
             } catch (err) {
@@ -586,7 +587,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                                     一括入力
                                 </Button>
                                 <div className="relative">
-                                    <input
+                                    <Input
                                         type="file"
                                         id="template-upload"
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -668,38 +669,37 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                 </Form>
 
                 {/* 一括編集用モーダルダイアログ */}
-                <ModalDialog
-                    isOpen={isBulkEditModalOpen}
-                    title="勤怠情報の一括入力"
-                >
+                <Dialog open={isBulkEditModalOpen} onOpenChange={setIsBulkEditModalOpen}>
+                  <DialogContent>
+                    <DialogTitle>勤怠情報の一括入力</DialogTitle>
                     <div className="space-y-4">
                         <div>
                             <h3 className="text-sm font-medium mb-2">適用範囲</h3>
                             <div className="flex space-x-4">
-                                <label className="flex items-center space-x-2">
-                                    <input
+                                <Label className="flex items-center space-x-2">
+                                    <Input
                                         type="radio"
                                         checked={dateRangeMode === "all"}
                                         onChange={() => setDateRangeMode("all")}
                                     />
                                     <span>全日</span>
-                                </label>
-                                <label className="flex items-center space-x-2">
-                                    <input
+                                </Label>
+                                <Label className="flex items-center space-x-2">
+                                    <Input
                                         type="radio"
                                         checked={dateRangeMode === "weekday"}
                                         onChange={() => setDateRangeMode("weekday")}
                                     />
                                     <span>曜日指定</span>
-                                </label>
-                                <label className="flex items-center space-x-2">
-                                    <input
+                                </Label>
+                                <Label className="flex items-center space-x-2">
+                                    <Input
                                         type="radio"
                                         checked={dateRangeMode === "custom"}
                                         onChange={() => setDateRangeMode("custom")}
                                     />
                                     <span>期間指定</span>
-                                </label>
+                                </Label>
                             </div>
                         </div>
 
@@ -715,7 +715,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                                                 checked={selectedDays.includes(index)}
                                                 onCheckedChange={() => toggleDay(index)}
                                             />
-                                            <label htmlFor={`day-${index}`}>{day}</label>
+                                            <Label htmlFor={`day-${index}`}>{day}</Label>
                                         </div>
                                     ))}
                                 </div>
@@ -726,7 +726,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                         {dateRangeMode === "custom" && (
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">開始日</label>
+                                    <Label className="block mb-1">開始日</Label>
                                     <Input
                                         type="date"
                                         value={startDate}
@@ -734,7 +734,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">終了日</label>
+                                    <Label className="block mb-1">終了日</Label>
                                     <Input
                                         type="date"
                                         value={endDate}
@@ -748,7 +748,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                             <h3 className="text-sm font-medium">勤怠情報</h3>
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">出勤時間</label>
+                                    <Label className="block mb-1">出勤時間</Label>
                                     <Input
                                         type="time"
                                         value={bulkStartTime}
@@ -757,7 +757,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">退勤時間</label>
+                                    <Label className="block mb-1">退勤時間</Label>
                                     <Input
                                         type="time"
                                         value={bulkEndTime}
@@ -766,7 +766,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">休憩時間（分）</label>
+                                    <Label className="block mb-1">休憩時間（分）</Label>
                                     <Input
                                         type="number"
                                         min="0"
@@ -794,16 +794,16 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                             </Button>
                         </div>
                     </div>
-                </ModalDialog>
+                  </DialogContent>
+                </Dialog>
 
                 {/* テンプレート設定用モーダルダイアログ */}
-                <ModalDialog
-                    isOpen={isTemplateConfigModalOpen}
-                    title="テンプレート設定"
-                >
+                <Dialog open={isTemplateConfigModalOpen} onOpenChange={setIsTemplateConfigModalOpen}>
+                  <DialogContent>
+                    <DialogTitle>テンプレート設定</DialogTitle>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">年月の名前</label>
+                            <Label className="block mb-1">年月の名前</Label>
                             <Input
                                 type="text"
                                 value={templateConfig.yearMonthName}
@@ -812,7 +812,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">範囲の名前</label>
+                            <Label className="block mb-1">範囲の名前</Label>
                             <Input
                                 type="text"
                                 value={templateConfig.rangeName}
@@ -826,7 +826,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
 
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">開始時間の列</label>
+                                <Label className="block mb-1">開始時間の列</Label>
                                 <Input
                                     type="number"
                                     min="1"
@@ -835,7 +835,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">終了時間の列</label>
+                                <Label className="block mb-1">終了時間の列</Label>
                                 <Input
                                     type="number"
                                     min="1"
@@ -844,7 +844,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">休憩時間の列</label>
+                                <Label className="block mb-1">休憩時間の列</Label>
                                 <Input
                                     type="number"
                                     min="1"
@@ -873,7 +873,8 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                             </Button>
                         </div>
                     </div>
-                </ModalDialog>
+                  </DialogContent>
+                </Dialog>
             </div>
         </LoadingOverlay>
     );

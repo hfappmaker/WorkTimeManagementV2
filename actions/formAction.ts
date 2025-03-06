@@ -7,6 +7,7 @@ import {
   searchContracts,
   getContractsByUserId,
   getContractById,
+  getContractsByClientId,
 } from "@/data/contract";
 import { createWorkReport, 
   updateWorkReportAttendances, 
@@ -52,17 +53,17 @@ export const generateOllamaAction = async (
 export const createContractAction = async (values: z.infer<typeof ContractSchema>) => {
   await createContract(values);
   console.log("Contract created successfully");
-  revalidatePath("/dashboard");
+  revalidatePath("/client/[clientId]");
 };
 
 export const updateContractAction = async (id: string, values: z.infer<typeof ContractSchema>) => {
   await updateContract(id, values);
-  revalidatePath("/contractMaster");
+  revalidatePath("/client/[clientId]");
 };  
 
 export const deleteContractAction = async (id: string) => {
   await deleteContract(id);
-  revalidatePath("/contractMaster");
+  revalidatePath("/client/[clientId]");
 };
 
 export const searchContractsAction = async (userId: string, searchQuery: string) => {
@@ -85,7 +86,6 @@ export const createWorkReportAction = async (
 };
 
 export const updateWorkReportAction = async (
-  contractId: string,
   workReportId: string,
   attendance: AttendanceFormValues
 ) => {
@@ -95,8 +95,7 @@ export const updateWorkReportAction = async (
 
 export const getWorkReportsByContractIdAction = async (contractId: string) => {
   try {
-    const reports = await getWorkReportsByContractId(contractId);
-    return reports ? JSON.parse(JSON.stringify(reports)) : [];
+    return await getWorkReportsByContractId(contractId);
   } catch (error) {
     console.error("Error fetching work reports:", error);
     throw new Error("Failed to fetch work reports");
@@ -106,6 +105,16 @@ export const getWorkReportsByContractIdAction = async (contractId: string) => {
 export const getContractsByUserIdAction = async (userId: string) => {
   try {
     const contracts = await getContractsByUserId(userId);
+    return contracts ? JSON.parse(JSON.stringify(contracts)) : [];
+  } catch (error) {
+    console.error("Error fetching contracts:", error);
+    throw new Error("Failed to fetch contracts");
+  }
+};
+
+export const getContractsByClientIdAction = async (clientId: string) => {
+  try {
+    const contracts = await getContractsByClientId(clientId);
     return contracts ? JSON.parse(JSON.stringify(contracts)) : [];
   } catch (error) {
     console.error("Error fetching contracts:", error);
@@ -125,8 +134,7 @@ export const getContractByIdAction = async (contractId: string) => {
 
 export const getClientByIdAction = async (clientId: string) => {
   try {
-    const client = await getClientById(clientId);
-    return client ? JSON.parse(JSON.stringify(client)) : null;
+    return await getClientById(clientId);
   } catch (error) {
     console.error("Error fetching client:", error);
     throw new Error("Failed to fetch client details");
@@ -135,8 +143,7 @@ export const getClientByIdAction = async (clientId: string) => {
 
 export const getClientsByUserIdAction = async (userId: string) => {
   try {
-    const clients = await getClientsByUserId(userId);
-    return clients ? JSON.parse(JSON.stringify(clients)) : [];
+    return await getClientsByUserId(userId);
   } catch (error) {
     console.error("Error fetching clients:", error);
     throw new Error("Failed to fetch clients");
