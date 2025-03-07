@@ -1,8 +1,9 @@
+import { getContractById } from "@/data/contract";
 import WorkReportClient from "./page.client";
-import { getWorkReportById, getAttendancesByWorkReportId, getContractById } from "@/data/work-time";
+import { getWorkReportById, getAttendancesByWorkReportId } from "@/data/work-report"
 import { notFound } from "next/navigation";
 
-export default async function WorkReport({ params: { contractId, workReportId } }: { params: { contractId: string; workReportId: string } }) {
+export default async function WorkReport({ params: { workReportId } }: { params: { workReportId: string } }) {
   // Assume that getWorkReportById returns a work report with startDate and endDate as strings or Date objects.
   const workReport = await getWorkReportById(workReportId);
   if (!workReport) {
@@ -11,7 +12,7 @@ export default async function WorkReport({ params: { contractId, workReportId } 
   }
   
   // 契約情報を取得
-  const contract = await getContractById(contractId);
+  const contract = await getContractById(workReport.contractId);
   if (!contract) {
     notFound();
   }
@@ -29,7 +30,7 @@ export default async function WorkReport({ params: { contractId, workReportId } 
   
   return (
     <WorkReportClient 
-      contractId={contractId} 
+      contractId={workReport.contractId} 
       workReportId={workReportId}
       workReport={{
         year: workReport.year,

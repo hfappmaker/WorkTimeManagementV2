@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { createWorkReportAction, getWorkReportsByContractIdAction, getContractByIdAction } from '@/actions/formAction';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal } from '@/components/ui/dialog';
 import { Contract, WorkReport } from '@prisma/client';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import { useIsClient } from '@/hooks/use-is-client';
@@ -147,7 +147,7 @@ export default function WorkTimeReportClient({ contractId }: { contractId: strin
   // Link クリック時の遷移処理
   const handleNavigation = (workReportId: string) => {
     startTransition(() => {
-      router.push(`/workReport/${contractId}/${workReportId}`);
+      router.push(`/workReport/${workReportId}`);
     });
   };
 
@@ -194,8 +194,8 @@ export default function WorkTimeReportClient({ contractId }: { contractId: strin
           <ul className="divide-y divide-gray-200">
             {workReports.map((workReport) => (
               <li key={workReport.id} className="py-2">
-                <div 
-                  onClick={() => handleNavigation(workReport.id)} 
+                <div
+                  onClick={() => handleNavigation(workReport.id)}
                   className="cursor-pointer hover:text-blue-500"
                 >
                   {workReport.year}年{workReport.month}月分
@@ -206,64 +206,67 @@ export default function WorkTimeReportClient({ contractId }: { contractId: strin
         )}
 
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent>
-            <DialogTitle>作業報告書を作成</DialogTitle>
-            <Form {...reportForm}>
-              <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={reportForm.control}
-                    name="year"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>年</FormLabel>
-                        <FormControl>
-                          <ComboBox
-                            {...field}
-                            name="year"
-                            options={yearOptions()}
-                            defaultValue={currentYear}
-                            placeholder="年を選択"
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={reportForm.control}
-                    name="month"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>月</FormLabel>
-                        <FormControl>
-                          <ComboBox
-                            {...field}
-                            name="month"
-                            options={monthOptions}
-                            defaultValue={currentMonth}
-                            placeholder="月を選択"
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogContent>
+              <DialogTitle>作業報告書を作成</DialogTitle>
+              <Form {...reportForm}>
+                <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={reportForm.control}
+                      name="year"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>年</FormLabel>
+                          <FormControl>
+                            <ComboBox
+                              {...field}
+                              name="year"
+                              options={yearOptions()}
+                              defaultValue={currentYear}
+                              placeholder="年を選択"
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={reportForm.control}
+                      name="month"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>月</FormLabel>
+                          <FormControl>
+                            <ComboBox
+                              {...field}
+                              name="month"
+                              options={monthOptions}
+                              defaultValue={currentMonth}
+                              placeholder="月を選択"
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                <div className="flex justify-end gap-2">
-                  <Button type="button" onClick={() => setShowCreateDialog(false)}>
-                    キャンセル
-                  </Button>
-                  <Button type="submit">作成</Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" onClick={() => setShowCreateDialog(false)}>
+                      キャンセル
+                    </Button>
+                    <Button type="submit">作成</Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </DialogPortal>
         </Dialog>
       </div>
     </LoadingOverlay>

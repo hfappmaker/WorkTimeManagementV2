@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
@@ -22,13 +21,13 @@ import { z } from "zod";
 interface Contract {
   id: string;
   name: string;
-  startDate: string;
-  endDate: string | null;
-  unitPrice: string;
-  settlementMin: string;
-  settlementMax: string;
-  upperRate: string;
-  middleRate: string;
+  startDate: Date;
+  endDate: Date | undefined;
+  unitPrice: number| undefined;
+  settlementMin: number| undefined;
+  settlementMax: number| undefined;
+  upperRate: number| undefined;
+  middleRate: number| undefined;
   closingDay: number | undefined;
 }
 
@@ -238,11 +237,11 @@ export default function ClientDetailsClient({ client, userId }: { client: Client
     name: "",
     startDate: new Date(),
     endDate: undefined as Date | undefined,
-    unitPrice: "",
-    settlementMin: "",
-    settlementMax: "",
-    upperRate: "",
-    middleRate: "",
+    unitPrice: undefined as number | undefined,
+    settlementMin: undefined as number | undefined,
+    settlementMax: undefined as number | undefined,
+    upperRate: undefined as number | undefined,
+    middleRate: undefined as number | undefined,
     closingDay: undefined as number | undefined,
   };
 
@@ -274,8 +273,6 @@ export default function ClientDetailsClient({ client, userId }: { client: Client
         const data = JSON.parse(JSON.stringify(jsonData));
         setContracts(data.map((contract: Contract) => ({
           ...contract,
-          startDate: contract.startDate.toString(),
-          endDate: contract.endDate ? contract.endDate.toString() : null
         })));
       }
     } catch (error) {
@@ -344,19 +341,28 @@ export default function ClientDetailsClient({ client, userId }: { client: Client
     });
   };
 
+  // Link クリック時の遷移処理
+  const handleNavigation = (url: string) => {
+    startTransition(() => {
+      router.push(url);
+    });
+  };
+
   // 編集ダイアログが開かれたときのフォーム初期化
   useEffect(() => {
     if (activeDialog === "edit" && activeContract) {
       editForm.reset({
+        userId: userId,
+        clientId: client.id,
         name: activeContract.name,
-        startDate: new Date(activeContract.startDate),
-        endDate: activeContract.endDate ? new Date(activeContract.endDate) : undefined,
+        startDate: activeContract.startDate,
+        endDate: activeContract.endDate,
         unitPrice: activeContract.unitPrice,
         settlementMin: activeContract.settlementMin,
         settlementMax: activeContract.settlementMax,
         upperRate: activeContract.upperRate,
         middleRate: activeContract.middleRate,
-        closingDay: activeContract.closingDay ? activeContract.closingDay.toString() : null,
+        closingDay: activeContract.closingDay,
       });
     }
   }, [activeDialog, activeContract, editForm]);
@@ -366,7 +372,7 @@ export default function ClientDetailsClient({ client, userId }: { client: Client
       <LoadingOverlay isClient={isClient} isPending={isPending}>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">{client.name}</h1>
-          <Button variant="outline" onClick={() => router.push("/client")}>
+          <Button variant="outline" onClick={() => handleNavigation("/client")}>
             戻る
           </Button>
         </div>
@@ -390,7 +396,7 @@ export default function ClientDetailsClient({ client, userId }: { client: Client
                     key={contract.id}
                     className="p-3 border rounded-md flex justify-between items-center"
                   >
-                    <div className="cursor-pointer hover:text-blue-500" onClick={() => openDetailsDialog(contract)}>
+                    <div className="cursor-pointer hover:text-blue-500" onClick={() => handleNavigation(`/contract/${contract.id}`)}>
                       <div className="font-medium">{contract.name}</div>
                       <div className="text-sm text-muted-foreground">
                         期間: {new Date(contract.startDate).toLocaleDateString()} ~
@@ -402,12 +408,8 @@ export default function ClientDetailsClient({ client, userId }: { client: Client
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => {
                         setActiveContract(contract);
-                        setActiveDialog("edit");
-                      }}>編集</Button>
-                      <Button variant="destructive" size="sm" onClick={() => {
-                        setActiveContract(contract);
-                        setActiveDialog("delete");
-                      }}>削除</Button>
+                        setActiveDialog("details");
+                      }}>詳細</Button>
                     </div>
                   </div>
                 ))}
@@ -448,6 +450,7 @@ export default function ClientDetailsClient({ client, userId }: { client: Client
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                       <Button variant="outline" onClick={() => setActiveDialog("edit")}>編集</Button>
+                      <Button variant="destructive" onClick={() => setActiveDialog("delete")}>削除</Button>
                       <Button variant="outline" onClick={closeDialog}>閉じる</Button>
                     </div>
                   </div>

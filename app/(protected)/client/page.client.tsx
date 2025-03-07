@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogPortal,
+  DialogOverlay,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -194,117 +195,135 @@ export default function ClientClient({ userId }: { userId: string }) {
 
         {/* Details Modal */}
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>クライアント詳細</DialogTitle>
-            </DialogHeader>
-            {selectedClient && (
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="font-medium">クライアント名:</div>
-                  <div>{selectedClient.name}</div>
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>クライアント詳細</DialogTitle>
+              </DialogHeader>
+              {selectedClient && (
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="font-medium">クライアント名:</div>
+                    <div>{selectedClient.name}</div>
+                  </div>
                 </div>
-              </div>
-            )}
-            <DialogFooter className="flex space-x-2 justify-between">
-              <div className="flex space-x-2">
-                <Button variant="outline" onClick={openEditModal}>
-                  編集
+              )}
+              <DialogFooter className="flex space-x-2 justify-between">
+                <div className="flex space-x-2">
+                  <Button variant="outline" onClick={openEditModal}>
+                    編集
+                  </Button>
+                  <Button variant="destructive" onClick={openDeleteConfirm}>
+                    削除
+                  </Button>
+                </div>
+                <Button variant="outline" onClick={() => setShowDetailsModal(false)}>
+                  閉じる
                 </Button>
-                <Button variant="destructive" onClick={openDeleteConfirm}>
-                  削除
-                </Button>
-              </div>
-              <Button variant="outline" onClick={() => setShowDetailsModal(false)}>
-                閉じる
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+              </DialogFooter>
+            </DialogContent>
+          </DialogPortal>
         </Dialog>
 
         {/* Create Modal */}
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>新規クライアント作成</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium">
-                  クライアント名
-                </Label>
-                <Input
-                  id="name"
-                  value={newClientName}
-                  onChange={(e) => setNewClientName(e.target.value)}
-                  placeholder="クライアント名を入力"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-                キャンセル
-              </Button>
-              <Button onClick={handleCreateClient}>
-                作成
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogContent>
+              <LoadingOverlay isClient={isClient} isPending={isPending}>
+                <DialogHeader>
+                  <DialogTitle>新規クライアント作成</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      クライアント名
+                    </Label>
+                    <Input
+                      id="name"
+                      value={newClientName}
+                      onChange={(e) => setNewClientName(e.target.value)}
+                      placeholder="クライアント名を入力"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+                    キャンセル
+                  </Button>
+                  <Button onClick={handleCreateClient}>
+                    作成
+                  </Button>
+                </DialogFooter>
+              </LoadingOverlay>
+            </DialogContent>
+          </DialogPortal>
         </Dialog>
 
         {/* Edit Modal */}
         <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>クライアント編集</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name" className="text-sm font-medium">
-                  クライアント名
-                </Label>
-                <Input
-                  id="edit-name"
-                  value={editClientName}
-                  onChange={(e) => setEditClientName(e.target.value)}
-                  placeholder="クライアント名を入力"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowEditModal(false)}>
-                キャンセル
-              </Button>
-              <Button onClick={handleEditClient}>
-                保存
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogContent>
+              <LoadingOverlay isClient={isClient} isPending={isPending}>
+                <DialogHeader>
+                  <DialogTitle>クライアント編集</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name" className="text-sm font-medium">
+                      クライアント名
+                    </Label>
+                    <Input
+                      id="edit-name"
+                      value={editClientName}
+                      onChange={(e) => setEditClientName(e.target.value)}
+                      placeholder="クライアント名を入力"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                    キャンセル
+                  </Button>
+                  <Button onClick={handleEditClient}>
+                    保存
+                  </Button>
+                </DialogFooter>
+              </LoadingOverlay>
+            </DialogContent>
+          </DialogPortal>
         </Dialog>
 
         {/* Delete Confirmation Modal */}
         <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>クライアント削除の確認</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <p className="text-center">
-                {selectedClient?.name} を削除してもよろしいですか？
-              </p>
-              <p className="text-center text-sm text-muted-foreground mt-2">
-                この操作は元に戻せません。
-              </p>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
-                キャンセル
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteClient}>
-                削除
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogContent>
+              <LoadingOverlay isClient={isClient} isPending={isPending}>
+                <DialogHeader>
+                  <DialogTitle>クライアント削除の確認</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-center">
+                    {selectedClient?.name} を削除してもよろしいですか？
+                  </p>
+                  <p className="text-center text-sm text-muted-foreground mt-2">
+                    この操作は元に戻せません。
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                    キャンセル
+                  </Button>
+                  <Button variant="destructive" onClick={handleDeleteClient}>
+                    削除
+                  </Button>
+                </DialogFooter>
+              </LoadingOverlay>
+            </DialogContent>
+          </DialogPortal>
         </Dialog>
       </div>
     </LoadingOverlay>

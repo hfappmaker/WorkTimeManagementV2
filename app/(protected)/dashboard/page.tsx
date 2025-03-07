@@ -1,3 +1,5 @@
+"use client";
+
 import LoadingOverlay from "@/components/LoadingOverlay";
 import { useIsClient } from "@/hooks/use-is-client";
 

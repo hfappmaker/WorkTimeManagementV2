@@ -493,30 +493,10 @@ export default function WorkReportClient({
         try {
 
             startTransition(async () => {
-                // テンプレートから作業報告書を作成
-                const blob = await createReportFromTemplate();
-                if (!blob) {
-                    setError("作業報告書の作成に失敗しました");
-                    return;
-                }
-
-                // 作成したファイルを保存
-                const fileName = `作業報告書_${workReport.year}年${workReport.month}月_${contractName}.xlsx`;
-                const url = URL.createObjectURL(blob);
-
-                // ファイルのダウンロード
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-
                 // メーラーを起動
-                setTimeout(() => {
-                    const recipient = "example@example.com"; // 送信先
-                    const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${contractName}`);
-                    const body = encodeURIComponent(`
+                const recipient = "example@example.com"; // 送信先
+                const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${contractName}`);
+                const body = encodeURIComponent(`
 ${contractName} 様
 
 お疲れ様です。
@@ -525,8 +505,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
 ご確認のほど、よろしくお願いいたします。
 
 `);
-                    window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
-                }, 1000); // ダウンロードが完了するのを少し待ってからメーラーを起動
+                window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
             });
         } catch (error) {
             console.error("作業報告書の作成に失敗しました", error);
