@@ -27,7 +27,7 @@ interface Client {
   createUserId: string;
 }
 
-export default function ClientClient({ userId }: { userId: string }) {
+export default function ClientClientListPage({ userId }: { userId: string }) {
   const [clients, setClients] = useState<Client[]>([]);
   const [isPending, startTransition] = useTransition();
   const isClient = useIsClient();

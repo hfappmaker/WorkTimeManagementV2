@@ -48,7 +48,6 @@ interface AttendanceRecord {
 }
 
 interface WorkReportClientProps {
-    contractId: string;
     workReportId: string;
     workReport: WorkReportData;
     attendances: AttendanceRecord[];
@@ -86,8 +85,7 @@ function mergeAttendances(
     return defaults;
 }
 
-export default function WorkReportClient({
-    contractId,
+export default function ClientWorkReportPage({
     workReportId,
     workReport,
     attendances,

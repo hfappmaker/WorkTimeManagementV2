@@ -20,7 +20,7 @@ interface ReportFormValues {
   month: string;
 }
 
-export default function WorkTimeReportClient({ contractId }: { contractId: string }) {
+export default function ContractClientPage({ contractId }: { contractId: string }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [workReports, setWorkReports] = useState<WorkReport[]>([]);

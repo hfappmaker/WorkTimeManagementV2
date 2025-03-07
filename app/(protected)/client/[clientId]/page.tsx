@@ -1,8 +1,8 @@
 import { getClientByIdAction } from "@/actions/formAction";
-import ClientDetailsClient from "./page.client";
+import ClientClientDetailsPage from "./page.client";
 import { currentUser } from "@/lib/auth";
 
-export default async function ClientDetails({
+export default async function ClientDetailsPage({
   params
 }: {
   params: Promise<{ clientId: string }>
@@ -16,5 +16,5 @@ export default async function ClientDetails({
   if (!client) {
     return <div>Client not found</div>;
   }
-  return <ClientDetailsClient client={client} userId={user.id}/>
+  return <ClientClientDetailsPage client={client} userId={user.id}/>
 }

@@ -1,7 +1,8 @@
-import WorkTimeReportClient from "./page.client";
+import ClientContractPage from "./page.client";
 
-export default async function WorkTimeReport({ params: { contractId } }: { params: { contractId: string } }) {
+export default async function ContractPage({ params }: { params: Promise<{ contractId: string }> }) {
+    const { contractId } = await params;
     return (
-        <WorkTimeReportClient contractId={contractId} />
+        <ClientContractPage contractId={contractId} />
     );
 }

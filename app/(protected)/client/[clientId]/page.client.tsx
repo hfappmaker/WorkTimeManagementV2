@@ -220,7 +220,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
   );
 };
 
-export default function ClientDetailsClient({ client, userId }: { client: Client, userId: string }) {
+export default function ClientClientDetailsPage({ client, userId }: { client: Client, userId: string }) {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [activeContract, setActiveContract] = useState<Contract | null>(null);
   const [activeDialog, setActiveDialog] = useState<DialogType>(null);

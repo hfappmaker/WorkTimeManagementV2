@@ -1,11 +1,11 @@
-import ClientClient from "./page.client";
+import ClientClientListPage from "./page.client";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 
-export default async function Client() {
+export default async function ClientListPage() {
   const user = await currentUser();
   if (!user) {
     redirect("/sign-in");
   }
-  return <ClientClient userId={user.id} />;
+  return <ClientClientListPage userId={user.id} />;
 }
