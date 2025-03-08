@@ -11,26 +11,20 @@ import { useIsClient } from "@/hooks/use-is-client";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import LoadingOverlay from "@/components/LoadingOverlay";
-import ExcelJS, { Worksheet } from 'exceljs';
+import ExcelJS from 'exceljs';
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { convertTimeStrToFractionOfDay } from "@/lib/utils";
 
 interface AttendanceEntry {
     start: string;
     end: string;
     breakDuration: string;
+    memo: string;
 }
 
 export interface AttendanceFormValues {
     [day: string]: AttendanceEntry;
-}
-
-interface TemplateConfig {
-    yearMonthName: string;
-    rangeName: string;
-    startTimeColumn: string;
-    endTimeColumn: string;
-    breakDurationColumn: string;
 }
 
 // Adjust the types as needed; here we assume workReport contains startDate and endDate as strings
@@ -44,7 +38,8 @@ interface AttendanceRecord {
     date: string;
     start: string | null;
     end: string | null;
-    breakDuration: number | null;
+    breakDuration: string | null;
+    memo: string | null;
 }
 
 interface WorkReportClientProps {
@@ -62,7 +57,7 @@ function generateAttendanceDefaults(year: number, month: number, closingDay: num
     const end = closingDay ? new Date(year, month, closingDay + 1) : new Date(year, month, 1);
     while (current < end) {
         const dateKey = current.toLocaleDateString('ja-JP');
-        defaults[dateKey] = { start: "", end: "", breakDuration: "0" };
+        defaults[dateKey] = { start: "", end: "", breakDuration: "", memo: "" };
         current.setDate(current.getDate() + 1);
     }
     return defaults;
@@ -78,12 +73,64 @@ function mergeAttendances(
             defaults[entry.date] = {
                 start: entry.start ?? "",
                 end: entry.end ?? "",
-                breakDuration: entry.breakDuration?.toString() ?? "0"
+                breakDuration: entry.breakDuration ?? "",
+                memo: entry.memo ?? ""
             };
         }
     });
     return defaults;
 }
+
+// ---- Begin moved helper functions ----
+
+const parseRangeReference = (ref: string | undefined): [string | null, string | null] => {
+    if (!ref) {
+        return [null, null];
+    }
+    const match = ref.match(/(?:'([^']+)'|([^!]+))!(.+)/);
+    if (match) {
+        const sheetName = match[1] || match[2];
+        const address = match[3];
+        return [sheetName, address];
+    }
+    return [null, ref];
+};
+
+type ExcelRange = { startRow: number; startCol: number; endRow: number; endCol: number };
+
+const parseExcelRange = (range: string): ExcelRange => {
+    const match = range.match(/(\$?)([A-Z]+)(\$?)(\d+):(\$?)([A-Z]+)(\$?)(\d+)/);
+    if (match) {
+        const startCol = columnNameToNumber(match[2]);
+        const startRow = parseInt(match[4], 10);
+        const endCol = columnNameToNumber(match[6]);
+        const endRow = parseInt(match[8], 10);
+        return { startRow, startCol, endRow, endCol };
+    }
+    const singleCellMatch = range.match(/(\$?)([A-Z]+)(\$?)(\d+)/);
+    if (singleCellMatch) {
+        const col = columnNameToNumber(singleCellMatch[2]);
+        const row = parseInt(singleCellMatch[4], 10);
+        return { startRow: row, startCol: col, endRow: row, endCol: col };
+    }
+    return { startRow: 1, startCol: 1, endRow: 100, endCol: 10 };
+};
+
+const columnNameToNumber = (name: string): number => {
+    const cleanName = name.replace(/\$/g, '');
+    let sum = 0;
+    for (let i = 0; i < cleanName.length; i++) {
+        sum = sum * 26 + (cleanName.charCodeAt(i) - 'A'.charCodeAt(0) + 1);
+    }
+    return sum;
+};
+
+function formatMonthDay(dateStr: string): string {
+    const d = new Date(dateStr);
+    return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+// ---- End moved helper functions ----
 
 export default function ClientWorkReportPage({
     workReportId,
@@ -101,7 +148,8 @@ export default function ClientWorkReportPage({
     // 一括編集用の状態
     const [bulkStartTime, setBulkStartTime] = useState("09:00");
     const [bulkEndTime, setBulkEndTime] = useState("18:00");
-    const [bulkBreakDuration, setBulkBreakDuration] = useState("60");
+    const [bulkBreakDuration, setBulkBreakDuration] = useState("01:00");
+    const [bulkMemo, setBulkMemo] = useState("");
     // 曜日選択用の状態（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
     const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]); // デフォルトで平日を選択
     // 日付範囲選択用の状態
@@ -109,19 +157,13 @@ export default function ClientWorkReportPage({
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
 
-    // Excelテンプレート関連の状態
-    const [templateFile, setTemplateFile] = useState<File | null>(null);
-    const [templateFileName, setTemplateFileName] = useState<string>("");
-    const [isTemplateConfigModalOpen, setIsTemplateConfigModalOpen] = useState(false);
-    const [templateConfig, setTemplateConfig] = useState<TemplateConfig>({
-        yearMonthName: "",
-        rangeName: "",
-        startTimeColumn: "1",
-        endTimeColumn: "2",
-        breakDurationColumn: "3"
-    });
-    // テンプレートのワークブック
-    const [templateWorkbook, setTemplateWorkbook] = useState<ExcelJS.Workbook | null>(null);
+    // New state for holding the uploaded template file
+    const [uploadedTemplateFile, setUploadedTemplateFile] = useState<File | null>(null);
+
+    // New states for Create Report Dialog
+    const [isCreateReportDialogOpen, setIsCreateReportDialogOpen] = useState(false);
+    const [templateOption, setTemplateOption] = useState("default");  // 'default' or 'upload'
+    const [extensionOption, setExtensionOption] = useState("excel");    // 'excel' or 'pdf'
 
     // Compute default attendance values for each day in the range…
     const defaults = generateAttendanceDefaults(workReport.year, workReport.month, closingDay);
@@ -202,77 +244,8 @@ export default function ClientWorkReportPage({
         setSuccess("一括編集を適用しました");
     };
 
-    // テンプレートアップロード関数
-    const uploadTemplate = (event: React.ChangeEvent<HTMLInputElement>) => {
-        try {
-            const file = event.target.files?.[0];
-            if (!file) return;
-
-            setError("");
-            setTemplateFile(file);
-            setTemplateFileName(file.name);
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const buffer = e.target?.result as ArrayBuffer;
-                    // Log info for debugging
-                    console.log("File size:", buffer.byteLength, "bytes");
-
-                    const workbook = new ExcelJS.Workbook();
-                    await workbook.xlsx.load(buffer);
-
-                    console.log("Parsed workbook:", workbook);
-                    console.log("Sheet names:", workbook.worksheets.map(sheet => sheet.name));
-
-                    // Validate workbook structure
-                    if (!workbook || workbook.worksheets.length === 0) {
-                        throw new Error("Invalid template format or no sheets found");
-                    }
-
-                    setTemplateWorkbook(workbook);
-                    setSuccess("テンプレートのアップロードが完了しました");
-                } catch (err) {
-                    console.error("Template parsing error:", err);
-                    setError("テンプレートの解析中にエラーが発生しました");
-                    setTemplateFile(null);
-                    setTemplateFileName("");
-                    setTemplateWorkbook(null);
-                }
-            };
-
-            reader.onerror = () => {
-                setError("ファイルの読み込み中にエラーが発生しました");
-                setTemplateFile(null);
-                setTemplateFileName("");
-            };
-
-            reader.readAsArrayBuffer(file);
-        } catch (err) {
-            console.error("Template upload failed:", err);
-            setError("テンプレートのアップロードに失敗しました");
-        } finally {
-            if (event.target) {
-                event.target.value = '';
-            }
-        }
-    };
-
-    // テンプレート設定の更新
-    const updateTemplateConfig = (field: keyof typeof templateConfig, value: string) => {
-        setTemplateConfig({
-            ...templateConfig,
-            [field]: value
-        });
-    };
-
     // テンプレートからの作業報告書作成
-    const createReportFromTemplate = async () => {
-        if (!templateWorkbook) {
-            setError("テンプレートがアップロードされていません");
-            return;
-        }
-
+    const createReportFromTemplate = async (templateWorkbook: ExcelJS.Workbook) => {
         try {
             // フォームデータを取得
             const formData = attendanceForm.getValues();
@@ -310,6 +283,16 @@ export default function ClientWorkReportPage({
                         newCell.style = { ...cell.style };
                     });
                 });
+
+                // セルの値をコピー
+                worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+                    const newRow = newSheet.getRow(rowNumber);
+                    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                        const newCell = newRow.getCell(colNumber);
+                        newCell.value = cell.value;
+                    });
+                });
+
             }
 
             // コピー元のテンプレートに定義された名前付き範囲を新しいワークブックに追加する
@@ -329,186 +312,159 @@ export default function ClientWorkReportPage({
             }
 
             // 年月の名前付き範囲を処理
-            if (templateConfig.yearMonthName) {
-                const yearMonthRanges = templateWorkbook.definedNames.getRanges(templateConfig.yearMonthName);
-                if (yearMonthRanges) {
-                    const [sheetName, rangeAddress] = parseRangeReference(yearMonthRanges.ranges[0]);
-                    if (sheetName) {
-                        console.log("sheetName", sheetName);
-                        console.log("rangeAddress", rangeAddress);
-                        const targetYearMonthSheet = workbook.getWorksheet(sheetName) as Worksheet;
-                        console.log("targetYearMonthSheet", targetYearMonthSheet);
-                        if (targetYearMonthSheet && rangeAddress) {
-                            // 年月を設定
-                            const yearMonthCell = targetYearMonthSheet.getCell(rangeAddress);
-                            console.log("yearMonthCell", yearMonthCell);
-                            console.log("yearMonthCell.value", yearMonthCell.value);
-                            const timeValue = new Date(workReport.year, workReport.month);
-                            yearMonthCell.value = timeValue;
-                        }
-                    }
+            const workReportMonthRanges = templateWorkbook.definedNames.getRanges("タイトル");
+            const [workReportMonthSheetName, workReportMonthRangeAddress] = parseRangeReference(workReportMonthRanges.ranges[0]);
+            if (workReportMonthSheetName) {
+                const targetWorkReportMonthSheet = workbook.getWorksheet(workReportMonthSheetName);
+                if (targetWorkReportMonthSheet && workReportMonthRangeAddress) {
+                    const workReportMonthCell = targetWorkReportMonthSheet.getCell(workReportMonthRangeAddress);
+                    workReportMonthCell.value = `${workReport.year}年${workReport.month}月度作業報告書`;
                 }
             }
 
-            // 勤怠データの名前付き範囲を処理
-            if (templateConfig.rangeName) {
-                const rangeRanges = templateWorkbook.definedNames.getRanges(templateConfig.rangeName);
-                if (rangeRanges) {
-                    const [sheetName, rangeAddress] = parseRangeReference(rangeRanges.ranges[0]);
-                    if (sheetName) {
-                        const targetSheet = workbook.getWorksheet(sheetName) as Worksheet;
-
-                        if (targetSheet && rangeAddress) {
-                            const { startRow, startCol, endRow, endCol } = parseExcelRange(rangeAddress);
-                            const targetRange = {
-                                start: { row: startRow, col: startCol },
-                                end: { row: endRow, col: endCol }
-                            };
-
-                            // フォームデータを埋め込む
-                            let row = 0;
-                            Object.entries(formData).forEach(([date, values]) => {
-                                const currentRow = targetRange!.start.row + row;
-
-                                if (currentRow <= targetRange!.end.row) {
-                                    // 開始時間を設定 (Convert "HH:mm" to a Date object)
-                                    if (values.start && templateConfig.startTimeColumn) {
-                                        const [hours, minutes] = values.start.split(":").map(Number);
-                                        console.log("hours", hours);
-                                        console.log("minutes", minutes);
-                                        // Use a base date (e.g., 1899-12-30) so that Excel recognizes it as a time.
-                                        const timeValue = new Date(1899, 11, 30, hours, minutes);
-                                        const startCol = targetRange!.start.col + (parseInt(templateConfig.startTimeColumn, 10) - 1);
-                                        const cell = targetSheet.getCell(currentRow, startCol);
-                                        console.log("cell:start", cell);
-                                        console.log("timeValue:start", timeValue.toLocaleTimeString());
-                                        cell.value = values.start;
+            // ----- New code: Fill form data into the named ranges -----
+            // Assume the named ranges '日付', '開始時刻', '終了時刻', '休憩時間' are each 31 cells vertically arranged
+            const sortedDates = Object.keys(formData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+            const fieldNames = ["日付", "開始時刻", "終了時刻", "休憩時間", "稼働時間", "作業内容"];
+            fieldNames.forEach(fieldName => {
+                const fieldRanges = workbook.definedNames.getRanges(fieldName);
+                if (fieldRanges && fieldRanges.ranges && fieldRanges.ranges.length > 0) {
+                    const [sheetName, rangeAddress] = parseRangeReference(fieldRanges.ranges[0]);
+                    if (sheetName && rangeAddress) {
+                        const { startRow, startCol } = parseExcelRange(rangeAddress);
+                        const sheet = workbook.getWorksheet(sheetName);
+                        if (sheet) {
+                            for (let i = 0; i < 31; i++) {
+                                const currentRow = startRow + i;
+                                let value: string | number = "";
+                                if (i < sortedDates.length) {
+                                    const dateKey = sortedDates[i];
+                                    const entry = formData[dateKey];
+                                    if (fieldName === "日付") {
+                                        value = formatMonthDay(dateKey);
+                                    } else if (fieldName === "開始時刻") {
+                                        if (entry.start) {
+                                            value = convertTimeStrToFractionOfDay(entry.start);
+                                            sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
+                                        }
+                                    } else if (fieldName === "終了時刻") {
+                                        if (entry.end) {
+                                            value = convertTimeStrToFractionOfDay(entry.end);
+                                            sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
+                                        }
+                                    } else if (fieldName === "休憩時間") {
+                                        if (entry.breakDuration) {
+                                            value = convertTimeStrToFractionOfDay(entry.breakDuration);
+                                            sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
+                                        }
+                                    } else if (fieldName === "稼働時間") {
+                                        if (entry.start && entry.end) {
+                                            const startMs = convertTimeStrToFractionOfDay(entry.start);
+                                            const endMs = convertTimeStrToFractionOfDay(entry.end);
+                                            if (entry.breakDuration) {
+                                                const breakMs = convertTimeStrToFractionOfDay(entry.breakDuration);
+                                                value = endMs - startMs - breakMs;
+                                            } else {
+                                                value = endMs - startMs;
+                                            }
+                                            sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
+                                        }
+                                    } else if (fieldName === "作業内容") {
+                                        if (entry.memo) {
+                                            value = entry.memo;
+                                        }
                                     }
-
-                                    // 終了時間を設定 (Convert "HH:mm" to a Date object)
-                                    if (values.end && templateConfig.endTimeColumn) {
-                                        const [hours, minutes] = values.end.split(":").map(Number);
-                                        console.log("hours", hours);
-                                        console.log("minutes", minutes);
-                                        const timeValue = new Date(1899, 11, 30, hours, minutes);
-                                        const endCol = targetRange!.start.col + (parseInt(templateConfig.endTimeColumn, 10) - 1);
-                                        const cell = targetSheet.getCell(currentRow, endCol);
-                                        console.log("cell:end", cell);
-                                        console.log("timeValue:end", timeValue.toLocaleTimeString());
-                                        cell.value = values.end;
-                                    }
-
-                                    // 休憩時間は数値のままでOK
-                                    if (values.breakDuration && templateConfig.breakDurationColumn) {
-                                        const breakCol = targetRange!.start.col + (parseInt(templateConfig.breakDurationColumn, 10) - 1);
-                                        const cell = targetSheet.getCell(currentRow, breakCol);
-                                        console.log("cell:breakDuration", cell);
-                                        cell.value = parseInt(values.breakDuration, 10);
-                                    }
-
-                                    row++;
                                 }
-                            });
+                                sheet.getCell(currentRow, startCol).value = value;
+                            }
                         }
                     }
                 }
-            }
+            });
+            // ----- End of new code -----
 
             // ファイルを保存
             const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const blob = new Blob([buffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
             const url = window.URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${workReport.year}年${workReport.month}月度作業報告書.xlsx`;
-            a.click();
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${workReport.year}年${workReport.month}月度作業報告書.xlsx`;
+            link.click();
             window.URL.revokeObjectURL(url);
-
             setSuccess("テンプレートからの作業報告書作成が完了しました");
-            setIsTemplateConfigModalOpen(false);
-            // 関数の最後で、生成したExcelファイルのBlobを返す
-            return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         } catch (err) {
             console.error("Error creating report from template:", err);
             setError("テンプレートからの作業報告書作成に失敗しました");
         }
     };
 
-    // ヘルパー関数: Excel参照のパース
-    const parseRangeReference = (ref: string | undefined): [string | null, string | null] => {
-        // エクセルの参照をシート名と範囲アドレスに分解
-        // 例: 'Sheet1'!A1:C10 -> ['Sheet1', 'A1:C10']
-        if (!ref) {
-            return [null, null];
-        }
-
-        const match = ref.match(/(?:'([^']+)'|([^!]+))!(.+)/);
-        if (match) {
-            const sheetName = match[1] || match[2];
-            const address = match[3];
-            return [sheetName, address];
-        }
-        return [null, ref]; // シート名が指定されていない場合
-    };
-
-    // ヘルパー関数: Excelの範囲アドレスを解析
-    const parseExcelRange = (range: string) => {
-        // A1:C10や$A$1:$C$10のような形式から行と列の情報を抽出（絶対参照$記号に対応）
-        const match = range.match(/(\$?)([A-Z]+)(\$?)(\d+):(\$?)([A-Z]+)(\$?)(\d+)/);
-        if (match) {
-            const startCol = columnNameToNumber(match[2]); // $記号を除いた列名
-            const startRow = parseInt(match[4], 10);
-            const endCol = columnNameToNumber(match[6]); // $記号を除いた列名
-            const endRow = parseInt(match[8], 10);
-            return { startRow, startCol, endRow, endCol };
-        }
-
-        // 単一セル（例: A1または$A$1）の場合
-        const singleCellMatch = range.match(/(\$?)([A-Z]+)(\$?)(\d+)/);
-        if (singleCellMatch) {
-            const col = columnNameToNumber(singleCellMatch[2]); // $記号を除いた列名
-            const row = parseInt(singleCellMatch[4], 10);
-            return { startRow: row, startCol: col, endRow: row, endCol: col };
-        }
-
-        return { startRow: 1, startCol: 1, endRow: 100, endCol: 10 }; // デフォルト値
-    };
-
-    // ヘルパー関数: 列名を数値に変換 (A -> 1, B -> 2, ...)
-    const columnNameToNumber = (name: string): number => {
-        // $記号が含まれている場合は削除
-        const cleanName = name.replace('$', '');
-        let sum = 0;
-        for (let i = 0; i < cleanName.length; i++) {
-            sum = sum * 26 + (cleanName.charCodeAt(i) - 'A'.charCodeAt(0) + 1);
-        }
-        return sum;
-    };
-
     // メール送信用の関数を追加
     const createReportAndSendEmail = async () => {
         try {
-
-            startTransition(async () => {
-                // メーラーを起動
-                const recipient = "example@example.com"; // 送信先
-                const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${contractName}`);
-                const body = encodeURIComponent(`
-${contractName} 様
-
-お疲れ様です。
-
-${workReport.year}年${workReport.month}月分の作業報告書を添付いたします。
-ご確認のほど、よろしくお願いいたします。
-
-`);
-                window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
-            });
+            if (!window.confirm("メールには作業報告書は自動で添付されません。\n「作業報告書を作成」でダウンロードしたファイルを手動で添付してください。")) {
+                return;
+            }
+            // メーラーを起動
+            const recipient = "example@example.com"; // 送信先
+            const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${contractName}`);
+            const body = encodeURIComponent(`
+            ${contractName} 様
+            
+            お疲れ様です。
+            
+            ${workReport.year}年${workReport.month}月分の作業報告書を添付いたします。
+            ご確認のほど、よろしくお願いいたします。
+            
+            `);
+            window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
         } catch (error) {
             console.error("作業報告書の作成に失敗しました", error);
             setError("作業報告書の作成に失敗しました");
         }
+    };
+
+    const handleConfirmCreateReport = async () => {
+        if (extensionOption === "excel") {
+            if (templateOption === "upload") {
+                if (!uploadedTemplateFile) {
+                    setError("テンプレートファイルが選択されていません");
+                    return;
+                }
+                try {
+                    const buffer = await uploadedTemplateFile.arrayBuffer();
+                    const workbook = new ExcelJS.Workbook();
+                    await workbook.xlsx.load(buffer);
+                    createReportFromTemplate(workbook);
+                } catch (err) {
+                    console.error("アップロードテンプレートの処理に失敗しました", err);
+                    setError("アップロードテンプレートの処理に失敗しました");
+                    return;
+                }
+            }
+            if (templateOption === "default") {
+                try {
+                    const response = await fetch("/workReportDefaultTemplate.xlsx");
+                    if (!response.ok) {
+                        throw new Error("デフォルトテンプレートの取得に失敗しました");
+                    }
+                    const buffer = await response.arrayBuffer();
+                    const workbook = new ExcelJS.Workbook();
+                    await workbook.xlsx.load(buffer);
+                    createReportFromTemplate(workbook);
+                } catch (err) {
+                    console.error("デフォルトテンプレートの読み込みに失敗しました:", err);
+                    setError("デフォルトテンプレートの読み込みに失敗しました");
+                    return;
+                }
+            }
+        } else if (extensionOption === "pdf") {
+            setError("PDF形式での作業報告書作成は未実装です");
+            return;
+        }
+        setIsCreateReportDialogOpen(false);
     };
 
     return (
@@ -519,37 +475,6 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                 </h1>
                 {error && <FormError message={error} />}
                 {success && <FormSuccess message={success} />}
-
-                {/* テンプレート情報表示 */}
-                {templateFileName && (
-                    <div className="bg-gray-100 dark:bg-gray-800 p-3 mb-4 rounded-md border border-gray-300 dark:border-gray-700">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center">
-                                <span className="font-medium mr-2 dark:text-gray-200">テンプレート:</span>
-                                <span className="text-gray-900 dark:text-gray-200">{templateFileName}</span>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsTemplateConfigModalOpen(true)}
-                                >
-                                    テンプレートから作業報告書作成
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={createReportAndSendEmail}
-                                    disabled={!templateFileName}
-                                >
-                                    作業報告書をメールで送信
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-
 
                 <Form {...attendanceForm}>
                     <form onSubmit={attendanceForm.handleSubmit(handleAttendanceSubmit)}>
@@ -563,18 +488,12 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                                 >
                                     一括入力
                                 </Button>
-                                <div className="relative">
-                                    <Input
-                                        type="file"
-                                        id="template-upload"
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        accept=".xltx,.xltm,.xlt,.xlsx,.xls,.xlsm"
-                                        onChange={uploadTemplate}
-                                    />
-                                    <Button type="button" variant="outline">
-                                        テンプレートをアップロード
-                                    </Button>
-                                </div>
+                                <Button type="button" variant="outline" onClick={() => setIsCreateReportDialogOpen(true)}>
+                                    作業報告書を作成
+                                </Button>
+                                <Button type="button" variant="outline" onClick={createReportAndSendEmail}>
+                                    メール送信
+                                </Button>
                             </div>
                         </div>
 
@@ -583,7 +502,8 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                             <span className="w-32"></span>
                             <span className="flex-1 text-center font-medium">出勤時間</span>
                             <span className="flex-1 text-center font-medium">退勤時間</span>
-                            <span className="flex-1 text-center font-medium">休憩時間（分）</span>
+                            <span className="flex-1 text-center font-medium">休憩時間</span>
+                            <span className="w-[400px] text-center font-medium">作業内容</span>
                         </div>
 
                         {Object.keys(attendanceForm.getValues()).map((day) => (
@@ -630,7 +550,21 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                                         render={({ field, fieldState }) => (
                                             <FormItem className="flex flex-col justify-center">
                                                 <FormControl>
-                                                    <Input {...field} type="number" min="0" id={`break-${day}`} />
+                                                    <Input {...field} type="time" id={`break-${day}`} />
+                                                </FormControl>
+                                                <FormMessage>{fieldState.error?.message}</FormMessage>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div className="flex-1">
+                                    <FormField
+                                        control={attendanceForm.control}
+                                        name={`${day}.memo`}
+                                        render={({ field, fieldState }) => (
+                                            <FormItem className="flex flex-col justify-center">
+                                                <FormControl>
+                                                    <Input {...field} type="text" id={`memo-${day}`} className="w-[400px]" />
                                                 </FormControl>
                                                 <FormMessage>{fieldState.error?.message}</FormMessage>
                                             </FormItem>
@@ -647,210 +581,235 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
 
                 {/* 一括編集用モーダルダイアログ */}
                 <Dialog open={isBulkEditModalOpen} onOpenChange={setIsBulkEditModalOpen}>
-                  <DialogContent>
-                    <DialogTitle>勤怠情報の一括入力</DialogTitle>
-                    <div className="space-y-4">
-                        <div>
-                            <h3 className="text-sm font-medium mb-2">適用範囲</h3>
-                            <div className="flex space-x-4">
-                                <Label className="flex items-center space-x-2">
-                                    <Input
-                                        type="radio"
-                                        checked={dateRangeMode === "all"}
-                                        onChange={() => setDateRangeMode("all")}
-                                    />
-                                    <span>全日</span>
-                                </Label>
-                                <Label className="flex items-center space-x-2">
-                                    <Input
-                                        type="radio"
-                                        checked={dateRangeMode === "weekday"}
-                                        onChange={() => setDateRangeMode("weekday")}
-                                    />
-                                    <span>曜日指定</span>
-                                </Label>
-                                <Label className="flex items-center space-x-2">
-                                    <Input
-                                        type="radio"
-                                        checked={dateRangeMode === "custom"}
-                                        onChange={() => setDateRangeMode("custom")}
-                                    />
-                                    <span>期間指定</span>
-                                </Label>
-                            </div>
-                        </div>
-
-                        {/* 曜日選択（dateRangeMode === "weekday"の場合に表示） */}
-                        {dateRangeMode === "weekday" && (
-                            <div className="py-2">
-                                <h3 className="text-sm font-medium mb-2">曜日を選択</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {dayNames.map((day, index) => (
-                                        <div key={index} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={`day-${index}`}
-                                                checked={selectedDays.includes(index)}
-                                                onCheckedChange={() => toggleDay(index)}
-                                            />
-                                            <Label htmlFor={`day-${index}`}>{day}</Label>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 日付範囲選択（dateRangeMode === "custom"の場合に表示） */}
-                        {dateRangeMode === "custom" && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="block mb-1">開始日</Label>
-                                    <Input
-                                        type="date"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="block mb-1">終了日</Label>
-                                    <Input
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
+                    <DialogContent>
+                        <DialogTitle>勤怠情報の一括入力</DialogTitle>
                         <div className="space-y-4">
-                            <h3 className="text-sm font-medium">勤怠情報</h3>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <Label className="block mb-1">出勤時間</Label>
-                                    <Input
-                                        type="time"
-                                        value={bulkStartTime}
-                                        onChange={(e) => setBulkStartTime(e.target.value)}
-                                        placeholder="例: 09:00"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="block mb-1">退勤時間</Label>
-                                    <Input
-                                        type="time"
-                                        value={bulkEndTime}
-                                        onChange={(e) => setBulkEndTime(e.target.value)}
-                                        placeholder="例: 18:00"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="block mb-1">休憩時間（分）</Label>
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        value={bulkBreakDuration}
-                                        onChange={(e) => setBulkBreakDuration(e.target.value)}
-                                        placeholder="例: 60"
-                                    />
+                            <div>
+                                <h3 className="text-sm font-medium mb-2">適用範囲</h3>
+                                <div className="flex space-x-4">
+                                    <Label className="flex items-center space-x-2">
+                                        <Input
+                                            type="radio"
+                                            className="h-4 w-4"
+                                            checked={dateRangeMode === "all"}
+                                            onChange={() => setDateRangeMode("all")}
+                                        />
+                                        <span>全日</span>
+                                    </Label>
+                                    <Label className="flex items-center space-x-2">
+                                        <Input
+                                            type="radio"
+                                            className="h-4 w-4"
+                                            checked={dateRangeMode === "weekday"}
+                                            onChange={() => setDateRangeMode("weekday")}
+                                        />
+                                        <span>曜日指定</span>
+                                    </Label>
+                                    <Label className="flex items-center space-x-2">
+                                        <Input
+                                            type="radio"
+                                            className="h-4 w-4"
+                                            checked={dateRangeMode === "custom"}
+                                            onChange={() => setDateRangeMode("custom")}
+                                        />
+                                        <span>期間指定</span>
+                                    </Label>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="flex justify-end space-x-2 mt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsBulkEditModalOpen(false)}
-                            >
-                                キャンセル
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={applyBulkEdit}
-                            >
-                                適用
-                            </Button>
+                            {/* 曜日選択（dateRangeMode === "weekday"の場合に表示） */}
+                            {dateRangeMode === "weekday" && (
+                                <div className="py-2">
+                                    <h3 className="text-sm font-medium mb-2">曜日を選択</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {dayNames.map((day, index) => (
+                                            <div key={index} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={`day-${index}`}
+                                                    checked={selectedDays.includes(index)}
+                                                    onCheckedChange={() => toggleDay(index)}
+                                                />
+                                                <Label htmlFor={`day-${index}`}>{day}</Label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 日付範囲選択（dateRangeMode === "custom"の場合に表示） */}
+                            {dateRangeMode === "custom" && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label className="block mb-1">開始日</Label>
+                                        <Input
+                                            type="date"
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="block mb-1">終了日</Label>
+                                        <Input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-medium">勤怠情報</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <Label className="block mb-1">出勤時間</Label>
+                                        <Input
+                                            type="time"
+                                            value={bulkStartTime}
+                                            onChange={(e) => setBulkStartTime(e.target.value)}
+                                            placeholder="例: 09:00"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="block mb-1">退勤時間</Label>
+                                        <Input
+                                            type="time"
+                                            value={bulkEndTime}
+                                            onChange={(e) => setBulkEndTime(e.target.value)}
+                                            placeholder="例: 18:00"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="block mb-1">休憩時間</Label>
+                                        <Input
+                                            type="time"
+                                            value={bulkBreakDuration}
+                                            onChange={(e) => setBulkBreakDuration(e.target.value)}
+                                            placeholder="例: 01:00"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="block mb-1">作業内容</Label>
+                                        <Input
+                                            type="text"
+                                            className="w-[400px]"
+                                            value={bulkMemo}
+                                            onChange={(e) => setBulkMemo(e.target.value)}
+                                            placeholder="例: 作業内容"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end space-x-2 mt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsBulkEditModalOpen(false)}
+                                >
+                                    キャンセル
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={applyBulkEdit}
+                                >
+                                    適用
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                  </DialogContent>
+                    </DialogContent>
                 </Dialog>
 
-                {/* テンプレート設定用モーダルダイアログ */}
-                <Dialog open={isTemplateConfigModalOpen} onOpenChange={setIsTemplateConfigModalOpen}>
-                  <DialogContent>
-                    <DialogTitle>テンプレート設定</DialogTitle>
-                    <div className="space-y-4">
-                        <div>
-                            <Label className="block mb-1">年月の名前</Label>
-                            <Input
-                                type="text"
-                                value={templateConfig.yearMonthName}
-                                onChange={(e) => updateTemplateConfig('yearMonthName', e.target.value)}
-                                placeholder="例:yearMonth"
-                            />
-                        </div>
-                        <div>
-                            <Label className="block mb-1">範囲の名前</Label>
-                            <Input
-                                type="text"
-                                value={templateConfig.rangeName}
-                                onChange={(e) => updateTemplateConfig('rangeName', e.target.value)}
-                                placeholder="例: ReportRange"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                                Excelで定義された範囲の名前。空白の場合はデータが含まれる範囲全体を使用
-                            </p>
-                        </div>
+                {/* テンプレート作成オプションダイアログ */}
+                <Dialog open={isCreateReportDialogOpen} onOpenChange={setIsCreateReportDialogOpen}>
+                    <DialogContent>
+                        <DialogTitle>作業報告書作成オプション</DialogTitle>
+                        <div className="space-y-4">
+                            <fieldset className="space-y-2">
+                                <legend className="font-medium">テンプレート選択</legend>
+                                <div className="flex space-x-4">
+                                    <Label htmlFor="defaultTemplate" className="inline-flex items-center gap-2">
+                                        <Input
+                                            type="radio"
+                                            id="defaultTemplate"
+                                            name="templateOption"
+                                            value="default"
+                                            checked={templateOption === "default"}
+                                            onChange={() => setTemplateOption("default")}
+                                            className="h-4 w-4"
+                                        />
+                                        <span>デフォルトテンプレート</span>
+                                    </Label>
+                                    <Label htmlFor="uploadTemplateOption" className="inline-flex items-center gap-2">
+                                        <Input
+                                            type="radio"
+                                            id="uploadTemplateOption"
+                                            name="templateOption"
+                                            value="upload"
+                                            checked={templateOption === "upload"}
+                                            onChange={() => setTemplateOption("upload")}
+                                            className="h-4 w-4"
+                                        />
+                                        <span>テンプレートをアップロード</span>
+                                    </Label>
+                                </div>
+                                {templateOption === "upload" && (
+                                    <div className="mt-2">
+                                        <Label htmlFor="templateUpload" className="block mb-1">テンプレートファイルを選択</Label>
+                                        <Input
+                                            type="file"
+                                            id="templateUpload"
+                                            accept=".xlsx"
+                                            onChange={(e) => {
+                                                if (e.target.files && e.target.files.length > 0) {
+                                                    setUploadedTemplateFile(e.target.files[0]);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </fieldset>
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <Label className="block mb-1">開始時間の列</Label>
-                                <Input
-                                    type="number"
-                                    min="1"
-                                    value={templateConfig.startTimeColumn}
-                                    onChange={(e) => updateTemplateConfig('startTimeColumn', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <Label className="block mb-1">終了時間の列</Label>
-                                <Input
-                                    type="number"
-                                    min="1"
-                                    value={templateConfig.endTimeColumn}
-                                    onChange={(e) => updateTemplateConfig('endTimeColumn', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <Label className="block mb-1">休憩時間の列</Label>
-                                <Input
-                                    type="number"
-                                    min="1"
-                                    value={templateConfig.breakDurationColumn}
-                                    onChange={(e) => updateTemplateConfig('breakDurationColumn', e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                            列の番号は、範囲の左端を1として相対的に指定してください。
-                        </p>
+                            <fieldset className="space-y-2">
+                                <legend className="font-medium">拡張子</legend>
+                                <div className="flex space-x-4">
+                                    <Label htmlFor="excelFormat" className="inline-flex items-center gap-2">
+                                        <Input
+                                            type="radio"
+                                            id="excelFormat"
+                                            name="extensionOption"
+                                            value="excel"
+                                            checked={extensionOption === "excel"}
+                                            onChange={() => setExtensionOption("excel")}
+                                            className="h-4 w-4"
+                                        />
+                                        <span>エクセル形式</span>
+                                    </Label>
+                                    <Label htmlFor="pdfFormat" className="inline-flex items-center gap-2">
+                                        <Input
+                                            type="radio"
+                                            id="pdfFormat"
+                                            name="extensionOption"
+                                            value="pdf"
+                                            checked={extensionOption === "pdf"}
+                                            onChange={() => setExtensionOption("pdf")}
+                                            className="h-4 w-4"
+                                        />
+                                        <span>PDF形式</span>
+                                    </Label>
+                                </div>
+                            </fieldset>
 
-                        <div className="flex justify-end space-x-2 mt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsTemplateConfigModalOpen(false)}
-                            >
-                                キャンセル
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={createReportFromTemplate}
-                            >
-                                OK
-                            </Button>
+                            <div className="flex justify-end space-x-2">
+                                <Button type="button" variant="outline" onClick={() => setIsCreateReportDialogOpen(false)}>
+                                    キャンセル
+                                </Button>
+                                <Button type="button" onClick={handleConfirmCreateReport}>
+                                    作成
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                  </DialogContent>
+                    </DialogContent>
                 </Dialog>
             </div>
         </LoadingOverlay>

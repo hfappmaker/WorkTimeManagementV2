@@ -54,22 +54,30 @@ model Client {
 }
 
 model Contract {
-  id            String       @id @default(cuid())
-  name          String
-  startDate     DateTime
-  endDate       DateTime?
-  clientId      String
-  client        Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  userId        String
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workReports   WorkReport[]
-  unitPrice     Decimal? // 月単価
-  settlementMin Decimal? // 精算幅下限
-  settlementMax Decimal? // 精算幅上限
-  upperRate     Decimal? // 超過時間単価
-  lowerRate     Decimal? // 控除時間単価
-  middleRate    Decimal? // 中間割の時間単価
-  closingDay    Int? // 締め日(1～31)
+  id                  String       @id @default(cuid())
+  name                String
+  startDate           DateTime
+  endDate             DateTime?
+  clientId            String
+  client              Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workReports         WorkReport[]
+  unitPrice           Decimal?     // 月単価
+  settlementMin       Decimal?     // 精算幅下限
+  settlementMax       Decimal?     // 精算幅上限
+  upperRate           Decimal?     // 超過時間単価
+  lowerRate           Decimal?     // 控除時間単価
+  middleRate          Decimal?     // 中間割の時間単価
+  
+  dailyWorkMinutes    Int?         // 1日あたりの作業単位(分)
+  monthlyWorkMinutes  Int?         // 1ヶ月あたりの作業単位(分)
+  basicStartTime      DateTime?    @db.Time // 基本開始時刻
+  basicEndTime        DateTime?    @db.Time // 基本終了時刻
+  basicBreakDuration  Int?         // 基本休憩時間（分）
+  basicWorkingMinutes Int?         // 基本稼働時間（分）
+
+  closingDay          Int?         // 締め日(1～31)
 }
 
 model WorkReport {

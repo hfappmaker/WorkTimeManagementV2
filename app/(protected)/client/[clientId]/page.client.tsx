@@ -112,7 +112,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="unitPrice"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>単価</FormLabel>
+              <FormLabel>単価（円）</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
               </FormControl>
@@ -127,7 +127,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="settlementMin"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>精算下限</FormLabel>
+              <FormLabel>精算下限（時間）</FormLabel>
               <FormControl>
                 <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）140" />
               </FormControl>
@@ -142,7 +142,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="settlementMax"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>精算上限</FormLabel>
+              <FormLabel>精算上限（時間）</FormLabel>
               <FormControl>
                 <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）180" />
               </FormControl>
@@ -157,7 +157,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="upperRate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>超過単価</FormLabel>
+              <FormLabel>超過単価（円）</FormLabel>
               <FormControl>
                 <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
               </FormControl>
@@ -172,7 +172,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="lowerRate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>控除単価</FormLabel>
+              <FormLabel>控除単価（円）</FormLabel>
               <FormControl>
                 <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
               </FormControl>
@@ -187,7 +187,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           name="middleRate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>中間単価</FormLabel>
+              <FormLabel>中間単価（円）</FormLabel>
               <FormControl>
                 <Input  {...field} value={field.value ?? ""} type="number" step="0.01" placeholder="（例）5000" />
               </FormControl>
@@ -204,7 +204,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
             <FormItem>
               <FormLabel>締め日</FormLabel>
               <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）20（末日の場合は0を入力）" />
+                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）20（未入力の場合は末日）" />
               </FormControl>
               <FormMessage />
             </FormItem>

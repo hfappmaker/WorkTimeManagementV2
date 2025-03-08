@@ -9,3 +9,26 @@ export function cn(...inputs: ClassValue[]) {
 export const truncate = (str: string, maxLength: number): string => {
   return str.length > maxLength ? str.slice(0, maxLength) + "…" : str;
 };
+
+export const convertTimeStrToFractionOfDay = (timeStr: string): number => {
+  const [hrs, mins] = timeStr.split(":").map(Number);
+  return ((hrs * 60) + mins) / 1440;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
