@@ -165,8 +165,8 @@ const LoginForm = () => {
               </>
             )}
           </div>
-          {error && <FormError message={error || urlError} />}
-          {success && <FormSuccess message={success} />}
+          {error && <FormError message={error || urlError} resetSignal={Date.now()} />}
+          {success && <FormSuccess message={success} resetSignal={Date.now()} />}
           <Button
             type="submit"
             disabled={isPending}

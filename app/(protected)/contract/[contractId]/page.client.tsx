@@ -157,8 +157,8 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         <h1 className="text-xl font-bold mb-4">
           作業報告書一覧（{contract?.name}）
         </h1>
-        {error && <FormError message={error} />}
-        {success && <FormSuccess message={success} />}
+        {error && <FormError message={error} resetSignal={Date.now()} />}
+        {success && <FormSuccess message={success} resetSignal={Date.now()} />}
         <div className="flex items-center mb-4">
           <Form {...searchForm}>
             <form

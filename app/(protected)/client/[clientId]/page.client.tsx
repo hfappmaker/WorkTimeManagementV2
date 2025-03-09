@@ -377,8 +377,8 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
           </Button>
         </div>
 
-        {error && <div className="mb-4"><FormError message={error} /></div>}
-        {success && <div className="mb-4"><FormSuccess message={success} /></div>}
+        {error && <div className="mb-4"><FormError message={error} resetSignal={Date.now()} /></div>}
+        {success && <div className="mb-4"><FormSuccess message={success} resetSignal={Date.now()} /></div>}
 
         <Card>
           <CardHeader>

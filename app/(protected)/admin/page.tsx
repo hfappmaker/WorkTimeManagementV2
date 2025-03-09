@@ -51,7 +51,7 @@ export default function AdminPage() {
       </CardHeader>
       <CardContent className="space-y-4">
         <RoleGate allowedRole={UserRole.ADMIN}>
-          <FormSuccess message="Allowed, your role give you permissions see this content!" />
+          <FormSuccess message="Allowed, your role give you permissions see this content!" resetSignal={Date.now()} />
 
           <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md">
             <p className="text-sm font-medium">Admin-only API Route</p>

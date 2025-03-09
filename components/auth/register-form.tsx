@@ -155,8 +155,8 @@ const RegisterForm = () => {
               )}
             />
           </div>
-          {error && <FormError message={error} />}
-          {success && <FormSuccess message={success} />}
+          {error && <FormError message={error} resetSignal={Date.now()} />}
+          {success && <FormSuccess message={success} resetSignal={Date.now()} />}
           <Button
             type="submit"
             disabled={isPending}

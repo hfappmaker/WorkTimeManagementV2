@@ -47,8 +47,8 @@ const NewVerificationForm = () => {
     >
       <div className="flex items-center w-full justify-center">
         {!success && !error && <Spinner />}
-        {!success && <FormError message={error} />}
-        {success && <FormSuccess message={success} />}
+        {!success && <FormError message={error} resetSignal={Date.now()} />}
+        {success && <FormSuccess message={success} resetSignal={Date.now()} />}
       </div>
     </CardWrapper>
   );

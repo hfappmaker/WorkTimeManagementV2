@@ -47,6 +47,7 @@ interface WorkReportClientProps {
     workReport: WorkReportData;
     attendances: AttendanceRecord[];
     contractName: string;
+    clientName: string;
     closingDay: number | null;
 }
 
@@ -137,6 +138,7 @@ export default function ClientWorkReportPage({
     workReport,
     attendances,
     contractName,
+    clientName,
     closingDay
 }: WorkReportClientProps) {
     const isClient = useIsClient();
@@ -404,22 +406,21 @@ export default function ClientWorkReportPage({
     // メール送信用の関数を追加
     const createReportAndSendEmail = async () => {
         try {
-            if (!window.confirm("メールには作業報告書は自動で添付されません。\n「作業報告書を作成」でダウンロードしたファイルを手動で添付してください。")) {
+            if (!window.confirm("作業報告書は自動で添付されません。\n「作業報告書を作成」でダウンロードしたファイルを手動で添付してください。")) {
                 return;
             }
             // メーラーを起動
             const recipient = "example@example.com"; // 送信先
             const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${contractName}`);
             const body = encodeURIComponent(`
-            ${contractName} 様
-            
-            お疲れ様です。
-            
-            ${workReport.year}年${workReport.month}月分の作業報告書を添付いたします。
-            ご確認のほど、よろしくお願いいたします。
-            
-            `);
-            window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+${clientName} 様
+   
+お疲れ様です。
+        
+${workReport.year}年${workReport.month}月分の作業報告書を添付いたします。
+ご確認のほど、よろしくお願いいたします。    
+`);
+            window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');
         } catch (error) {
             console.error("作業報告書の作成に失敗しました", error);
             setError("作業報告書の作成に失敗しました");
@@ -473,8 +474,8 @@ export default function ClientWorkReportPage({
                 <h1 className="text-xl font-bold mb-4 dark:text-white">
                     {contractName}の作業報告書
                 </h1>
-                {error && <FormError message={error} />}
-                {success && <FormSuccess message={success} />}
+                {error && <FormError message={error} resetSignal={Date.now()} />}
+                {success && <FormSuccess message={success} resetSignal={Date.now()} />}
 
                 <Form {...attendanceForm}>
                     <form onSubmit={attendanceForm.handleSubmit(handleAttendanceSubmit)}>

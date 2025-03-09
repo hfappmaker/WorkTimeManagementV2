@@ -43,41 +43,46 @@ model User {
   contracts             Contract[]
   clients               Client[]
   auditLogs             AuditLog[]
+  EmailTemplate         EmailTemplate[]
 }
 
 model Client {
-  id           String     @id @default(cuid())
-  name         String
-  createUserId String
-  createUser   User       @relation(fields: [createUserId], references: [id], onDelete: Cascade)
-  contracts    Contract[]
+  id                     String         @id @default(cuid())
+  name                   String
+  contactName            String
+  email                  String
+  createUserId           String
+  createUser             User           @relation(fields: [createUserId], references: [id], onDelete: Cascade)
+  contracts              Contract[]
+  defaultEmailTemplateId String?
+  defaultEmailTemplate   EmailTemplate? @relation(fields: [defaultEmailTemplateId], references: [id])
 }
 
 model Contract {
-  id                  String       @id @default(cuid())
-  name                String
-  startDate           DateTime
-  endDate             DateTime?
-  clientId            String
-  client              Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  userId              String
-  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workReports         WorkReport[]
-  unitPrice           Decimal?     // 月単価
-  settlementMin       Decimal?     // 精算幅下限
-  settlementMax       Decimal?     // 精算幅上限
-  upperRate           Decimal?     // 超過時間単価
-  lowerRate           Decimal?     // 控除時間単価
-  middleRate          Decimal?     // 中間割の時間単価
-  
-  dailyWorkMinutes    Int?         // 1日あたりの作業単位(分)
-  monthlyWorkMinutes  Int?         // 1ヶ月あたりの作業単位(分)
-  basicStartTime      DateTime?    @db.Time // 基本開始時刻
-  basicEndTime        DateTime?    @db.Time // 基本終了時刻
-  basicBreakDuration  Int?         // 基本休憩時間（分）
-  basicWorkingMinutes Int?         // 基本稼働時間（分）
+  id            String       @id @default(cuid())
+  name          String
+  startDate     DateTime
+  endDate       DateTime?
+  clientId      String
+  client        Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workReports   WorkReport[]
+  unitPrice     Decimal? // 月単価
+  settlementMin Decimal? // 精算幅下限
+  settlementMax Decimal? // 精算幅上限
+  upperRate     Decimal? // 超過時間単価
+  lowerRate     Decimal? // 控除時間単価
+  middleRate    Decimal? // 中間割の時間単価
 
-  closingDay          Int?         // 締め日(1～31)
+  dailyWorkMinutes    Int? // 1日あたりの作業単位(分)
+  monthlyWorkMinutes  Int? // 1ヶ月あたりの作業単位(分)
+  basicStartTime      DateTime? @db.Time // 基本開始時刻
+  basicEndTime        DateTime? @db.Time // 基本終了時刻
+  basicBreakDuration  Int? // 基本休憩時間（分）
+  basicWorkingMinutes Int? // 基本稼働時間（分）
+
+  closingDay Int? // 締め日(1～31)
 }
 
 model WorkReport {
@@ -102,6 +107,18 @@ model Attendance {
   workReportId  String
 
   @@unique([date, workReportId])
+}
+
+model EmailTemplate {
+  id           String   @id @default(cuid())
+  name         String   @unique // テンプレート識別子（"work-report-submission" など）
+  subject      String // メール件名
+  body         String // メール本文（HTMLやプレーンテキスト）
+  createUserId String
+  createUser   User     @relation(fields: [createUserId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  Client       Client[]
 }
 
 model Account {
