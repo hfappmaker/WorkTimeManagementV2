@@ -260,19 +260,6 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField
-                                        control={createForm.control}
-                                        name="createUserId"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Create User ID</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Create User ID" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
                                     <div className="flex justify-end gap-2 mt-4">
                                         <Button type="button" variant="outline" onClick={closeDialog}>キャンセル</Button>
                                         <Button type="submit">作成</Button>
@@ -332,19 +319,6 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
                                                 <FormLabel>Body</FormLabel>
                                                 <FormControl>
                                                     <TextArea {...field} placeholder="Body" rows={4} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={editForm.control}
-                                        name="createUserId"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Create User ID</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Create User ID" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
