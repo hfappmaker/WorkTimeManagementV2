@@ -8,12 +8,8 @@ export const NAV_LINKS = [
     path: "/client",
   },
   {
-    title: "作業報告書テンプレート設定",
-    path: "/work-report-template",
-  },
-  {
     title: "メールテンプレート設定",
-    path: "/mail-template",
+    path: "/emailTemplate",
   },
   {
     title: "設定",

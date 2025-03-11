@@ -9,16 +9,30 @@ import {
   getContractById,
   getContractsByClientId,
 } from "@/data/contract";
-import { createWorkReport, 
-  updateWorkReportAttendances, 
-  getWorkReportsByContractId } from "@/data/work-report";
+import {
+  createWorkReport,
+  updateWorkReportAttendances,
+  getWorkReportsByContractId,
+} from "@/data/work-report";
+import {
+  createEmailTemplate,
+  deleteEmailTemplate,
+  updateEmailTemplate,
+  getEmailTemplatesByCreateUserId,
+} from "@/data/email-template";
 
 import { revalidatePath } from "next/cache";
-import { FormActionResult } from '@/models/form-action-result';
-import { generateWithOllama } from '@/lib/ai';
-import { z } from 'zod';
-import { ClientSchema, ContractSchema } from '@/schemas';
-import { getClientById, getClientsByUserId, createClient, updateClient, deleteClient } from "@/data/client";
+import { FormActionResult } from "@/models/form-action-result";
+import { generateWithOllama } from "@/lib/ai";
+import { z } from "zod";
+import { ClientSchema, ContractSchema, EmailTemplateSchema } from "@/schemas";
+import {
+  getClientById,
+  getClientsByUserId,
+  createClient,
+  updateClient,
+  deleteClient,
+} from "@/data/client";
 
 interface AttendanceEntry {
   start: string;
@@ -44,29 +58,37 @@ export const generateOllamaAction = async (
   const config = {
     model: aiModel,
     temperature: 0.7,
-    max_tokens: 2048, 
+    max_tokens: 2048,
   };
 
   return await generateWithOllama(deepSeekPrompt, config);
 };
 
-export const createContractAction = async (values: z.infer<typeof ContractSchema>) => {
+export const createContractAction = async (
+  values: z.infer<typeof ContractSchema>
+) => {
   await createContract(values);
   console.log("Contract created successfully");
   revalidatePath("/client/[clientId]");
 };
 
-export const updateContractAction = async (id: string, values: z.infer<typeof ContractSchema>) => {
+export const updateContractAction = async (
+  id: string,
+  values: z.infer<typeof ContractSchema>
+) => {
   await updateContract(id, values);
   revalidatePath("/client/[clientId]");
-};  
+};
 
 export const deleteContractAction = async (id: string) => {
   await deleteContract(id);
   revalidatePath("/client/[clientId]");
 };
 
-export const searchContractsAction = async (userId: string, searchQuery: string) => {
+export const searchContractsAction = async (
+  userId: string,
+  searchQuery: string
+) => {
   try {
     const contracts = await searchContracts(userId, searchQuery);
     return contracts ? JSON.parse(JSON.stringify(contracts)) : [];
@@ -150,12 +172,17 @@ export const getClientsByUserIdAction = async (userId: string) => {
   }
 };
 
-export const createClientAction = async (values: z.infer<typeof ClientSchema>) => {
+export const createClientAction = async (
+  values: z.infer<typeof ClientSchema>
+) => {
   await createClient(values);
   revalidatePath("/client");
 };
 
-export const updateClientAction = async (id: string, values: z.infer<typeof ClientSchema>) => {
+export const updateClientAction = async (
+  id: string,
+  values: z.infer<typeof ClientSchema>
+) => {
   await updateClient(id, values);
   revalidatePath("/client");
 };
@@ -165,7 +192,65 @@ export const deleteClientAction = async (id: string) => {
   revalidatePath("/client");
 };
 
+export const getEmailTemplatesByCreateUserIdAction = async (
+  createUserId: string
+) => {
+  try {
+    console.log("createUserId", createUserId);
+    const templates = await getEmailTemplatesByCreateUserId(createUserId);
+    console.log("templates", templates);
+    return templates ? JSON.parse(JSON.stringify(templates)) : [];
+  } catch (error) {
+    console.error("Error fetching email templates:", error);
+    throw new Error("Failed to fetch email templates");
+  }
+};
 
+export const createEmailTemplateAction = async (
+  values: z.infer<typeof EmailTemplateSchema>
+) => {
+  const name = values.name;
+  const subject = values.subject;
+  const body = values.body;
+  const createUserId = values.createUserId;
+  try {
+    const template = await createEmailTemplate({
+      name,
+      subject,
+      body,
+      createUserId,
+    });
+    revalidatePath("/emailTemplate");
+    return template;
+  } catch (error) {
+    console.error("Error creating email template:", error);
+    throw new Error("Failed to create email template");
+  }
+};
 
+export const updateEmailTemplateAction = async (
+  id: string,
+  values: z.infer<typeof EmailTemplateSchema>
+) => {
+  const name = values.name;
+  const subject = values.subject;
+  const body = values.body;
+  try {
+    const template = await updateEmailTemplate(id, { name, subject, body });
+    revalidatePath("/emailTemplate");
+    return template;
+  } catch (error) {
+    console.error("Error updating email template:", error);
+    throw new Error("Failed to update email template");
+  }
+};
 
-
+export const deleteEmailTemplateAction = async (id: string) => {
+  try {
+    await deleteEmailTemplate(id);
+    revalidatePath("/emailTemplate");
+  } catch (error) {
+    console.error("Error deleting email template:", error);
+    throw new Error("Failed to delete email template");
+  }
+};

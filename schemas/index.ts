@@ -141,3 +141,10 @@ export const ClientSchema = z.object({
   name: z.string().min(1, { message: "Client name is required" }),
 });
 
+export const EmailTemplateSchema = z.object({
+  name: z.string().min(1, { message: "Template name is required" }),
+  subject: z.string().min(1, { message: "Subject is required" }),
+  body: z.string().min(1, { message: "Body is required" }),
+  createUserId: z.string().min(1, { message: "User is required" }),
+});
+
