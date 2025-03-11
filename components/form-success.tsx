@@ -8,12 +8,13 @@ type FormSuccessProps = {
 
 const FormSuccess = ({ message, resetSignal }: FormSuccessProps) => {
   const [visible, setVisible] = useState(true);
-  if (!message || !visible) return null;
-
+  
   // resetSignal の値が変化すれば再表示する
   useEffect(() => {
     setVisible(true);
   }, [resetSignal]);
+
+  if (!message || !visible) return null;
 
   return (
     <div className="relative bg-emerald-500/15 p-3 rounded-md flex items-center gap-x-2 text-sm text-emerald-500">

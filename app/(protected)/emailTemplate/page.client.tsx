@@ -152,13 +152,12 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
                     <ul>
                         {templates.map((template) => (
                             <li key={template.id} className="border p-3 mb-2 flex justify-between items-center">
-                                <div className="cursor-pointer" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("details"); }}>
+                                <div className="cursor-pointer">
                                     <div className="font-medium">{template.name}</div>
                                     <div className="text-sm text-muted-foreground">Subject: {template.subject}</div>
                                 </div>
                                 <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("edit"); }}>編集</Button>
-                                    <Button variant="destructive" size="sm" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("delete"); }}>削除</Button>
+                                    <Button variant="outline" size="sm" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("details"); }}>詳細</Button>
                                 </div>
                             </li>
                         ))}
@@ -191,8 +190,6 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
                                             <div>{activeEmailTemplate.subject}</div>
                                             <div className="font-semibold">Body</div>
                                             <div>{activeEmailTemplate.body}</div>
-                                            <div className="font-semibold">Create User ID</div>
-                                            <div>{activeEmailTemplate.createUserId}</div>
                                         </div>
                                     </div>
                                     <div className="flex justify-end gap-2 mt-4">
