@@ -28,8 +28,8 @@ import { register } from "@/actions/register";
 const RegisterForm = () => {
   const isClient = useIsClient();
 
-  const [error, setError] = useState<string>("");
-  const [success, setSuccess] = useState<string>("");
+  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
 
   const [isPending, startTransition] = useTransition();
 
@@ -46,14 +46,14 @@ const RegisterForm = () => {
   const onSubmit = (values: z.infer<typeof RegisterSchema>) => {
     startTransition(() => {
       register(values).then((data) => {
-        if (data.success) setSuccess(data.success);
-        if (data?.error) setError(data.error);
+        if (data.success) setSuccess({ message: data.success, date: new Date() });
+        if (data?.error) setError({ message: data.error, date: new Date() });
       });
     });
 
     form.reset();
-    setSuccess("");
-    setError("");
+    setSuccess({ message: "", date: new Date() });
+    setError({ message: "", date: new Date() });
   };
 
   if (!isClient) return <Spinner />;
@@ -155,8 +155,8 @@ const RegisterForm = () => {
               )}
             />
           </div>
-          {error && <FormError message={error} resetSignal={Date.now()} />}
-          {success && <FormSuccess message={success} resetSignal={Date.now()} />}
+          {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
+          {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
           <Button
             type="submit"
             disabled={isPending}

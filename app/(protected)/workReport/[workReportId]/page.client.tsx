@@ -142,8 +142,8 @@ export default function ClientWorkReportPage({
     closingDay
 }: WorkReportClientProps) {
     const isClient = useIsClient();
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+    const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+    const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
     const [isPending, startTransition] = useTransition();
     // モーダルの状態管理
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
@@ -181,12 +181,12 @@ export default function ClientWorkReportPage({
         startTransition(async () => {
             try {
                 await updateWorkReportAction(workReportId, data);
-                setSuccess("Attendance submitted successfully.");
-                setError("");
+                setSuccess({ message: "Attendance submitted successfully.", date: new Date() });
+                setError({ message: "", date: new Date() });
             } catch (err) {
                 console.error(err);
-                setError("Failed to update attendance.");
-                setSuccess("");
+                setError({ message: "Failed to update attendance.", date: new Date() });
+                setSuccess({ message: "", date: new Date() });
             }
         });
     };
@@ -243,7 +243,7 @@ export default function ClientWorkReportPage({
         // フォームの値を更新
         attendanceForm.reset(updatedValues);
         setIsBulkEditModalOpen(false);
-        setSuccess("一括編集を適用しました");
+        setSuccess({ message: "一括編集を適用しました", date: new Date() });
     };
 
     // テンプレートからの作業報告書作成
@@ -396,10 +396,10 @@ export default function ClientWorkReportPage({
             link.download = `${workReport.year}年${workReport.month}月度作業報告書.xlsx`;
             link.click();
             window.URL.revokeObjectURL(url);
-            setSuccess("テンプレートからの作業報告書作成が完了しました");
+            setSuccess({ message: "テンプレートからの作業報告書作成が完了しました", date: new Date() });
         } catch (err) {
             console.error("Error creating report from template:", err);
-            setError("テンプレートからの作業報告書作成に失敗しました");
+            setError({ message: "テンプレートからの作業報告書作成に失敗しました", date: new Date() });
         }
     };
 
@@ -423,7 +423,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
             window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');
         } catch (error) {
             console.error("作業報告書の作成に失敗しました", error);
-            setError("作業報告書の作成に失敗しました");
+            setError({ message: "作業報告書の作成に失敗しました", date: new Date() });
         }
     };
 
@@ -431,7 +431,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
         if (extensionOption === "excel") {
             if (templateOption === "upload") {
                 if (!uploadedTemplateFile) {
-                    setError("テンプレートファイルが選択されていません");
+                    setError({ message: "テンプレートファイルが選択されていません", date: new Date() });
                     return;
                 }
                 try {
@@ -441,7 +441,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                     createReportFromTemplate(workbook);
                 } catch (err) {
                     console.error("アップロードテンプレートの処理に失敗しました", err);
-                    setError("アップロードテンプレートの処理に失敗しました");
+                    setError({ message: "アップロードテンプレートの処理に失敗しました", date: new Date() });
                     return;
                 }
             }
@@ -457,12 +457,12 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                     createReportFromTemplate(workbook);
                 } catch (err) {
                     console.error("デフォルトテンプレートの読み込みに失敗しました:", err);
-                    setError("デフォルトテンプレートの読み込みに失敗しました");
+                    setError({ message: "デフォルトテンプレートの読み込みに失敗しました", date: new Date() });
                     return;
                 }
             }
         } else if (extensionOption === "pdf") {
-            setError("PDF形式での作業報告書作成は未実装です");
+            setError({ message: "PDF形式での作業報告書作成は未実装です", date: new Date() });
             return;
         }
         setIsCreateReportDialogOpen(false);
@@ -474,8 +474,8 @@ ${workReport.year}年${workReport.month}月分の作業報告書を添付いた�
                 <h1 className="text-xl font-bold mb-4 dark:text-white">
                     {contractName}の作業報告書
                 </h1>
-                {error && <FormError message={error} resetSignal={Date.now()} />}
-                {success && <FormSuccess message={success} resetSignal={Date.now()} />}
+                {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
+                {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
 
                 <Form {...attendanceForm}>
                     <form onSubmit={attendanceForm.handleSubmit(handleAttendanceSubmit)}>

@@ -224,8 +224,8 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [activeContract, setActiveContract] = useState<Contract | null>(null);
   const [activeDialog, setActiveDialog] = useState<DialogType>(null);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [isPending, startTransition] = useTransition();
   const isClient = useIsClient();
   const router = useRouter();
@@ -297,13 +297,13 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
     startTransition(async () => {
       try {
         await createContractAction({ ...data, clientId: client.id });
-        setSuccess(`契約 '${data.name}' を作成しました`);
+        setSuccess({ message: `契約 '${data.name}' を作成しました`, date: new Date() });
         createForm.reset(defaultFormValues);
         closeDialog();
         await refreshContracts();
       } catch (err) {
         console.error(err);
-        setError("契約の作成に失敗しました");
+        setError({ message: "契約の作成に失敗しました", date: new Date() });
       }
     });
   };
@@ -314,13 +314,13 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
     startTransition(async () => {
       try {
         await updateContractAction(activeContract.id, { ...data, clientId: client.id });
-        setSuccess("契約を編集しました");
+        setSuccess({ message: `契約 '${data.name}' を編集しました`, date: new Date() });
         closeDialog();
         editForm.reset(defaultFormValues);
         await refreshContracts();
       } catch (err) {
         console.error(err);
-        setError("契約の更新に失敗しました");
+        setError({ message: "契約の更新に失敗しました", date: new Date() });
       }
     });
   };
@@ -331,12 +331,12 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
     startTransition(async () => {
       try {
         await deleteContractAction(activeContract.id);
-        setSuccess("契約を削除しました");
+        setSuccess({ message: `契約 '${activeContract.name}' を削除しました`, date: new Date() });
         closeDialog();
         await refreshContracts();
       } catch (err) {
         console.error(err);
-        setError("契約の削除に失敗しました。関連する勤怠情報が存在する可能性があります。");
+        setError({ message: "契約の削除に失敗しました。関連する勤怠情報が存在する可能性があります。", date: new Date() });
       }
     });
   };
@@ -377,8 +377,8 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
           </Button>
         </div>
 
-        {error && <div className="mb-4"><FormError message={error} resetSignal={Date.now()} /></div>}
-        {success && <div className="mb-4"><FormSuccess message={success} resetSignal={Date.now()} /></div>}
+        {error && <div className="mb-4"><FormError message={error.message} resetSignal={error.date.getTime()} /></div>}
+        {success && <div className="mb-4"><FormSuccess message={success.message} resetSignal={success.date.getTime()} /></div>}
 
         <Card>
           <CardHeader>

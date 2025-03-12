@@ -23,8 +23,8 @@ import FormSuccess from "@/components/form-success";
 import { reset } from "@/actions/reset";
 
 const ResetPasswordForm = () => {
-  const [error, setError] = useState<string | undefined>("");
-  const [success, setSuccess] = useState<string | undefined>("");
+  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof ResetSchema>>({
@@ -35,13 +35,13 @@ const ResetPasswordForm = () => {
   });
 
   const onSubmit = (values: z.infer<typeof ResetSchema>) => {
-    setError("");
-    setSuccess("");
+    setError({ message: "", date: new Date() });
+    setSuccess({ message: "", date: new Date() });
 
     startTransition(() => {
       reset(values).then((data) => {
-        setError(data?.error);
-        setSuccess(data?.success);
+        setError({ message: data?.error || "", date: new Date() });
+        setSuccess({ message: data?.success || "", date: new Date() });
       });
     });
   };
@@ -77,8 +77,8 @@ const ResetPasswordForm = () => {
               )}
             />
           </div>
-          {error && <FormError message={error} resetSignal={Date.now()} />}
-          {success && <FormSuccess message={success} resetSignal={Date.now()} />}
+          {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
+          {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
           <Button
             disabled={isPending}
             type="submit"

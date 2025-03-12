@@ -10,8 +10,8 @@ import FormSuccess from "@/components/form-success";
 import Spinner from "../spinner";
 
 const NewVerificationForm = () => {
-  const [error, setError] = useState<string | undefined>();
-  const [success, setSuccess] = useState<string | undefined>();
+  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
 
   const searchParams = useSearchParams();
 
@@ -21,17 +21,17 @@ const NewVerificationForm = () => {
     if (success || error) return;
 
     if (!token) {
-      setError("Missing token!");
+      setError({ message: "Missing token!", date: new Date() });
       return;
     }
 
     newVerification(token)
       .then((data) => {
-        setSuccess(data.success);
-        setError(data.error);
+        setSuccess({ message: data.success || "", date: new Date() });
+        setError({ message: data.error || "", date: new Date() });
       })
       .catch(() => {
-        setError("Something went wrong!");
+        setError({ message: "Something went wrong!", date: new Date() });
       });
   }, [token, success, error]);
 
@@ -47,8 +47,8 @@ const NewVerificationForm = () => {
     >
       <div className="flex items-center w-full justify-center">
         {!success && !error && <Spinner />}
-        {!success && <FormError message={error} resetSignal={Date.now()} />}
-        {success && <FormSuccess message={success} resetSignal={Date.now()} />}
+        {!success && <FormError message={error.message} resetSignal={error.date.getTime()} />}
+        {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
       </div>
     </CardWrapper>
   );

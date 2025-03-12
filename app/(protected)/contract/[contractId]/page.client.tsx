@@ -21,8 +21,8 @@ interface ReportFormValues {
 }
 
 export default function ContractClientPage({ contractId }: { contractId: string }) {
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [workReports, setWorkReports] = useState<WorkReport[]>([]);
   const [contract, setContract] = useState<Contract | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -69,10 +69,10 @@ export default function ContractClientPage({ contractId }: { contractId: string 
       if (data) {
         setWorkReports(data);
       } else {
-        setError('作業報告書の取得に失敗しました');
+        setError({ message: '作業報告書の取得に失敗しました', date: new Date() });
       }
     } catch (error: any) {
-      setError(error.message || '作業報告書の取得に失敗しました');
+      setError({ message: error.message || '作業報告書の取得に失敗しました', date: new Date() });
     }
   };
 
@@ -94,7 +94,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   const handleCreateReport = async (values: ReportFormValues) => {
     try {
       if (!contract) {
-        setError('契約情報がありません');
+        setError({ message: '契約情報がありません', date: new Date() });
         return;
       }
 
@@ -104,7 +104,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
 
       startTransition(async () => {
         await createWorkReportAction(contractId, yearInt, monthInt);
-        setSuccess('作業報告書を作成しました');
+        setSuccess({ message: '作業報告書を作成しました', date: new Date() });
         // Refresh report list after creation
         await fetchReports();
         // Close dialog and reset the creation form
@@ -115,7 +115,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         });
       });
     } catch (error: any) {
-      setError(error.message || '作業報告書の作成に失敗しました');
+      setError({ message: error.message || '作業報告書の作成に失敗しました', date: new Date() });
     }
   };
 
@@ -157,8 +157,8 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         <h1 className="text-xl font-bold mb-4">
           作業報告書一覧（{contract?.name}）
         </h1>
-        {error && <FormError message={error} resetSignal={Date.now()} />}
-        {success && <FormSuccess message={success} resetSignal={Date.now()} />}
+        {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
+        {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
         <div className="flex items-center mb-4">
           <Form {...searchForm}>
             <form

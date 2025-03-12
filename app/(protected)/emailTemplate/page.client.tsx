@@ -32,8 +32,8 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [activeDialog, setActiveDialog] = useState<DialogType>(null);
     const [activeEmailTemplate, setActiveEmailTemplate] = useState<EmailTemplate | null>(null);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+    const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+    const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
     const [isPending, startTransition] = useTransition();
     const isClient = useIsClient();
 
@@ -83,13 +83,13 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
         startTransition(async () => {
             try {
                 await createEmailTemplateAction(data);
-                setSuccess(`メールテンプレート '${data.name}' を作成しました`);
+                setSuccess({ message: `メールテンプレート '${data.name}' を作成しました`, date: new Date() });
                 createForm.reset(defaultFormValues);
                 closeDialog();
                 await refreshTemplates();
             } catch (err) {
                 console.error(err);
-                setError("メールテンプレートの作成に失敗しました");
+                setError({ message: "メールテンプレートの作成に失敗しました", date: new Date() });
             }
         });
     };
@@ -100,13 +100,13 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
         startTransition(async () => {
             try {
                 await updateEmailTemplateAction(activeEmailTemplate.id, data);
-                setSuccess("メールテンプレートを編集しました");
+                setSuccess({ message: `メールテンプレート '${data.name}' を編集しました`, date: new Date() });
                 closeDialog();
                 editForm.reset(defaultFormValues);
                 await refreshTemplates();
             } catch (err) {
                 console.error(err);
-                setError("メールテンプレートの更新に失敗しました");
+                setError({ message: "メールテンプレートの更新に失敗しました", date: new Date() });
             }
         });
     };
@@ -117,12 +117,12 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
         startTransition(async () => {
             try {
                 await deleteEmailTemplateAction(activeEmailTemplate.id);
-                setSuccess("メールテンプレートを削除しました");
+                setSuccess({ message: `メールテンプレート '${activeEmailTemplate.name}' を削除しました`, date: new Date() });
                 closeDialog();
                 await refreshTemplates();
             } catch (err) {
                 console.error(err);
-                setError("メールテンプレートの削除に失敗しました");
+                setError({ message: "メールテンプレートの削除に失敗しました", date: new Date() });
             }
         });
     };
@@ -143,8 +143,8 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
         <div className="p-4">
             <LoadingOverlay isClient={isClient} isPending={isPending}>
                 <h1 className="text-2xl font-bold mb-4">メールテンプレート一覧</h1>
-                {error && <div className="mb-4"><FormError message={error} resetSignal={Date.now()} /></div>}
-                {success && <div className="mb-4"><FormSuccess message={success} resetSignal={Date.now()} /></div>}
+                {error && <div className="mb-4"><FormError message={error.message} resetSignal={error.date.getTime()} /></div>}
+                {success && <div className="mb-4"><FormSuccess message={success.message} resetSignal={success.date.getTime()} /></div>}
                 <div className="mb-4">
                     <Button onClick={() => setActiveDialog("create")}>新規作成</Button>
                 </div>

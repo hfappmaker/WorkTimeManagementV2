@@ -36,8 +36,8 @@ const LoginForm = () => {
 
   const [showTwoFactor, setShowTwoFactor] = useState(false);
 
-  const [error, setError] = useState<string>("");
-  const [success, setSuccess] = useState<string>("");
+  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
 
   const [isPending, startTransition] = useTransition();
 
@@ -58,12 +58,12 @@ const LoginForm = () => {
         login(values, callbackUrl).then((data) => {
           if (data?.error) {
             form.reset();
-            setError(data.error);
+            setError({ message: data.error, date: new Date() });
           }
 
           if (data?.success) {
             form.reset();
-            setSuccess(data.success);
+            setSuccess({ message: data.success, date: new Date() });
           }
 
           if (data?.twoFactor) {
@@ -71,11 +71,11 @@ const LoginForm = () => {
           }
         });
       } catch (err) {
-        setError(`Something went wrong! Error:${err}`);
+        setError({ message: `Something went wrong! Error:${err}`, date: new Date() });
       } finally {
         setShowTwoFactor(false);
-        setSuccess("");
-        setError("");
+        setSuccess({ message: "", date: new Date() });
+        setError({ message: "", date: new Date() });
       }
     });
   };
@@ -165,8 +165,8 @@ const LoginForm = () => {
               </>
             )}
           </div>
-          {error && <FormError message={error || urlError} resetSignal={Date.now()} />}
-          {success && <FormSuccess message={success} resetSignal={Date.now()} />}
+          {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
+          {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
           <Button
             type="submit"
             disabled={isPending}
