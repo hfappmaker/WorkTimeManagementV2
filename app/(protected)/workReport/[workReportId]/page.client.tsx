@@ -49,6 +49,8 @@ interface WorkReportClientProps {
     contractName: string;
     clientName: string;
     closingDay: number | null;
+    userName: string;
+    clientEmail: string;
 }
 
 // Helper to generate a key for each day between startDate and endDate (inclusive)
@@ -139,7 +141,9 @@ export default function ClientWorkReportPage({
     attendances,
     contractName,
     clientName,
-    closingDay
+    closingDay,
+    userName,
+    clientEmail
 }: WorkReportClientProps) {
     const isClient = useIsClient();
     const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
@@ -410,14 +414,14 @@ export default function ClientWorkReportPage({
                 return;
             }
             // メーラーを起動
-            const recipient = "example@example.com"; // 送信先
-            const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${contractName}`);
+            const recipient = clientEmail; // 送信先
+            const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${userName}`);
             const body = encodeURIComponent(`
 ${clientName} 様
    
-お疲れ様です。
+お世話になっております。${userName}です。
         
-${workReport.year}年${workReport.month}月分の作業報告書を添付いたします。
+${workReport.year}年${workReport.month}月分の作業報告書を送付いたします。
 ご確認のほど、よろしくお願いいたします。    
 `);
             window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');

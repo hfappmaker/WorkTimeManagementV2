@@ -1,6 +1,7 @@
 import { getContractById } from "@/data/contract";
 import ClientWorkReportPage from "./page.client";
 import { getWorkReportById, getAttendancesByWorkReportId } from "@/data/work-report"
+import { currentUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
 // Helper function to format minutes as "HH:MM"
 function formatDuration(minutes: number): string {
@@ -11,17 +12,17 @@ function formatDuration(minutes: number): string {
 
 export default async function WorkReportPage({ params }: { params: Promise<{ workReportId: string }> }) {
   const { workReportId } = await params;
+  const user = await currentUser();
   // Assume that getWorkReportById returns a work report with startDate and endDate as strings or Date objects.
   const workReport = await getWorkReportById(workReportId);
   if (!workReport) {
-    // Return a 404 if not found
-    notFound();
+    return notFound();
   }
   
   // 契約情報を取得
   const contract = await getContractById(workReport.contractId);
-  if (!contract) {
-    notFound();
+  if (!contract || contract.client.createUserId !== user?.id) {
+    return notFound();
   }
   
   // Fetch raw attendances from the DB.
@@ -43,9 +44,11 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
         year: workReport.year,
         month: workReport.month,
       }}
+      userName={user.name}
       attendances={attendances}
       contractName={contract.name}
       clientName={contract.client.name}
+      clientEmail={contract.client.email}
       closingDay={contract.closingDay}
     />
   );
