@@ -9,7 +9,7 @@
 - DBへのCRUD操作を記録する監査ログ機能
 
 ## アピールポイント
-- 最新の技術スタック（TypeScript, React, Next.js(App Router), prisma(PostgreSQL)）を採用しております。
+- 最新の技術スタック（TypeScript, React v19, Next.js(App Router), prisma(PostgreSQL)）を採用しております。
 - Devcontainer を活用した一貫した開発環境により、チーム全体での生産性が向上します。
 - GitHub Actions を用いたCI/CDパイプラインで、AWS RDSのマイグレーション,AWS ECSへのデプロイまで自動で行います。
 
