@@ -39,6 +39,7 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
   
   return (
     <ClientWorkReportPage 
+      contractId={contract.id}
       workReportId={workReportId}
       workReport={{
         year: workReport.year,

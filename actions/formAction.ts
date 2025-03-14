@@ -69,7 +69,7 @@ export const createContractAction = async (
 ) => {
   await createContract(values);
   console.log("Contract created successfully");
-  revalidatePath("/client/[clientId]");
+  revalidatePath(`/client/${values.clientId}`);
 };
 
 export const updateContractAction = async (
@@ -77,12 +77,12 @@ export const updateContractAction = async (
   values: z.infer<typeof ContractSchema>
 ) => {
   await updateContract(id, values);
-  revalidatePath("/client/[clientId]");
+  revalidatePath(`/client/${values.clientId}`);
 };
 
 export const deleteContractAction = async (id: string) => {
   await deleteContract(id);
-  revalidatePath("/client/[clientId]");
+  revalidatePath(`/client/${id}`);
 };
 
 export const searchContractsAction = async (
@@ -104,15 +104,16 @@ export const createWorkReportAction = async (
   month: number
 ) => {
   await createWorkReport(contractId, year, month);
-  revalidatePath("/workReport/[contractId]");
+  revalidatePath(`/workReport/${contractId}`);
 };
 
 export const updateWorkReportAction = async (
+  contractId: string,
   workReportId: string,
   attendance: AttendanceFormValues
 ) => {
   await updateWorkReportAttendances(workReportId, attendance);
-  revalidatePath("/workReport/[contractId]/[workReportId]");
+  revalidatePath(`/workReport/${contractId}/${workReportId}`);
 };
 
 export const getWorkReportsByContractIdAction = async (contractId: string) => {

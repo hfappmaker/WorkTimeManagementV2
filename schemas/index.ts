@@ -139,6 +139,8 @@ export const ContractSchema = z.object({
 export const ClientSchema = z.object({
   createUserId: z.string().min(1, { message: "User is required" }),
   name: z.string().min(1, { message: "Client name is required" }),
+  contactName: z.optional(z.string()),
+  email: z.optional(z.string().email({ message: "Please enter a valid email address, required." })),
 });
 
 export const EmailTemplateSchema = z.object({

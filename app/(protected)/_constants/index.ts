@@ -8,10 +8,6 @@ export const NAV_LINKS = [
     path: "/client",
   },
   {
-    title: "メールテンプレート設定",
-    path: "/emailTemplate",
-  },
-  {
     title: "設定",
     path: "/settings",
   },

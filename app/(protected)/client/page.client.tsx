@@ -21,9 +21,14 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import { useIsClient } from "@/hooks/use-is-client";
 import { useRouter } from "next/navigation";
 import { truncate } from "@/lib/utils";
+
+// クライアント作成/編集では ClientSchema (name, contactName, email, createUserId) を利用するので、
+// 担当者名 (contactName) とメールアドレス (email) も含むようにインターフェースを修正します。
 interface Client {
   id: string;
   name: string;
+  contactName: string;
+  email: string;
   createUserId: string;
 }
 
@@ -38,8 +43,16 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // 作成用の状態：クライアント名、担当者名、メールアドレス
   const [newClientName, setNewClientName] = useState("");
+  const [newContactName, setNewContactName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+
+  // 編集用の状態
   const [editClientName, setEditClientName] = useState("");
+  const [editContactName, setEditContactName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+
   const router = useRouter();
 
   useEffect(() => {
@@ -58,6 +71,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     }
   };
 
+  // 作成時は必須項目 (クライアント名、担当者名、メールアドレス) の入力チェックを行い、ClientSchema通りのデータを渡します
   const handleCreateClient = async () => {
     if (!newClientName.trim()) {
       toast.error("クライアント名を入力してください");
@@ -65,12 +79,20 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     }
     startTransition(async () => {
       try {
-        await createClientAction({ createUserId: userId, name: newClientName });
+        await createClientAction({ 
+          createUserId: userId, 
+          name: newClientName, 
+          contactName: newContactName,
+          email: newEmail,
+        });
 
         toast.success("クライアントを作成しました");
         await fetchClients();
         setShowCreateModal(false);
+        // 入力欄をクリア
         setNewClientName("");
+        setNewContactName("");
+        setNewEmail("");
       } catch (error) {
         if (error instanceof Error) {
           toast.error(error.message);
@@ -82,6 +104,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     });
   };
 
+  // 編集時も同様に、必須項目が入力されていることをチェックして更新します
   const handleEditClient = async () => {
     if (!selectedClient || !editClientName.trim()) {
       toast.error("クライアント名を入力してください");
@@ -89,7 +112,12 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     }
     startTransition(async () => {
       try {
-        await updateClientAction(selectedClient.id, { createUserId: userId, name: editClientName });
+        await updateClientAction(selectedClient.id, {
+          createUserId: userId,
+          name: editClientName,
+          contactName: editContactName,
+          email: editEmail,
+        });
         toast.success("クライアント情報を更新しました");
         await fetchClients();
         setShowEditModal(false);
@@ -129,9 +157,12 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     setShowDetailsModal(true);
   };
 
+  // 編集時は、選択中のクライアント情報 (クライアント名、担当者名、メールアドレス) を初期値として設定します
   const openEditModal = () => {
     if (selectedClient) {
       setEditClientName(selectedClient.name);
+      setEditContactName(selectedClient.contactName);
+      setEditEmail(selectedClient.email);
       setShowEditModal(true);
       setShowDetailsModal(false);
     }
@@ -173,11 +204,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
                         {truncate(client.name, 30)}
                       </Label>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openDetailsModal(client)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => openDetailsModal(client)}>
                       詳細
                     </Button>
                   </div>
@@ -206,6 +233,14 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="font-medium">クライアント名:</div>
                     <div>{selectedClient.name}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="font-medium">担当者名:</div>
+                    <div>{selectedClient.contactName}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="font-medium">メールアドレス:</div>
+                    <div>{selectedClient.email}</div>
                   </div>
                 </div>
               )}
@@ -247,6 +282,28 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
                       placeholder="クライアント名を入力"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-name" className="text-sm font-medium">
+                      担当者名
+                    </Label>
+                    <Input
+                      id="contact-name"
+                      value={newContactName}
+                      onChange={(e) => setNewContactName(e.target.value)}
+                      placeholder="担当者名を入力"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">
+                      メールアドレス
+                    </Label>
+                    <Input
+                      id="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="メールアドレスを入力"
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setShowCreateModal(false)}>
@@ -280,6 +337,28 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
                       value={editClientName}
                       onChange={(e) => setEditClientName(e.target.value)}
                       placeholder="クライアント名を入力"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-contact-name" className="text-sm font-medium">
+                      担当者名
+                    </Label>
+                    <Input
+                      id="edit-contact-name"
+                      value={editContactName}
+                      onChange={(e) => setEditContactName(e.target.value)}
+                      placeholder="担当者名を入力"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-email" className="text-sm font-medium">
+                      メールアドレス
+                    </Label>
+                    <Input
+                      id="edit-email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="メールアドレスを入力"
                     />
                   </div>
                 </div>

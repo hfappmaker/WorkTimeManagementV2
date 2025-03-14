@@ -20,6 +20,8 @@ export async function createClient(values: z.infer<typeof ClientSchema>) {
   await db.client.create({
     data: {
       name: values.name,
+      contactName: values.contactName || "",
+      email: values.email || "",
       createUser: {
         connect: {
           id: values.createUserId,
@@ -32,7 +34,7 @@ export async function createClient(values: z.infer<typeof ClientSchema>) {
 export async function updateClient(id: string, values: z.infer<typeof ClientSchema>) {
   await db.client.update({
     where: { id },
-    data: { name: values.name },
+    data: { name: values.name, contactName: values.contactName || "", email: values.email || "" },
   });
 }
 

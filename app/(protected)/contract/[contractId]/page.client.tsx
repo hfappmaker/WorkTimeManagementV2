@@ -212,7 +212,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
               <DialogTitle>作業報告書を作成</DialogTitle>
               <Form {...reportForm}>
                 <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex gap-4">
                     <FormField
                       control={reportForm.control}
                       name="year"
@@ -223,6 +223,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
                             <ComboBox
                               {...field}
                               name="year"
+                              triggerClassName="w-48"
                               options={yearOptions()}
                               defaultValue={currentYear}
                               placeholder="年を選択"
@@ -244,6 +245,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
                             <ComboBox
                               {...field}
                               name="month"
+                              triggerClassName="w-48"
                               options={monthOptions}
                               defaultValue={currentMonth}
                               placeholder="月を選択"

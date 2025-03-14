@@ -150,45 +150,51 @@ export interface ComboBoxProps
   options: Option[];
   /** プレースホルダー（未選択時に表示される文字） */
   placeholder?: string;
+  /** Trigger のクラス名。幅などをこちらで上書きできます。 */
+  triggerClassName?: string;
 }
 
 export const ComboBox: React.FC<ComboBoxProps> = ({
   name,
   options,
-  placeholder = 'Select an option',
+  placeholder = "Select an option",
   defaultValue,
   onValueChange,
   onChange,
   value,
+  triggerClassName,
   ...props
 }) => {
-
   const handleChange = (value: string) => {
     onValueChange?.(value);
     onChange?.(value);
-  }
+  };
 
   return (
-      <div className="flex flex-col">
-        <Select name={name} {...props} onValueChange={handleChange} value={value}>
-          <SelectTrigger
-            className={`w-[400px] truncate border rounded-md py-2 px-3 border-gray-300`}>
-            <SelectValue placeholder={placeholder} className="truncate"/>
-          </SelectTrigger>
-          <SelectContent defaultValue={defaultValue}>
-            {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <input 
-          type="hidden" 
-          name={`${name}Label`} 
-          value={options.find(opt => opt.value === value)?.label || ''} 
-        />
-      </div>
+    <div className="flex flex-col">
+      <Select name={name} {...props} onValueChange={handleChange} value={value}>
+        <SelectTrigger
+          className={cn(
+            "truncate border rounded-md py-2 px-3 border-gray-300",
+            triggerClassName
+          )}
+        >
+          <SelectValue placeholder={placeholder} className="truncate" />
+        </SelectTrigger>
+        <SelectContent defaultValue={defaultValue}>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <input
+        type="hidden"
+        name={`${name}Label`}
+        value={options.find((opt) => opt.value === value)?.label || ""}
+      />
+    </div>
   );
 };
 

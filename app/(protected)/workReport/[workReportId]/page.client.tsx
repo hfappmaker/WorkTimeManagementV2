@@ -43,6 +43,7 @@ interface AttendanceRecord {
 }
 
 interface WorkReportClientProps {
+    contractId: string;
     workReportId: string;
     workReport: WorkReportData;
     attendances: AttendanceRecord[];
@@ -136,6 +137,7 @@ function formatMonthDay(dateStr: string): string {
 // ---- End moved helper functions ----
 
 export default function ClientWorkReportPage({
+    contractId,
     workReportId,
     workReport,
     attendances,
@@ -184,7 +186,7 @@ export default function ClientWorkReportPage({
     const handleAttendanceSubmit = (data: AttendanceFormValues) => {
         startTransition(async () => {
             try {
-                await updateWorkReportAction(workReportId, data);
+                await updateWorkReportAction(contractId, workReportId, data);
                 setSuccess({ message: "Attendance submitted successfully.", date: new Date() });
                 setError({ message: "", date: new Date() });
             } catch (err) {
@@ -417,7 +419,7 @@ export default function ClientWorkReportPage({
             const recipient = clientEmail; // 送信先
             const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${userName}`);
             const body = encodeURIComponent(`
-${clientName} 様
+${contractName ?? clientName} 様
    
 お世話になっております。${userName}です。
         
