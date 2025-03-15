@@ -134,6 +134,11 @@ export const ContractSchema = z.object({
   lowerRate: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
   middleRate: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
   closingDay: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
+  dailyWorkMinutes: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
+  monthlyWorkMinutes: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
+  basicStartTime: z.string().datetime().optional(),
+  basicEndTime: z.string().datetime().optional(),
+  basicBreakDuration: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
 });
 
 export const ClientSchema = z.object({

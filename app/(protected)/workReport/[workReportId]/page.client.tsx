@@ -1,9 +1,9 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { updateWorkReportAction } from "@/actions/formAction";
-import { FormControl, FormField, FormItem, FormMessage, Form } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormMessage, Form, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,9 @@ import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox";
 import { convertTimeStrToFractionOfDay } from "@/lib/utils";
 import { useTransitionContext } from "@/contexts/TransitionContext";
+import { ComboBox } from "@/components/ui/select";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface AttendanceEntry {
     start: string;
@@ -135,6 +138,78 @@ function formatMonthDay(dateStr: string): string {
 
 // ---- End moved helper functions ----
 
+// 時間間隔を設定するヘルパー関数（例：15分単位）
+function generateTimeOptions(intervalMinutes: number = 15) {
+    const options = [];
+    const totalMinutes = 24 * 60; // 24時間分の分数
+
+    for (let minutes = 0; minutes < totalMinutes; minutes += intervalMinutes) {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        const timeString = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+        options.push(timeString);
+    }
+
+    return options;
+}
+
+const editFormSchema = z.object({
+    startHour: z.string().optional(),
+    startMinute: z.string().optional(),
+    endHour: z.string().optional(),
+    endMinute: z.string().optional(),
+    breakHour: z.string().optional(),
+    breakMinute: z.string().optional(),
+    memo: z.string().optional(),
+});
+
+type EditFormValues = z.infer<typeof editFormSchema>;
+const dateRangeModes = ["all", "weekday", "custom"] as const;
+type dateRangeMode = typeof dateRangeModes[number];
+
+// 日付が更新対象かどうかを判定する関数
+const shouldUpdateDate = (
+    date: Date,
+    dateRangeMode: dateRangeMode,
+    selectedDays?: number[],
+    startDate?: string,
+    endDate?: string
+): boolean => {
+    const dayOfWeek = date.getDay();
+
+    switch (dateRangeMode) {
+        case "all":
+            return true;
+        case "weekday":
+            return selectedDays?.includes(dayOfWeek) ?? false;
+        case "custom":
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                return date >= start && date <= end;
+            }
+            return false;
+        default:
+            return false;
+    }
+};
+
+const bulkEditFormSchema = z.object({
+    dateRangeMode: z.enum(dateRangeModes),
+    selectedDays: z.array(z.number()).optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    startHour: z.string().optional(),
+    startMinute: z.string().optional(),
+    endHour: z.string().optional(),
+    endMinute: z.string().optional(),
+    breakHour: z.string().optional(),
+    breakMinute: z.string().optional(),
+    memo: z.string().optional()
+});
+
+type BulkEditFormValues = z.infer<typeof bulkEditFormSchema>;
+
 export default function ClientWorkReportPage({
     contractId,
     workReportId,
@@ -151,25 +226,9 @@ export default function ClientWorkReportPage({
     const { startTransition } = useTransitionContext();
     // モーダルの状態管理
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
-    // 編集用の状態管理
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingDate, setEditingDate] = useState<string | null>(null);
-    const [tempEditValues, setTempEditValues] = useState<AttendanceEntry | null>(null);
-    // 一括編集用の状態
-    const [bulkStartTime, setBulkStartTime] = useState("09:00");
-    const [bulkEndTime, setBulkEndTime] = useState("18:00");
-    const [bulkBreakDuration, setBulkBreakDuration] = useState("01:00");
-    const [bulkMemo, setBulkMemo] = useState("");
-    // 曜日選択用の状態（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
-    const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]); // デフォルトで平日を選択
-    // 日付範囲選択用の状態
-    const [dateRangeMode, setDateRangeMode] = useState<"all" | "weekday" | "custom">("weekday");
-    const [startDate, setStartDate] = useState<string>("");
-    const [endDate, setEndDate] = useState<string>("");
-
     // New state for holding the uploaded template file
     const [uploadedTemplateFile, setUploadedTemplateFile] = useState<File | null>(null);
-
     // New states for Create Report Dialog
     const [isCreateReportDialogOpen, setIsCreateReportDialogOpen] = useState(false);
     const [templateOption, setTemplateOption] = useState("default");  // 'default' or 'upload'
@@ -183,6 +242,38 @@ export default function ClientWorkReportPage({
     // Use these merged defaults in your useForm hook.
     const attendanceForm = useForm<AttendanceFormValues>({
         defaultValues: initialAttendance
+    });
+
+    // 編集用フォーム
+    const editForm = useForm<EditFormValues>({
+        resolver: zodResolver(editFormSchema),
+        defaultValues: {
+            startHour: "",
+            startMinute: "",
+            endHour: "",
+            endMinute: "",
+            breakHour: "",
+            breakMinute: "",
+            memo: ""
+        }
+    });
+
+    // 一括編集用フォーム
+    const bulkEditForm = useForm<BulkEditFormValues>({
+        resolver: zodResolver(bulkEditFormSchema),
+        defaultValues: {
+            dateRangeMode: "weekday",
+            selectedDays: [1, 2, 3, 4, 5],
+            startHour: "09",
+            startMinute: "00",
+            endHour: "18",
+            endMinute: "00",
+            breakHour: "01",
+            breakMinute: "00",
+            memo: "",
+            startDate: "",
+            endDate: "",
+        }
     });
 
     const handleAttendanceSubmit = (data: AttendanceFormValues) => {
@@ -199,88 +290,92 @@ export default function ClientWorkReportPage({
         });
     };
 
-    // 曜日選択のトグル
-    const toggleDay = (day: number) => {
-        if (selectedDays.includes(day)) {
-            setSelectedDays(selectedDays.filter(d => d !== day));
-        } else {
-            setSelectedDays([...selectedDays, day]);
-        }
-    };
-
     // 曜日名の配列
     const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
 
     // 一括編集を適用する
-    const applyBulkEdit = () => {
+    const applyBulkEdit = (data: BulkEditFormValues) => {
         const formValues = attendanceForm.getValues();
         const updatedValues = { ...formValues };
 
-        // 全ての日付を取得
         Object.keys(formValues).forEach(dateStr => {
             const date = new Date(dateStr);
-            const dayOfWeek = date.getDay(); // 0-6（日-土）
+            const shouldUpdate = shouldUpdateDate(
+                date,
+                data.dateRangeMode,
+                data.selectedDays,
+                data.startDate,
+                data.endDate
+            );
 
-            let shouldUpdate = false;
-
-            // 選択モードに応じて更新するかどうかを決定
-            if (dateRangeMode === "all") {
-                shouldUpdate = true;
-            } else if (dateRangeMode === "weekday") {
-                shouldUpdate = selectedDays.includes(dayOfWeek);
-            } else if (dateRangeMode === "custom") {
-                // 日付範囲の選択がある場合
-                if (startDate && endDate) {
-                    const start = new Date(startDate);
-                    const end = new Date(endDate);
-                    shouldUpdate = date >= start && date <= end;
-                }
-            }
-
-            // 更新条件を満たす場合、値を更新
             if (shouldUpdate) {
                 updatedValues[dateStr] = {
                     ...updatedValues[dateStr],
-                    start: bulkStartTime || updatedValues[dateStr].start,
-                    end: bulkEndTime || updatedValues[dateStr].end,
-                    breakDuration: bulkBreakDuration || updatedValues[dateStr].breakDuration
+                    start: data.startHour && data.startMinute ? `${data.startHour}:${data.startMinute}` : updatedValues[dateStr].start,
+                    end: data.endHour && data.endMinute ? `${data.endHour}:${data.endMinute}` : updatedValues[dateStr].end,
+                    breakDuration: data.breakHour && data.breakMinute ? `${data.breakHour}:${data.breakMinute}` : updatedValues[dateStr].breakDuration,
+                    memo: data.memo || updatedValues[dateStr].memo
                 };
             }
         });
 
-        // フォームの値を更新
         attendanceForm.reset(updatedValues);
         setIsBulkEditModalOpen(false);
         setSuccess({ message: "一括編集を適用しました", date: new Date() });
     };
 
-    // 編集ダイアログを開く
+    // 編集フォームの送信処理
+    const onEditSubmit = async (data: EditFormValues) => {
+        try {
+            if (!editingDate) return;
+
+            startTransition(async () => {
+                const formValues = attendanceForm.getValues();
+                const updatedValues = { ...formValues };
+                updatedValues[editingDate] = {
+                    start: `${data.startHour}:${data.startMinute}`,
+                    end: `${data.endHour}:${data.endMinute}`,
+                    breakDuration: `${data.breakHour}:${data.breakMinute}`,
+                    memo: data.memo || ""
+                };
+                // フォームの値を更新
+                await updateWorkReportAction(contractId, workReportId, updatedValues);
+                attendanceForm.reset(updatedValues);
+                setEditingDate(null);
+            })
+            setSuccess({ message: "編集を適用しました", date: new Date() });
+        } catch (error) {
+            console.error("編集の適用に失敗しました", error);
+            setError({ message: "編集の適用に失敗しました", date: new Date() });
+        }
+    };
+
+    // openEditDialog関数を簡略化
     const openEditDialog = (date: string) => {
-        const formValues = attendanceForm.getValues();
-        setTempEditValues(formValues[date]);
         setEditingDate(date);
-        setIsEditModalOpen(true);
     };
 
-    // 編集を適用する
-    const applyEdit = () => {
-        if (!editingDate || !tempEditValues) return;
+    // editingDateの変更を監視してフォームをリセット
+    useEffect(() => {
+        if (editingDate) {
+            const formValues = attendanceForm.getValues();
+            const entry = formValues[editingDate];
 
-        const formValues = attendanceForm.getValues();
-        const updatedValues = { ...formValues };
-        updatedValues[editingDate] = tempEditValues;
-
-        // フォームの値を更新
-        attendanceForm.reset(updatedValues);
-        setIsEditModalOpen(false);
-        setTempEditValues(null);
-        setSuccess({ message: "編集を適用しました", date: new Date() });
-    };
+            editForm.reset({
+                startHour: entry.start.split(':')[0] || '',
+                startMinute: entry.start.split(':')[1] || '',
+                endHour: entry.end.split(':')[0] || '',
+                endMinute: entry.end.split(':')[1] || '',
+                breakHour: entry.breakDuration.split(':')[0] || '',
+                breakMinute: entry.breakDuration.split(':')[1] || '',
+                memo: entry.memo
+            });
+        }
+    }, [editingDate, attendanceForm, editForm]);
 
     // 編集をキャンセル
     const cancelEdit = () => {
-        setIsEditModalOpen(false);
-        setTempEditValues(null);
+        setEditingDate(null);
     };
 
     // テンプレートからの作業報告書作成
@@ -636,140 +731,272 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                     <DialogHeader>
                         <DialogTitle>勤怠情報の一括入力</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
-                        <div>
-                            <h3 className="text-sm font-medium mb-2">適用範囲</h3>
-                            <div className="flex space-x-4">
-                                <Label className="flex items-center space-x-2">
-                                    <Input
-                                        type="radio"
-                                        className="h-4 w-4"
-                                        checked={dateRangeMode === "all"}
-                                        onChange={() => setDateRangeMode("all")}
-                                    />
-                                    <span>全日</span>
-                                </Label>
-                                <Label className="flex items-center space-x-2">
-                                    <Input
-                                        type="radio"
-                                        className="h-4 w-4"
-                                        checked={dateRangeMode === "weekday"}
-                                        onChange={() => setDateRangeMode("weekday")}
-                                    />
-                                    <span>曜日指定</span>
-                                </Label>
-                                <Label className="flex items-center space-x-2">
-                                    <Input
-                                        type="radio"
-                                        className="h-4 w-4"
-                                        checked={dateRangeMode === "custom"}
-                                        onChange={() => setDateRangeMode("custom")}
-                                    />
-                                    <span>期間指定</span>
-                                </Label>
+                    <Form {...bulkEditForm}>
+                        <form onSubmit={bulkEditForm.handleSubmit(applyBulkEdit)} className="space-y-4">
+                            <div>
+                                <h3 className="text-sm font-medium mb-2">適用範囲</h3>
+                                <FormField
+                                    control={bulkEditForm.control}
+                                    name="dateRangeMode"
+                                    render={({ field }) => (
+                                        <FormItem className="flex space-x-4">
+                                            <FormControl>
+                                                <div className="flex space-x-4">
+                                                    <Label className="flex items-center space-x-2">
+                                                        <Input
+                                                            type="radio"
+                                                            className="h-4 w-4"
+                                                            checked={field.value === "all"}
+                                                            onChange={() => field.onChange("all")}
+                                                        />
+                                                        <span>全日</span>
+                                                    </Label>
+                                                    <Label className="flex items-center space-x-2">
+                                                        <Input
+                                                            type="radio"
+                                                            className="h-4 w-4"
+                                                            checked={field.value === "weekday"}
+                                                            onChange={() => field.onChange("weekday")}
+                                                        />
+                                                        <span>曜日指定</span>
+                                                    </Label>
+                                                    <Label className="flex items-center space-x-2">
+                                                        <Input
+                                                            type="radio"
+                                                            className="h-4 w-4"
+                                                            checked={field.value === "custom"}
+                                                            onChange={() => field.onChange("custom")}
+                                                        />
+                                                        <span>期間指定</span>
+                                                    </Label>
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
-                        </div>
 
-                        {/* 曜日選択（dateRangeMode === "weekday"の場合に表示） */}
-                        {dateRangeMode === "weekday" && (
-                            <div className="py-2">
-                                <h3 className="text-sm font-medium mb-2">曜日を選択</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {dayNames.map((day, index) => (
-                                        <div key={index} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={`day-${index}`}
-                                                checked={selectedDays.includes(index)}
-                                                onCheckedChange={() => toggleDay(index)}
-                                            />
-                                            <Label htmlFor={`day-${index}`}>{day}</Label>
-                                        </div>
-                                    ))}
+                            {bulkEditForm.watch("dateRangeMode") === "weekday" && (
+                                <div className="py-2">
+                                    <h3 className="text-sm font-medium mb-2">曜日を選択</h3>
+                                    <FormField
+                                        control={bulkEditForm.control}
+                                        name="selectedDays"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {dayNames.map((day, index) => (
+                                                            <div key={index} className="flex items-center space-x-2">
+                                                                <Checkbox
+                                                                    id={`day-${index}`}
+                                                                    checked={field.value?.includes(index)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        const currentValue = field.value || [];
+                                                                        if (checked) {
+                                                                            field.onChange([...currentValue, index]);
+                                                                        } else {
+                                                                            field.onChange(currentValue.filter(d => d !== index));
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <Label htmlFor={`day-${index}`}>{day}</Label>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+
+                            {bulkEditForm.watch("dateRangeMode") === "custom" && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={bulkEditForm.control}
+                                        name="startDate"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>開始日</FormLabel>
+                                                <FormControl>
+                                                    <Input type="date" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={bulkEditForm.control}
+                                        name="endDate"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>終了日</FormLabel>
+                                                <FormControl>
+                                                    <Input type="date" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-medium">勤怠情報</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <FormField
+                                        control={bulkEditForm.control}
+                                        name="startHour"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>出勤時間</FormLabel>
+                                                <div className="flex gap-2">
+                                                    <FormControl>
+                                                        <ComboBox
+                                                            {...field}
+                                                            options={Array.from({ length: 24 }, (_, i) => ({
+                                                                label: String(i).padStart(2, '0'),
+                                                                value: String(i).padStart(2, '0')
+                                                            }))}
+                                                            placeholder="時"
+                                                        />
+                                                    </FormControl>
+                                                    <FormField
+                                                        control={bulkEditForm.control}
+                                                        name="startMinute"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormControl>
+                                                                    <ComboBox
+                                                                        {...field}
+                                                                        options={[0, 15, 30, 45].map(minute => ({
+                                                                            label: String(minute).padStart(2, '0'),
+                                                                            value: String(minute).padStart(2, '0')
+                                                                        }))}
+                                                                        placeholder="分"
+                                                                    />
+                                                                </FormControl>
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={bulkEditForm.control}
+                                        name="endHour"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>退勤時間</FormLabel>
+                                                <div className="flex gap-2">
+                                                    <FormControl>
+                                                        <ComboBox
+                                                            {...field}
+                                                            options={Array.from({ length: 24 }, (_, i) => ({
+                                                                label: String(i).padStart(2, '0'),
+                                                                value: String(i).padStart(2, '0')
+                                                            }))}
+                                                            placeholder="時"
+                                                        />
+                                                    </FormControl>
+                                                    <FormField
+                                                        control={bulkEditForm.control}
+                                                        name="endMinute"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormControl>
+                                                                    <ComboBox
+                                                                        {...field}
+                                                                        options={[0, 15, 30, 45].map(minute => ({
+                                                                            label: String(minute).padStart(2, '0'),
+                                                                            value: String(minute).padStart(2, '0')
+                                                                        }))}
+                                                                        placeholder="分"
+                                                                    />
+                                                                </FormControl>
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={bulkEditForm.control}
+                                        name="breakHour"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>休憩時間</FormLabel>
+                                                <div className="flex gap-2">
+                                                    <FormControl>
+                                                        <ComboBox
+                                                            {...field}
+                                                            options={Array.from({ length: 24 }, (_, i) => ({
+                                                                label: String(i).padStart(2, '0'),
+                                                                value: String(i).padStart(2, '0')
+                                                            }))}
+                                                            placeholder="時"
+                                                        />
+                                                    </FormControl>
+                                                    <FormField
+                                                        control={bulkEditForm.control}
+                                                        name="breakMinute"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormControl>
+                                                                    <ComboBox
+                                                                        {...field}
+                                                                        options={[0, 15, 30, 45].map(minute => ({
+                                                                            label: String(minute).padStart(2, '0'),
+                                                                            value: String(minute).padStart(2, '0')
+                                                                        }))}
+                                                                        placeholder="分"
+                                                                    />
+                                                                </FormControl>
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={bulkEditForm.control}
+                                        name="memo"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>作業内容</FormLabel>
+                                                <FormControl>
+                                                    <Input type="text" className="w-[400px]" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                             </div>
-                        )}
 
-                        {/* 日付範囲選択（dateRangeMode === "custom"の場合に表示） */}
-                        {dateRangeMode === "custom" && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="block mb-1">開始日</Label>
-                                    <Input
-                                        type="date"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="block mb-1">終了日</Label>
-                                    <Input
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                    />
-                                </div>
+                            <div className="flex justify-end space-x-2 mt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsBulkEditModalOpen(false)}
+                                >
+                                    キャンセル
+                                </Button>
+                                <Button type="submit">
+                                    適用
+                                </Button>
                             </div>
-                        )}
-
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-medium">勤怠情報</h3>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <Label className="block mb-1">出勤時間</Label>
-                                    <Input
-                                        type="time"
-                                        value={bulkStartTime}
-                                        onChange={(e) => setBulkStartTime(e.target.value)}
-                                        placeholder="例: 09:00"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="block mb-1">退勤時間</Label>
-                                    <Input
-                                        type="time"
-                                        value={bulkEndTime}
-                                        onChange={(e) => setBulkEndTime(e.target.value)}
-                                        placeholder="例: 18:00"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="block mb-1">休憩時間</Label>
-                                    <Input
-                                        type="time"
-                                        value={bulkBreakDuration}
-                                        onChange={(e) => setBulkBreakDuration(e.target.value)}
-                                        placeholder="例: 01:00"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="block mb-1">作業内容</Label>
-                                    <Input
-                                        type="text"
-                                        className="w-[400px]"
-                                        value={bulkMemo}
-                                        onChange={(e) => setBulkMemo(e.target.value)}
-                                        placeholder="例: 作業内容"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end space-x-2 mt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsBulkEditModalOpen(false)}
-                            >
-                                キャンセル
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={applyBulkEdit}
-                            >
-                                適用
-                            </Button>
-                        </div>
-                    </div>
+                        </form>
+                    </Form>
                 </DialogContent>
             </Dialog>
 
@@ -868,87 +1095,180 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
             </Dialog>
 
             {/* 編集用モーダルダイアログ */}
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                <DialogContent className="max-w-[900px]">
+            <Dialog open={editingDate !== null} onOpenChange={(open) => !open && setEditingDate(null)}>
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>勤怠情報の編集</DialogTitle>
                     </DialogHeader>
-                    {editingDate && tempEditValues && (
-                        <div className="space-y-4">
-                            <div>
-                                <h3 className="text-sm font-medium mb-2">
-                                    {(() => {
-                                        const date = new Date(editingDate);
-                                        const dayOfWeek = date.getDay();
-                                        return `${editingDate}(${dayNames[dayOfWeek]})の勤怠情報を編集`;
-                                    })()}
-                                </h3>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex space-x-4">
-                                    <div className="flex-1">
-                                        <Label className="block mb-1">出勤時間</Label>
-                                        <Input
-                                            type="time"
-                                            value={tempEditValues.start}
-                                            onChange={(e) => setTempEditValues({
-                                                ...tempEditValues,
-                                                start: e.target.value
-                                            })}
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <Label className="block mb-1">退勤時間</Label>
-                                        <Input
-                                            type="time"
-                                            value={tempEditValues.end}
-                                            onChange={(e) => setTempEditValues({
-                                                ...tempEditValues,
-                                                end: e.target.value
-                                            })}
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <Label className="block mb-1">休憩時間</Label>
-                                        <Input
-                                            type="time"
-                                            value={tempEditValues.breakDuration}
-                                            onChange={(e) => setTempEditValues({
-                                                ...tempEditValues,
-                                                breakDuration: e.target.value
-                                            })}
-                                        />
-                                    </div>
-                                </div>
+                    {editingDate && (
+                        <Form {...editForm}>
+                            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
                                 <div>
-                                    <Label className="block mb-1">作業内容</Label>
-                                    <Input
-                                        type="text"
-                                        value={tempEditValues.memo}
-                                        onChange={(e) => setTempEditValues({
-                                            ...tempEditValues,
-                                            memo: e.target.value
-                                        })}
-                                        className="w-[400px]"
+                                    <h3 className="text-sm font-medium mb-2">
+                                        {(() => {
+                                            const date = new Date(editingDate);
+                                            const dayOfWeek = date.getDay();
+                                            return `${editingDate}(${dayNames[dayOfWeek]})の勤怠情報を編集`;
+                                        })()}
+                                    </h3>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="flex space-x-4">
+                                        <FormField
+                                            control={editForm.control}
+                                            name="startHour"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>出勤時間</FormLabel>
+                                                    <div className="flex gap-2">
+                                                        <FormControl>
+                                                            <ComboBox
+                                                                {...field}
+                                                                options={Array.from({ length: 24 }, (_, i) => ({
+                                                                    label: String(i).padStart(2, '0'),
+                                                                    value: String(i).padStart(2, '0')
+                                                                }))}
+                                                                placeholder="時"
+                                                            />
+                                                        </FormControl>
+                                                        <FormField
+                                                            control={editForm.control}
+                                                            name="startMinute"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <ComboBox
+                                                                            {...field}
+                                                                            options={[0, 15, 30, 45].map(minute => ({
+                                                                                label: String(minute).padStart(2, '0'),
+                                                                                value: String(minute).padStart(2, '0')
+                                                                            }))}
+                                                                            placeholder="分"
+                                                                        />
+                                                                    </FormControl>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={editForm.control}
+                                            name="endHour"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>退勤時間</FormLabel>
+                                                    <div className="flex gap-2">
+                                                        <FormControl>
+                                                            <ComboBox
+                                                                {...field}
+                                                                options={Array.from({ length: 24 }, (_, i) => ({
+                                                                    label: String(i).padStart(2, '0'),
+                                                                    value: String(i).padStart(2, '0')
+                                                                }))}
+                                                                placeholder="時"
+                                                            />
+                                                        </FormControl>
+                                                        <FormField
+                                                            control={editForm.control}
+                                                            name="endMinute"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <ComboBox
+                                                                            {...field}
+                                                                            options={[0, 15, 30, 45].map(minute => ({
+                                                                                label: String(minute).padStart(2, '0'),
+                                                                                value: String(minute).padStart(2, '0')
+                                                                            }))}
+                                                                            placeholder="分"
+                                                                        />
+                                                                    </FormControl>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={editForm.control}
+                                            name="breakHour"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>休憩時間</FormLabel>
+                                                    <div className="flex gap-2">
+                                                        <FormControl>
+                                                            <ComboBox
+                                                                {...field}
+                                                                options={Array.from({ length: 24 }, (_, i) => ({
+                                                                    label: String(i).padStart(2, '0'),
+                                                                    value: String(i).padStart(2, '0')
+                                                                }))}
+                                                                placeholder="時"
+                                                            />
+                                                        </FormControl>
+                                                        <FormField
+                                                            control={editForm.control}
+                                                            name="breakMinute"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormControl>
+                                                                        <ComboBox
+                                                                            {...field}
+                                                                            triggerClassName="w-full"
+                                                                            options={[0, 15, 30, 45].map(minute => ({
+                                                                                label: String(minute).padStart(2, '0'),
+                                                                                value: String(minute).padStart(2, '0')
+                                                                            }))}
+                                                                            placeholder="分"
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <FormField
+                                        control={editForm.control}
+                                        name="memo"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>作業内容</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        {...field}
+                                                        type="text"
+                                                        className="w-[400px]"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
                                     />
                                 </div>
-                            </div>
-                            <div className="flex justify-end space-x-2 mt-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={cancelEdit}
-                                >
-                                    キャンセル
-                                </Button>
-                                <Button
-                                    type="button"
-                                    onClick={applyEdit}
-                                >
-                                    保存
-                                </Button>
-                            </div>
-                        </div>
+                                <div className="flex justify-end space-x-2 mt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={cancelEdit}
+                                    >
+                                        キャンセル
+                                    </Button>
+                                    <Button type="submit">
+                                        保存
+                                    </Button>
+                                </div>
+                            </form>
+                        </Form>
                     )}
                 </DialogContent>
             </Dialog>

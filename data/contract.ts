@@ -30,9 +30,6 @@ export async function createContract(values: z.infer<typeof ContractSchema>) {
   await db.contract.create({
     data: {
       ...values,
-      closingDay: values.closingDay
-        ? parseInt(values.closingDay as string)
-        : null,
     },
   });
 }
@@ -57,9 +54,6 @@ export async function updateContract(
     where: { id },
     data: {
       ...values,
-      closingDay: values.closingDay
-        ? parseInt(values.closingDay as string)
-        : null,
     },
   });
 }

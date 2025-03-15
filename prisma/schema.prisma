@@ -80,7 +80,6 @@ model Contract {
   basicStartTime      DateTime? @db.Time // 基本開始時刻
   basicEndTime        DateTime? @db.Time // 基本終了時刻
   basicBreakDuration  Int? // 基本休憩時間（分）
-  basicWorkingMinutes Int? // 基本稼働時間（分）
 
   closingDay Int? // 締め日(1～31)
 }
