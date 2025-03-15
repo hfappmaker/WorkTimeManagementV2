@@ -27,6 +27,11 @@ enum AuditAction {
   DELETE
 }
 
+enum ContractRateType {
+  upperLower    // 上下割
+  middle  // 中間割
+}
+
 // ADMINは契約の作成、支払いの作成、Userの割り当てとUSERで出来ることが全て可能
 // USERは契約の閲覧、WorkReportの作成が可能
 model User {
@@ -71,9 +76,10 @@ model Contract {
   unitPrice     Decimal? // 月単価
   settlementMin Decimal? // 精算幅下限
   settlementMax Decimal? // 精算幅上限
-  upperRate     Decimal? // 超過時間単価
-  lowerRate     Decimal? // 控除時間単価
-  middleRate    Decimal? // 中間割の時間単価
+  rateType      ContractRateType @default(upperLower)
+  upperRate     Decimal?        // 超過時間単価
+  lowerRate     Decimal?        // 控除時間単価
+  middleRate    Decimal?        // 中間割の時間単価
 
   dailyWorkMinutes    Int? // 1日あたりの作業単位(分)
   monthlyWorkMinutes  Int? // 1ヶ月あたりの作業単位(分)
