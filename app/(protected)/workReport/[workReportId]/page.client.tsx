@@ -151,6 +151,10 @@ export default function ClientWorkReportPage({
     const { startTransition } = useTransitionContext();
     // モーダルの状態管理
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+    // 編集用の状態管理
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingDate, setEditingDate] = useState<string | null>(null);
+    const [tempEditValues, setTempEditValues] = useState<AttendanceEntry | null>(null);
     // 一括編集用の状態
     const [bulkStartTime, setBulkStartTime] = useState("09:00");
     const [bulkEndTime, setBulkEndTime] = useState("18:00");
@@ -248,6 +252,35 @@ export default function ClientWorkReportPage({
         attendanceForm.reset(updatedValues);
         setIsBulkEditModalOpen(false);
         setSuccess({ message: "一括編集を適用しました", date: new Date() });
+    };
+
+    // 編集ダイアログを開く
+    const openEditDialog = (date: string) => {
+        const formValues = attendanceForm.getValues();
+        setTempEditValues(formValues[date]);
+        setEditingDate(date);
+        setIsEditModalOpen(true);
+    };
+
+    // 編集を適用する
+    const applyEdit = () => {
+        if (!editingDate || !tempEditValues) return;
+
+        const formValues = attendanceForm.getValues();
+        const updatedValues = { ...formValues };
+        updatedValues[editingDate] = tempEditValues;
+
+        // フォームの値を更新
+        attendanceForm.reset(updatedValues);
+        setIsEditModalOpen(false);
+        setTempEditValues(null);
+        setSuccess({ message: "編集を適用しました", date: new Date() });
+    };
+
+    // 編集をキャンセル
+    const cancelEdit = () => {
+        setIsEditModalOpen(false);
+        setTempEditValues(null);
     };
 
     // テンプレートからの作業報告書作成
@@ -473,348 +506,446 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
     };
 
     return (
-            <div className="p-4">
-                <h1 className="text-xl font-bold mb-4 dark:text-white">
-                    {contractName}の作業報告書
-                </h1>
-                {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
-                {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
+        <div className="p-4">
+            <h1 className="text-xl font-bold mb-4 dark:text-white">
+                {contractName}の作業報告書
+            </h1>
+            {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
+            {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
 
-                <Form {...attendanceForm}>
-                    <form onSubmit={attendanceForm.handleSubmit(handleAttendanceSubmit)}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-semibold">出勤情報を入力</h2>
-                            <div className="flex gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsBulkEditModalOpen(true)}
-                                >
-                                    一括入力
-                                </Button>
-                                <Button type="button" variant="outline" onClick={() => setIsCreateReportDialogOpen(true)}>
-                                    作業報告書を作成
-                                </Button>
-                                <Button type="button" variant="outline" onClick={createReportAndSendEmail}>
-                                    メール送信
-                                </Button>
-                            </div>
+            <Form {...attendanceForm}>
+                <form onSubmit={attendanceForm.handleSubmit(handleAttendanceSubmit)}>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-semibold">出勤情報を入力</h2>
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsBulkEditModalOpen(true)}
+                            >
+                                一括入力
+                            </Button>
+                            <Button type="button" variant="outline" onClick={() => setIsCreateReportDialogOpen(true)}>
+                                作業報告書を作成
+                            </Button>
+                            <Button type="button" variant="outline" onClick={createReportAndSendEmail}>
+                                メール送信
+                            </Button>
                         </div>
+                    </div>
 
-                        {/* 列ヘッダー */}
-                        <div className="flex items-center space-x-4 mb-2">
-                            <span className="w-32"></span>
-                            <span className="flex-1 text-center font-medium">出勤時間</span>
-                            <span className="flex-1 text-center font-medium">退勤時間</span>
-                            <span className="flex-1 text-center font-medium">休憩時間</span>
-                            <span className="w-[400px] text-center font-medium">作業内容</span>
-                        </div>
+                    {/* 列ヘッダー */}
+                    <div className="flex items-center space-x-4 mb-2">
+                        <span className="w-32"></span>
+                        <span className="w-16"></span>
+                        <span className="flex-1 text-center font-medium">出勤時間</span>
+                        <span className="flex-1 text-center font-medium">退勤時間</span>
+                        <span className="flex-1 text-center font-medium">休憩時間</span>
+                        <span className="w-[400px] text-center font-medium">作業内容</span>
+                    </div>
 
-                        {Object.keys(attendanceForm.getValues()).map((day) => (
-                            <div key={day} className="flex items-center space-x-4 mb-2">
-                                <span className="w-32 flex items-center">
+                    {Object.keys(attendanceForm.getValues()).map((day) => (
+                        <div key={day} className="flex items-center space-x-4 mb-2">
+
+                            <div className="w-32 flex items-center justify-between">
+                                <span>
                                     {(() => {
                                         const date = new Date(day);
                                         const dayOfWeek = date.getDay();
                                         return `${day}(${dayNames[dayOfWeek]})`;
                                     })()}
                                 </span>
-                                <div className="flex-1">
-                                    <FormField
-                                        control={attendanceForm.control}
-                                        name={`${day}.start`}
-                                        render={({ field, fieldState }) => (
-                                            <FormItem className="flex flex-col justify-center">
-                                                <FormControl>
-                                                    <Input {...field} type="time" id={`start-${day}`} />
-                                                </FormControl>
-                                                <FormMessage>{fieldState.error?.message}</FormMessage>
-                                            </FormItem>
-                                        )}
+                            </div>
+                            <div className="w-16 flex items-center justify-between">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openEditDialog(day)}
+                                >
+                                    編集
+                                </Button>
+                            </div>
+                            <div className="flex-1">
+                                <FormField
+                                    control={attendanceForm.control}
+                                    name={`${day}.start`}
+                                    render={({ field, fieldState }) => (
+                                        <FormItem className="flex flex-col justify-center">
+                                            <FormControl>
+                                                <Input {...field} type="time" id={`start-${day}`} readOnly />
+                                            </FormControl>
+                                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <FormField
+                                    control={attendanceForm.control}
+                                    name={`${day}.end`}
+                                    render={({ field, fieldState }) => (
+                                        <FormItem className="flex flex-col justify-center">
+                                            <FormControl>
+                                                <Input {...field} type="time" id={`end-${day}`} readOnly />
+                                            </FormControl>
+                                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <FormField
+                                    control={attendanceForm.control}
+                                    name={`${day}.breakDuration`}
+                                    render={({ field, fieldState }) => (
+                                        <FormItem className="flex flex-col justify-center">
+                                            <FormControl>
+                                                <Input {...field} type="time" id={`break-${day}`} readOnly />
+                                            </FormControl>
+                                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <FormField
+                                    control={attendanceForm.control}
+                                    name={`${day}.memo`}
+                                    render={({ field, fieldState }) => (
+                                        <FormItem className="flex flex-col justify-center">
+                                            <FormControl>
+                                                <Input {...field} type="text" id={`memo-${day}`} className="w-[400px]" readOnly />
+                                            </FormControl>
+                                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                    <div className="flex flex-col gap-2 mt-4">
+                        <Button type="submit">保存</Button>
+                    </div>
+                </form>
+            </Form>
+
+            {/* 一括編集用モーダルダイアログ */}
+            <Dialog open={isBulkEditModalOpen} onOpenChange={setIsBulkEditModalOpen}>
+                <DialogContent>
+                    <DialogTitle>勤怠情報の一括入力</DialogTitle>
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-sm font-medium mb-2">適用範囲</h3>
+                            <div className="flex space-x-4">
+                                <Label className="flex items-center space-x-2">
+                                    <Input
+                                        type="radio"
+                                        className="h-4 w-4"
+                                        checked={dateRangeMode === "all"}
+                                        onChange={() => setDateRangeMode("all")}
+                                    />
+                                    <span>全日</span>
+                                </Label>
+                                <Label className="flex items-center space-x-2">
+                                    <Input
+                                        type="radio"
+                                        className="h-4 w-4"
+                                        checked={dateRangeMode === "weekday"}
+                                        onChange={() => setDateRangeMode("weekday")}
+                                    />
+                                    <span>曜日指定</span>
+                                </Label>
+                                <Label className="flex items-center space-x-2">
+                                    <Input
+                                        type="radio"
+                                        className="h-4 w-4"
+                                        checked={dateRangeMode === "custom"}
+                                        onChange={() => setDateRangeMode("custom")}
+                                    />
+                                    <span>期間指定</span>
+                                </Label>
+                            </div>
+                        </div>
+
+                        {/* 曜日選択（dateRangeMode === "weekday"の場合に表示） */}
+                        {dateRangeMode === "weekday" && (
+                            <div className="py-2">
+                                <h3 className="text-sm font-medium mb-2">曜日を選択</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {dayNames.map((day, index) => (
+                                        <div key={index} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`day-${index}`}
+                                                checked={selectedDays.includes(index)}
+                                                onCheckedChange={() => toggleDay(index)}
+                                            />
+                                            <Label htmlFor={`day-${index}`}>{day}</Label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 日付範囲選択（dateRangeMode === "custom"の場合に表示） */}
+                        {dateRangeMode === "custom" && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="block mb-1">開始日</Label>
+                                    <Input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
                                     />
                                 </div>
-                                <div className="flex-1">
-                                    <FormField
-                                        control={attendanceForm.control}
-                                        name={`${day}.end`}
-                                        render={({ field, fieldState }) => (
-                                            <FormItem className="flex flex-col justify-center">
-                                                <FormControl>
-                                                    <Input {...field} type="time" id={`end-${day}`} />
-                                                </FormControl>
-                                                <FormMessage>{fieldState.error?.message}</FormMessage>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <FormField
-                                        control={attendanceForm.control}
-                                        name={`${day}.breakDuration`}
-                                        render={({ field, fieldState }) => (
-                                            <FormItem className="flex flex-col justify-center">
-                                                <FormControl>
-                                                    <Input {...field} type="time" id={`break-${day}`} />
-                                                </FormControl>
-                                                <FormMessage>{fieldState.error?.message}</FormMessage>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <FormField
-                                        control={attendanceForm.control}
-                                        name={`${day}.memo`}
-                                        render={({ field, fieldState }) => (
-                                            <FormItem className="flex flex-col justify-center">
-                                                <FormControl>
-                                                    <Input {...field} type="text" id={`memo-${day}`} className="w-[400px]" />
-                                                </FormControl>
-                                                <FormMessage>{fieldState.error?.message}</FormMessage>
-                                            </FormItem>
-                                        )}
+                                <div>
+                                    <Label className="block mb-1">終了日</Label>
+                                    <Input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
                                     />
                                 </div>
                             </div>
-                        ))}
-                        <div className="flex flex-col gap-2 mt-4">
-                            <Button type="submit">出勤情報を送信</Button>
-                        </div>
-                    </form>
-                </Form>
+                        )}
 
-                {/* 一括編集用モーダルダイアログ */}
-                <Dialog open={isBulkEditModalOpen} onOpenChange={setIsBulkEditModalOpen}>
-                    <DialogContent>
-                        <DialogTitle>勤怠情報の一括入力</DialogTitle>
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-medium">勤怠情報</h3>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <Label className="block mb-1">出勤時間</Label>
+                                    <Input
+                                        type="time"
+                                        value={bulkStartTime}
+                                        onChange={(e) => setBulkStartTime(e.target.value)}
+                                        placeholder="例: 09:00"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="block mb-1">退勤時間</Label>
+                                    <Input
+                                        type="time"
+                                        value={bulkEndTime}
+                                        onChange={(e) => setBulkEndTime(e.target.value)}
+                                        placeholder="例: 18:00"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="block mb-1">休憩時間</Label>
+                                    <Input
+                                        type="time"
+                                        value={bulkBreakDuration}
+                                        onChange={(e) => setBulkBreakDuration(e.target.value)}
+                                        placeholder="例: 01:00"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="block mb-1">作業内容</Label>
+                                    <Input
+                                        type="text"
+                                        className="w-[400px]"
+                                        value={bulkMemo}
+                                        onChange={(e) => setBulkMemo(e.target.value)}
+                                        placeholder="例: 作業内容"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-2 mt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsBulkEditModalOpen(false)}
+                            >
+                                キャンセル
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={applyBulkEdit}
+                            >
+                                適用
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* テンプレート作成オプションダイアログ */}
+            <Dialog open={isCreateReportDialogOpen} onOpenChange={setIsCreateReportDialogOpen}>
+                <DialogContent>
+                    <DialogTitle>作業報告書作成オプション</DialogTitle>
+                    <div className="space-y-4">
+                        <fieldset className="space-y-2">
+                            <legend className="font-medium">テンプレート選択</legend>
+                            <div className="flex space-x-4">
+                                <Label htmlFor="defaultTemplate" className="inline-flex items-center gap-2">
+                                    <Input
+                                        type="radio"
+                                        id="defaultTemplate"
+                                        name="templateOption"
+                                        value="default"
+                                        checked={templateOption === "default"}
+                                        onChange={() => setTemplateOption("default")}
+                                        className="h-4 w-4"
+                                    />
+                                    <span>デフォルトテンプレート</span>
+                                </Label>
+                                <Label htmlFor="uploadTemplateOption" className="inline-flex items-center gap-2">
+                                    <Input
+                                        type="radio"
+                                        id="uploadTemplateOption"
+                                        name="templateOption"
+                                        value="upload"
+                                        checked={templateOption === "upload"}
+                                        onChange={() => setTemplateOption("upload")}
+                                        className="h-4 w-4"
+                                    />
+                                    <span>テンプレートをアップロード</span>
+                                </Label>
+                            </div>
+                            {templateOption === "upload" && (
+                                <div className="mt-2">
+                                    <Label htmlFor="templateUpload" className="block mb-1">テンプレートファイルを選択</Label>
+                                    <Input
+                                        type="file"
+                                        id="templateUpload"
+                                        accept=".xlsx"
+                                        onChange={(e) => {
+                                            if (e.target.files && e.target.files.length > 0) {
+                                                setUploadedTemplateFile(e.target.files[0]);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </fieldset>
+
+                        <fieldset className="space-y-2">
+                            <legend className="font-medium">拡張子</legend>
+                            <div className="flex space-x-4">
+                                <Label htmlFor="excelFormat" className="inline-flex items-center gap-2">
+                                    <Input
+                                        type="radio"
+                                        id="excelFormat"
+                                        name="extensionOption"
+                                        value="excel"
+                                        checked={extensionOption === "excel"}
+                                        onChange={() => setExtensionOption("excel")}
+                                        className="h-4 w-4"
+                                    />
+                                    <span>エクセル形式</span>
+                                </Label>
+                                <Label htmlFor="pdfFormat" className="inline-flex items-center gap-2">
+                                    <Input
+                                        type="radio"
+                                        id="pdfFormat"
+                                        name="extensionOption"
+                                        value="pdf"
+                                        checked={extensionOption === "pdf"}
+                                        onChange={() => setExtensionOption("pdf")}
+                                        className="h-4 w-4"
+                                    />
+                                    <span>PDF形式</span>
+                                </Label>
+                            </div>
+                        </fieldset>
+
+                        <div className="flex justify-end space-x-2">
+                            <Button type="button" variant="outline" onClick={() => setIsCreateReportDialogOpen(false)}>
+                                キャンセル
+                            </Button>
+                            <Button type="button" onClick={handleConfirmCreateReport}>
+                                作成
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* 編集用モーダルダイアログ */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="max-w-[900px]">
+                    <DialogTitle>勤怠情報の編集</DialogTitle>
+                    {editingDate && tempEditValues && (
                         <div className="space-y-4">
                             <div>
-                                <h3 className="text-sm font-medium mb-2">適用範囲</h3>
-                                <div className="flex space-x-4">
-                                    <Label className="flex items-center space-x-2">
-                                        <Input
-                                            type="radio"
-                                            className="h-4 w-4"
-                                            checked={dateRangeMode === "all"}
-                                            onChange={() => setDateRangeMode("all")}
-                                        />
-                                        <span>全日</span>
-                                    </Label>
-                                    <Label className="flex items-center space-x-2">
-                                        <Input
-                                            type="radio"
-                                            className="h-4 w-4"
-                                            checked={dateRangeMode === "weekday"}
-                                            onChange={() => setDateRangeMode("weekday")}
-                                        />
-                                        <span>曜日指定</span>
-                                    </Label>
-                                    <Label className="flex items-center space-x-2">
-                                        <Input
-                                            type="radio"
-                                            className="h-4 w-4"
-                                            checked={dateRangeMode === "custom"}
-                                            onChange={() => setDateRangeMode("custom")}
-                                        />
-                                        <span>期間指定</span>
-                                    </Label>
-                                </div>
+                                <h3 className="text-sm font-medium mb-2">
+                                    {(() => {
+                                        const date = new Date(editingDate);
+                                        const dayOfWeek = date.getDay();
+                                        return `${editingDate}(${dayNames[dayOfWeek]})の勤怠情報を編集`;
+                                    })()}
+                                </h3>
                             </div>
-
-                            {/* 曜日選択（dateRangeMode === "weekday"の場合に表示） */}
-                            {dateRangeMode === "weekday" && (
-                                <div className="py-2">
-                                    <h3 className="text-sm font-medium mb-2">曜日を選択</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {dayNames.map((day, index) => (
-                                            <div key={index} className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id={`day-${index}`}
-                                                    checked={selectedDays.includes(index)}
-                                                    onCheckedChange={() => toggleDay(index)}
-                                                />
-                                                <Label htmlFor={`day-${index}`}>{day}</Label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 日付範囲選択（dateRangeMode === "custom"の場合に表示） */}
-                            {dateRangeMode === "custom" && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label className="block mb-1">開始日</Label>
-                                        <Input
-                                            type="date"
-                                            value={startDate}
-                                            onChange={(e) => setStartDate(e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="block mb-1">終了日</Label>
-                                        <Input
-                                            type="date"
-                                            value={endDate}
-                                            onChange={(e) => setEndDate(e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
                             <div className="space-y-4">
-                                <h3 className="text-sm font-medium">勤怠情報</h3>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div>
+                                <div className="flex space-x-4">
+                                    <div className="flex-1">
                                         <Label className="block mb-1">出勤時間</Label>
                                         <Input
                                             type="time"
-                                            value={bulkStartTime}
-                                            onChange={(e) => setBulkStartTime(e.target.value)}
-                                            placeholder="例: 09:00"
+                                            value={tempEditValues.start}
+                                            onChange={(e) => setTempEditValues({
+                                                ...tempEditValues,
+                                                start: e.target.value
+                                            })}
                                         />
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                         <Label className="block mb-1">退勤時間</Label>
                                         <Input
                                             type="time"
-                                            value={bulkEndTime}
-                                            onChange={(e) => setBulkEndTime(e.target.value)}
-                                            placeholder="例: 18:00"
+                                            value={tempEditValues.end}
+                                            onChange={(e) => setTempEditValues({
+                                                ...tempEditValues,
+                                                end: e.target.value
+                                            })}
                                         />
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                         <Label className="block mb-1">休憩時間</Label>
                                         <Input
                                             type="time"
-                                            value={bulkBreakDuration}
-                                            onChange={(e) => setBulkBreakDuration(e.target.value)}
-                                            placeholder="例: 01:00"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="block mb-1">作業内容</Label>
-                                        <Input
-                                            type="text"
-                                            className="w-[400px]"
-                                            value={bulkMemo}
-                                            onChange={(e) => setBulkMemo(e.target.value)}
-                                            placeholder="例: 作業内容"
+                                            value={tempEditValues.breakDuration}
+                                            onChange={(e) => setTempEditValues({
+                                                ...tempEditValues,
+                                                breakDuration: e.target.value
+                                            })}
                                         />
                                     </div>
                                 </div>
+                                <div>
+                                    <Label className="block mb-1">作業内容</Label>
+                                    <Input
+                                        type="text"
+                                        value={tempEditValues.memo}
+                                        onChange={(e) => setTempEditValues({
+                                            ...tempEditValues,
+                                            memo: e.target.value
+                                        })}
+                                        className="w-[400px]"
+                                    />
+                                </div>
                             </div>
-
                             <div className="flex justify-end space-x-2 mt-4">
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => setIsBulkEditModalOpen(false)}
+                                    onClick={cancelEdit}
                                 >
                                     キャンセル
                                 </Button>
                                 <Button
                                     type="button"
-                                    onClick={applyBulkEdit}
+                                    onClick={applyEdit}
                                 >
-                                    適用
+                                    保存
                                 </Button>
                             </div>
                         </div>
-                    </DialogContent>
-                </Dialog>
-
-                {/* テンプレート作成オプションダイアログ */}
-                <Dialog open={isCreateReportDialogOpen} onOpenChange={setIsCreateReportDialogOpen}>
-                    <DialogContent>
-                        <DialogTitle>作業報告書作成オプション</DialogTitle>
-                        <div className="space-y-4">
-                            <fieldset className="space-y-2">
-                                <legend className="font-medium">テンプレート選択</legend>
-                                <div className="flex space-x-4">
-                                    <Label htmlFor="defaultTemplate" className="inline-flex items-center gap-2">
-                                        <Input
-                                            type="radio"
-                                            id="defaultTemplate"
-                                            name="templateOption"
-                                            value="default"
-                                            checked={templateOption === "default"}
-                                            onChange={() => setTemplateOption("default")}
-                                            className="h-4 w-4"
-                                        />
-                                        <span>デフォルトテンプレート</span>
-                                    </Label>
-                                    <Label htmlFor="uploadTemplateOption" className="inline-flex items-center gap-2">
-                                        <Input
-                                            type="radio"
-                                            id="uploadTemplateOption"
-                                            name="templateOption"
-                                            value="upload"
-                                            checked={templateOption === "upload"}
-                                            onChange={() => setTemplateOption("upload")}
-                                            className="h-4 w-4"
-                                        />
-                                        <span>テンプレートをアップロード</span>
-                                    </Label>
-                                </div>
-                                {templateOption === "upload" && (
-                                    <div className="mt-2">
-                                        <Label htmlFor="templateUpload" className="block mb-1">テンプレートファイルを選択</Label>
-                                        <Input
-                                            type="file"
-                                            id="templateUpload"
-                                            accept=".xlsx"
-                                            onChange={(e) => {
-                                                if (e.target.files && e.target.files.length > 0) {
-                                                    setUploadedTemplateFile(e.target.files[0]);
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </fieldset>
-
-                            <fieldset className="space-y-2">
-                                <legend className="font-medium">拡張子</legend>
-                                <div className="flex space-x-4">
-                                    <Label htmlFor="excelFormat" className="inline-flex items-center gap-2">
-                                        <Input
-                                            type="radio"
-                                            id="excelFormat"
-                                            name="extensionOption"
-                                            value="excel"
-                                            checked={extensionOption === "excel"}
-                                            onChange={() => setExtensionOption("excel")}
-                                            className="h-4 w-4"
-                                        />
-                                        <span>エクセル形式</span>
-                                    </Label>
-                                    <Label htmlFor="pdfFormat" className="inline-flex items-center gap-2">
-                                        <Input
-                                            type="radio"
-                                            id="pdfFormat"
-                                            name="extensionOption"
-                                            value="pdf"
-                                            checked={extensionOption === "pdf"}
-                                            onChange={() => setExtensionOption("pdf")}
-                                            className="h-4 w-4"
-                                        />
-                                        <span>PDF形式</span>
-                                    </Label>
-                                </div>
-                            </fieldset>
-
-                            <div className="flex justify-end space-x-2">
-                                <Button type="button" variant="outline" onClick={() => setIsCreateReportDialogOpen(false)}>
-                                    キャンセル
-                                </Button>
-                                <Button type="button" onClick={handleConfirmCreateReport}>
-                                    作成
-                                </Button>
-                            </div>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }
