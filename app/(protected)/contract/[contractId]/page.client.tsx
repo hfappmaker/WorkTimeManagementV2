@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { createWorkReportAction, getWorkReportsByContractIdAction, getContractByIdAction } from '@/actions/formAction';
-import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal, DialogHeader } from '@/components/ui/dialog';
 import { Contract, WorkReport } from '@prisma/client';
 import { ComboBox } from '@/components/ui/select';
 import FormError from "@/components/form-error";
@@ -204,7 +204,9 @@ export default function ContractClientPage({ contractId }: { contractId: string 
           <DialogPortal>
             <DialogOverlay />
             <DialogContent>
-              <DialogTitle>作業報告書を作成</DialogTitle>
+              <DialogHeader>
+                <DialogTitle>作業報告書を作成</DialogTitle>
+              </DialogHeader>
               <Form {...reportForm}>
                 <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
                   <div className="flex gap-4">

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import ExcelJS from 'exceljs';
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { convertTimeStrToFractionOfDay } from "@/lib/utils";
 import { useTransitionContext } from "@/contexts/TransitionContext";
@@ -633,7 +633,9 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
             {/* 一括編集用モーダルダイアログ */}
             <Dialog open={isBulkEditModalOpen} onOpenChange={setIsBulkEditModalOpen}>
                 <DialogContent>
-                    <DialogTitle>勤怠情報の一括入力</DialogTitle>
+                    <DialogHeader>
+                        <DialogTitle>勤怠情報の一括入力</DialogTitle>
+                    </DialogHeader>
                     <div className="space-y-4">
                         <div>
                             <h3 className="text-sm font-medium mb-2">適用範囲</h3>
@@ -774,7 +776,9 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
             {/* テンプレート作成オプションダイアログ */}
             <Dialog open={isCreateReportDialogOpen} onOpenChange={setIsCreateReportDialogOpen}>
                 <DialogContent>
-                    <DialogTitle>作業報告書作成オプション</DialogTitle>
+                    <DialogHeader>
+                        <DialogTitle>作業報告書作成オプション</DialogTitle>
+                    </DialogHeader>
                     <div className="space-y-4">
                         <fieldset className="space-y-2">
                             <legend className="font-medium">テンプレート選択</legend>
@@ -866,7 +870,9 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
             {/* 編集用モーダルダイアログ */}
             <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
                 <DialogContent className="max-w-[900px]">
-                    <DialogTitle>勤怠情報の編集</DialogTitle>
+                    <DialogHeader>
+                        <DialogTitle>勤怠情報の編集</DialogTitle>
+                    </DialogHeader>
                     {editingDate && tempEditValues && (
                         <div className="space-y-4">
                             <div>
