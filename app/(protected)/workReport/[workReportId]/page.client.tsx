@@ -14,9 +14,9 @@ import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox";
 import { convertTimeStrToFractionOfDay } from "@/lib/utils";
 import { useTransitionContext } from "@/contexts/TransitionContext";
-import { ComboBox } from "@/components/ui/select";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { TimePickerField } from "@/components/ui/time-picker"
 
 interface AttendanceEntry {
     start: string;
@@ -54,6 +54,11 @@ interface WorkReportClientProps {
     closingDay: number | null;
     userName: string;
     clientEmail: string;
+    dailyWorkMinutes: number;
+    monthlyWorkMinutes: number;
+    basicStartTime: { hour: number; minute: number } | null;
+    basicEndTime: { hour: number; minute: number } | null;
+    basicBreakDuration: { hour: number; minute: number } | null;
 }
 
 // Helper to generate a key for each day between startDate and endDate (inclusive)
@@ -219,7 +224,12 @@ export default function ClientWorkReportPage({
     clientName,
     closingDay,
     userName,
-    clientEmail
+    clientEmail,
+    dailyWorkMinutes,
+    monthlyWorkMinutes,
+    basicStartTime,
+    basicEndTime,
+    basicBreakDuration
 }: WorkReportClientProps) {
     const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
     const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
@@ -248,12 +258,12 @@ export default function ClientWorkReportPage({
     const editForm = useForm<EditFormValues>({
         resolver: zodResolver(editFormSchema),
         defaultValues: {
-            startHour: "",
-            startMinute: "",
-            endHour: "",
-            endMinute: "",
-            breakHour: "",
-            breakMinute: "",
+            startHour: basicStartTime?.hour?.toString() || "",
+            startMinute: basicStartTime?.minute?.toString() || "",
+            endHour: basicEndTime?.hour?.toString() || "",
+            endMinute: basicEndTime?.minute?.toString() || "",
+            breakHour: basicBreakDuration?.hour?.toString() || "",
+            breakMinute: basicBreakDuration?.minute?.toString() || "",
             memo: ""
         }
     });
@@ -264,12 +274,12 @@ export default function ClientWorkReportPage({
         defaultValues: {
             dateRangeMode: "weekday",
             selectedDays: [1, 2, 3, 4, 5],
-            startHour: "09",
-            startMinute: "00",
-            endHour: "18",
-            endMinute: "00",
-            breakHour: "01",
-            breakMinute: "00",
+            startHour: basicStartTime?.hour?.toString() || "",
+            startMinute: basicStartTime?.minute?.toString() || "",
+            endHour: basicEndTime?.hour?.toString() || "",
+            endMinute: basicEndTime?.minute?.toString() || "",
+            breakHour: basicBreakDuration?.hour?.toString() || "",
+            breakMinute: basicBreakDuration?.minute?.toString() || "",
             memo: "",
             startDate: "",
             endDate: "",
@@ -850,39 +860,15 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     <FormField
                                         control={bulkEditForm.control}
                                         name="startHour"
-                                        render={({ field }) => (
+                                        render={() => (
                                             <FormItem>
                                                 <FormLabel>出勤時間</FormLabel>
-                                                <div className="flex gap-2">
-                                                    <FormControl>
-                                                        <ComboBox
-                                                            {...field}
-                                                            options={Array.from({ length: 24 }, (_, i) => ({
-                                                                label: String(i).padStart(2, '0'),
-                                                                value: String(i).padStart(2, '0')
-                                                            }))}
-                                                            placeholder="時"
-                                                        />
-                                                    </FormControl>
-                                                    <FormField
-                                                        control={bulkEditForm.control}
-                                                        name="startMinute"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormControl>
-                                                                    <ComboBox
-                                                                        {...field}
-                                                                        options={[0, 15, 30, 45].map(minute => ({
-                                                                            label: String(minute).padStart(2, '0'),
-                                                                            value: String(minute).padStart(2, '0')
-                                                                        }))}
-                                                                        placeholder="分"
-                                                                    />
-                                                                </FormControl>
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </div>
+                                                <TimePickerField
+                                                    control={bulkEditForm.control}
+                                                    hourFieldName="startHour"
+                                                    minuteFieldName="startMinute"
+                                                    minuteStep={dailyWorkMinutes}
+                                                />
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -890,39 +876,15 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     <FormField
                                         control={bulkEditForm.control}
                                         name="endHour"
-                                        render={({ field }) => (
+                                        render={() => (
                                             <FormItem>
                                                 <FormLabel>退勤時間</FormLabel>
-                                                <div className="flex gap-2">
-                                                    <FormControl>
-                                                        <ComboBox
-                                                            {...field}
-                                                            options={Array.from({ length: 24 }, (_, i) => ({
-                                                                label: String(i).padStart(2, '0'),
-                                                                value: String(i).padStart(2, '0')
-                                                            }))}
-                                                            placeholder="時"
-                                                        />
-                                                    </FormControl>
-                                                    <FormField
-                                                        control={bulkEditForm.control}
-                                                        name="endMinute"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormControl>
-                                                                    <ComboBox
-                                                                        {...field}
-                                                                        options={[0, 15, 30, 45].map(minute => ({
-                                                                            label: String(minute).padStart(2, '0'),
-                                                                            value: String(minute).padStart(2, '0')
-                                                                        }))}
-                                                                        placeholder="分"
-                                                                    />
-                                                                </FormControl>
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </div>
+                                                <TimePickerField
+                                                    control={bulkEditForm.control}
+                                                    hourFieldName="endHour"
+                                                    minuteFieldName="endMinute"
+                                                    minuteStep={dailyWorkMinutes}
+                                                />
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -930,39 +892,15 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     <FormField
                                         control={bulkEditForm.control}
                                         name="breakHour"
-                                        render={({ field }) => (
+                                        render={() => (
                                             <FormItem>
                                                 <FormLabel>休憩時間</FormLabel>
-                                                <div className="flex gap-2">
-                                                    <FormControl>
-                                                        <ComboBox
-                                                            {...field}
-                                                            options={Array.from({ length: 24 }, (_, i) => ({
-                                                                label: String(i).padStart(2, '0'),
-                                                                value: String(i).padStart(2, '0')
-                                                            }))}
-                                                            placeholder="時"
-                                                        />
-                                                    </FormControl>
-                                                    <FormField
-                                                        control={bulkEditForm.control}
-                                                        name="breakMinute"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormControl>
-                                                                    <ComboBox
-                                                                        {...field}
-                                                                        options={[0, 15, 30, 45].map(minute => ({
-                                                                            label: String(minute).padStart(2, '0'),
-                                                                            value: String(minute).padStart(2, '0')
-                                                                        }))}
-                                                                        placeholder="分"
-                                                                    />
-                                                                </FormControl>
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </div>
+                                                <TimePickerField
+                                                    control={bulkEditForm.control}
+                                                    hourFieldName="breakHour"
+                                                    minuteFieldName="breakMinute"
+                                                    minuteStep={dailyWorkMinutes}
+                                                />
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -1117,39 +1055,15 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                         <FormField
                                             control={editForm.control}
                                             name="startHour"
-                                            render={({ field }) => (
+                                            render={() => (
                                                 <FormItem>
                                                     <FormLabel>出勤時間</FormLabel>
-                                                    <div className="flex gap-2">
-                                                        <FormControl>
-                                                            <ComboBox
-                                                                {...field}
-                                                                options={Array.from({ length: 24 }, (_, i) => ({
-                                                                    label: String(i).padStart(2, '0'),
-                                                                    value: String(i).padStart(2, '0')
-                                                                }))}
-                                                                placeholder="時"
-                                                            />
-                                                        </FormControl>
-                                                        <FormField
-                                                            control={editForm.control}
-                                                            name="startMinute"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <ComboBox
-                                                                            {...field}
-                                                                            options={[0, 15, 30, 45].map(minute => ({
-                                                                                label: String(minute).padStart(2, '0'),
-                                                                                value: String(minute).padStart(2, '0')
-                                                                            }))}
-                                                                            placeholder="分"
-                                                                        />
-                                                                    </FormControl>
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </div>
+                                                    <TimePickerField
+                                                        control={editForm.control}
+                                                        hourFieldName="startHour"
+                                                        minuteFieldName="startMinute"
+                                                        minuteStep={dailyWorkMinutes}
+                                                    />
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -1157,39 +1071,15 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                         <FormField
                                             control={editForm.control}
                                             name="endHour"
-                                            render={({ field }) => (
+                                            render={() => (
                                                 <FormItem>
                                                     <FormLabel>退勤時間</FormLabel>
-                                                    <div className="flex gap-2">
-                                                        <FormControl>
-                                                            <ComboBox
-                                                                {...field}
-                                                                options={Array.from({ length: 24 }, (_, i) => ({
-                                                                    label: String(i).padStart(2, '0'),
-                                                                    value: String(i).padStart(2, '0')
-                                                                }))}
-                                                                placeholder="時"
-                                                            />
-                                                        </FormControl>
-                                                        <FormField
-                                                            control={editForm.control}
-                                                            name="endMinute"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <ComboBox
-                                                                            {...field}
-                                                                            options={[0, 15, 30, 45].map(minute => ({
-                                                                                label: String(minute).padStart(2, '0'),
-                                                                                value: String(minute).padStart(2, '0')
-                                                                            }))}
-                                                                            placeholder="分"
-                                                                        />
-                                                                    </FormControl>
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </div>
+                                                    <TimePickerField
+                                                        control={editForm.control}
+                                                        hourFieldName="endHour"
+                                                        minuteFieldName="endMinute"
+                                                        minuteStep={dailyWorkMinutes}
+                                                    />
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -1197,41 +1087,15 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                         <FormField
                                             control={editForm.control}
                                             name="breakHour"
-                                            render={({ field }) => (
+                                            render={() => (
                                                 <FormItem>
                                                     <FormLabel>休憩時間</FormLabel>
-                                                    <div className="flex gap-2">
-                                                        <FormControl>
-                                                            <ComboBox
-                                                                {...field}
-                                                                options={Array.from({ length: 24 }, (_, i) => ({
-                                                                    label: String(i).padStart(2, '0'),
-                                                                    value: String(i).padStart(2, '0')
-                                                                }))}
-                                                                placeholder="時"
-                                                            />
-                                                        </FormControl>
-                                                        <FormField
-                                                            control={editForm.control}
-                                                            name="breakMinute"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormControl>
-                                                                        <ComboBox
-                                                                            {...field}
-                                                                            triggerClassName="w-full"
-                                                                            options={[0, 15, 30, 45].map(minute => ({
-                                                                                label: String(minute).padStart(2, '0'),
-                                                                                value: String(minute).padStart(2, '0')
-                                                                            }))}
-                                                                            placeholder="分"
-                                                                        />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </div>
+                                                    <TimePickerField
+                                                        control={editForm.control}
+                                                        hourFieldName="breakHour"
+                                                        minuteFieldName="breakMinute"
+                                                        minuteStep={dailyWorkMinutes}
+                                                    />
                                                     <FormMessage />
                                                 </FormItem>
                                             )}

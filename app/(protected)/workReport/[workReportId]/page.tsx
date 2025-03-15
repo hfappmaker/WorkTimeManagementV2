@@ -50,6 +50,14 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
       contractName={contract.name}
       clientName={contract.client.name}
       clientEmail={contract.client.email}
+      dailyWorkMinutes={contract.dailyWorkMinutes ?? 15}
+      monthlyWorkMinutes={contract.monthlyWorkMinutes ?? 15}
+      basicStartTime={contract.basicStartTime ? { hour: contract.basicStartTime.getHours(), minute: contract.basicStartTime.getMinutes() } : { hour: 9, minute: 0 }}
+      basicEndTime={contract.basicEndTime ? { hour: contract.basicEndTime.getHours(), minute: contract.basicEndTime.getMinutes() } : { hour: 18, minute: 0 }}
+      basicBreakDuration={contract.basicBreakDuration ? { 
+        hour: Math.floor(contract.basicBreakDuration / 60), 
+        minute: contract.basicBreakDuration % 60 
+      } : { hour: 1, minute: 0 }}
       closingDay={contract.closingDay}
     />
   );

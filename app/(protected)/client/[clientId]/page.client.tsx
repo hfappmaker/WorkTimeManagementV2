@@ -16,6 +16,9 @@ import { createContractAction, deleteContractAction, updateContractAction, getCo
 import { ContractSchema } from '@/schemas';
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import { z } from "zod";
+import { ComboBox } from "@/components/ui/select";
+import { TimePickerField } from "@/components/ui/time-picker";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Contract {
   id: string;
@@ -53,6 +56,9 @@ type ContractFormProps = {
 type DialogType = "create" | "edit" | "delete" | "details" | null;
 
 const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFormProps) => {
+  // Add state for rate type
+  const [rateType, setRateType] = useState<"upperLower" | "middle">("upperLower");
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -61,7 +67,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           control={form.control}
           name="name"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex-1">
               <FormLabel>契約名</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value ?? ""} placeholder="契約名を入力" />
@@ -71,229 +77,284 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
           )}
         />
 
-        {/* Start Date */}
+        {/* Start Date and End Date in the same row */}
+        <div className="flex gap-6">
+          <FormField
+            control={form.control}
+            name="startDate"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>開始日</FormLabel>
+                <FormControl>
+                  <DateInput
+                    {...field}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="開始日を選択"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="endDate"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>終了日</FormLabel>
+                <FormControl>
+                  <DateInput
+                    {...field}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="終了日を選択（任意）"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Unit Price, Settlement Min, Settlement Max in the same row */}
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="unitPrice"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>単価（円）</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="settlementMin"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>精算下限（時間）</FormLabel>
+                <FormControl>
+                  <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）140" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="settlementMax"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>精算上限（時間）</FormLabel>
+                <FormControl>
+                  <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）180" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Rate Type Selection */}
         <FormField
           control={form.control}
-          name="startDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>開始日</FormLabel>
+          name="rateType"
+          render={() => (  
+            <FormItem className="space-y-3">
+              <FormLabel>精算方式</FormLabel>
               <FormControl>
-                <DateInput
-                  {...field}
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="開始日を選択"
+                <RadioGroup
+                  onValueChange={(value: "upperLower" | "middle") => {
+                    setRateType(value);
+                    if (value === "upperLower") {
+                      form.setValue("middleRate", undefined);
+                    } else {
+                      form.setValue("upperRate", undefined);
+                      form.setValue("lowerRate", undefined);
+                    }
+                  }}
+                  defaultValue="upperLower"
+                  className="flex flex-row space-x-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="upperLower" id="upperLower" />
+                    <label htmlFor="upperLower">上下割</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="middle" id="middle" />
+                    <label htmlFor="middle">中間割</label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Rate fields - conditionally rendered based on rate type */}
+        <div className="flex gap-4">
+          {rateType === "upperLower" && (
+            <>
+              <FormField
+                control={form.control}
+                name="upperRate"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>超過単価（円）</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lowerRate"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>控除単価（円）</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
+
+          {rateType === "middle" && (
+            <FormField
+              control={form.control}
+              name="middleRate"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>中間単価（円）</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value ?? ""} type="number" step="0.01" placeholder="（例）5000" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
+
+        {/* Daily Work Minutes and Monthly Work Minutes in the same row */}
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="dailyWorkMinutes"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>1日あたりの作業単位(分)</FormLabel>
+                <FormControl>
+                  <ComboBox
+                    {...field}
+                    options={[1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60].map(num => ({
+                      value: num.toString(),
+                      label: num.toString()
+                    }))}
+                    placeholder="（例）15"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="monthlyWorkMinutes"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>1ヶ月あたりの作業単位(分)</FormLabel>
+                <FormControl>
+                  <ComboBox
+                    {...field}
+                    options={[1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60].map(num => ({
+                      value: num.toString(),
+                      label: num.toString()
+                    }))}
+                    placeholder="（例）15"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Basic Start Time, Basic End Time, and Basic Break Duration in the same row */}
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="basicStartTime"
+            render={() => (
+              <FormItem className="flex-1">
+                <FormLabel>基本開始時刻</FormLabel>
+                <TimePickerField
+                  control={form.control}
+                  hourFieldName="basicStartTimeHour"
+                  minuteFieldName="basicStartTimeMinute"
+                  minuteStep={form.getValues("dailyWorkMinutes") || 1}
+                />  
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="basicEndTime"
+            render={() => (
+              <FormItem className="flex-1">
+                <FormLabel>基本終了時刻</FormLabel>
+                <TimePickerField
+                  control={form.control}
+                  hourFieldName="basicEndTimeHour"
+                  minuteFieldName="basicEndTimeMinute"
+                  minuteStep={form.getValues("dailyWorkMinutes") || 1}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* End Date */}
-        <FormField
-          control={form.control}
-          name="endDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>終了日</FormLabel>
-              <FormControl>
-                <DateInput
-                  {...field}
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="終了日を選択（任意）"
+          <FormField
+            control={form.control}
+            name="basicBreakDuration"
+            render={() => (
+              <FormItem className="flex-1">
+                <FormLabel>基本休憩時間(分)</FormLabel>
+                <TimePickerField
+                  control={form.control}
+                  hourFieldName="basicBreakDurationHour"
+                  minuteFieldName="basicBreakDurationMinute"
+                  minuteStep={form.getValues("dailyWorkMinutes") || 1}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Unit Price */}
-        <FormField
-          control={form.control}
-          name="unitPrice"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>単価（円）</FormLabel>
-              <FormControl>
-                <Input {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Settlement Min */}
-        <FormField
-          control={form.control}
-          name="settlementMin"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>精算下限（時間）</FormLabel>
-              <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）140" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Settlement Max */}
-        <FormField
-          control={form.control}
-          name="settlementMax"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>精算上限（時間）</FormLabel>
-              <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）180" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Upper Rate */}
-        <FormField
-          control={form.control}
-          name="upperRate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>超過単価（円）</FormLabel>
-              <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Lower Rate */}
-        <FormField
-          control={form.control}
-          name="lowerRate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>控除単価（円）</FormLabel>
-              <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Middle Rate */}
-        <FormField
-          control={form.control}
-          name="middleRate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>中間単価（円）</FormLabel>
-              <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" step="0.01" placeholder="（例）5000" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* dailyWorkMinutes */}
-        <FormField
-          control={form.control}
-          name="dailyWorkMinutes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>1日あたりの作業単位(分)</FormLabel>
-              <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）15" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* monthlyWorkMinutes */}
-        <FormField
-          control={form.control}
-          name="monthlyWorkMinutes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>1ヶ月あたりの作業単位(分)</FormLabel>
-              <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）15" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* basicStartTime */}
-        <FormField
-          control={form.control}
-          name="basicStartTime"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>基本開始時刻</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value}
-                  type="time"
-                  onChange={field.onChange}
-                  placeholder="基本開始時刻を選択（任意）"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* basicEndTime */}
-        <FormField
-          control={form.control}
-          name="basicEndTime"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>基本終了時刻</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value}
-                  type="time"
-                  onChange={field.onChange}
-                  placeholder="基本終了時刻を選択（任意）"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* basicBreakDuration */}
-        <FormField
-          control={form.control}
-          name="basicBreakDuration"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>基本休憩時間(分)</FormLabel>
-              <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）30" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Closing Day */}
         <FormField
           control={form.control}
           name="closingDay"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex-1">
               <FormLabel>締め日</FormLabel>
               <FormControl>
                 <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）20（未入力の場合は末日）" />
@@ -563,7 +624,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       >
         <DialogPortal>
           <DialogOverlay />
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] w-[95vw] max-w-[1400px] overflow-y-auto p-8">
             <DialogHeader>
               <DialogTitle>契約を作成</DialogTitle>
             </DialogHeader>
@@ -585,7 +646,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       >
         <DialogPortal>
           <DialogOverlay />
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] w-[95vw] max-w-[1400px] overflow-y-auto p-8">
             <DialogHeader>
               <DialogTitle>契約を編集</DialogTitle>
             </DialogHeader>

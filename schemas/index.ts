@@ -130,6 +130,7 @@ export const ContractSchema = z.object({
   unitPrice: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
   settlementMin: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
   settlementMax: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
+  rateType: z.enum(["upperLower", "middle"]).default("upperLower"),
   upperRate: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
   lowerRate: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
   middleRate: z.preprocess((val) => val ? typeof val === "string" ? Number(val) : val : undefined, z.number().optional()),
