@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roboto_Mono as Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { TransitionProvider } from "@/contexts/TransitionContext";
 
 const mono = Mono({ subsets: ["latin"] });
 
@@ -25,11 +26,13 @@ export default function RootLayout({
       className="dark"
     >
       <body className={mono.className}>
-       {children}
-       <Toaster
-        richColors
-        closeButton
-      />
+        <TransitionProvider>
+          {children}
+          <Toaster
+            richColors
+            closeButton
+          />
+        </TransitionProvider>
       </body>
     </html>
   );

@@ -1,21 +1,19 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect } from "react";
 import { createEmailTemplateAction, updateEmailTemplateAction, deleteEmailTemplateAction, getEmailTemplatesByCreateUserIdAction } from "@/actions/formAction";
 import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { TextArea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import LoadingOverlay from "@/components/LoadingOverlay";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
-import { useIsClient } from "@/hooks/use-is-client";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { EmailTemplateSchema } from "@/schemas";
-
+import { useTransitionContext } from "@/contexts/TransitionContext";
 // Define dialog types
 type DialogType = "create" | "edit" | "delete" | "details" | null;
 
@@ -34,8 +32,7 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
     const [activeEmailTemplate, setActiveEmailTemplate] = useState<EmailTemplate | null>(null);
     const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
     const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-    const [isPending, startTransition] = useTransition();
-    const isClient = useIsClient();
+    const { startTransition } = useTransitionContext();
 
     const defaultFormValues = {
         name: "",
@@ -141,7 +138,6 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
 
     return (
         <div className="p-4">
-            <LoadingOverlay isClient={isClient} isPending={isPending}>
                 <h1 className="text-2xl font-bold mb-4">メールテンプレート一覧</h1>
                 {error && <div className="mb-4"><FormError message={error.message} resetSignal={error.date.getTime()} /></div>}
                 {success && <div className="mb-4"><FormSuccess message={success.message} resetSignal={success.date.getTime()} /></div>}
@@ -355,7 +351,6 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
                         </DialogContent>
                     </DialogPortal>
                 </Dialog>
-            </LoadingOverlay>
         </div>
     );
 }

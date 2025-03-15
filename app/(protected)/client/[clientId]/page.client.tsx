@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,13 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { DateInput } from "@/components/ui/date-input";
-import LoadingOverlay from "@/components/LoadingOverlay";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from "@/components/ui/form";
-import { createContractAction, deleteContractAction, updateContractAction, getClientByIdAction, getContractsByClientIdAction } from '@/actions/formAction';
+import { createContractAction, deleteContractAction, updateContractAction, getContractsByClientIdAction } from '@/actions/formAction';
 import { ContractSchema } from '@/schemas';
-import { useIsClient } from "@/hooks/use-is-client";
+import { useTransitionContext } from "@/contexts/TransitionContext";
 import { z } from "zod";
 
 interface Contract {
@@ -226,8 +225,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   const [activeDialog, setActiveDialog] = useState<DialogType>(null);
   const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-  const [isPending, startTransition] = useTransition();
-  const isClient = useIsClient();
+  const { startTransition } = useTransitionContext();
   const router = useRouter();
 
   // フォームのデフォルト値
@@ -369,7 +367,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
 
   return (
     <div className="p-6 space-y-6 relative">
-      <LoadingOverlay isClient={isClient} isPending={isPending}>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">{client.name}</h1>
           <Button variant="outline" onClick={() => handleNavigation("/client")}>
@@ -406,10 +403,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => {
-                        setActiveContract(contract);
-                        setActiveDialog("details");
-                      }}>詳細</Button>
+                      <Button variant="outline" size="sm" onClick={() => openDetailsDialog(contract)}>詳細</Button>
                     </div>
                   </div>
                 ))}
@@ -431,7 +425,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
           <DialogPortal>
             <DialogOverlay />
             <DialogContent>
-              <LoadingOverlay isClient={isClient} isPending={isPending}>
                 <DialogHeader>
                   <DialogTitle>契約詳細</DialogTitle>
                 </DialogHeader>
@@ -455,7 +448,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                     </div>
                   </div>
                 )}
-              </LoadingOverlay>
             </DialogContent>
           </DialogPortal>
         </Dialog>
@@ -469,7 +461,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
           <DialogPortal>
             <DialogOverlay />
             <DialogContent>
-              <LoadingOverlay isClient={isClient} isPending={isPending}>
                 <DialogHeader>
                   <DialogTitle>契約を作成</DialogTitle>
                 </DialogHeader>
@@ -479,7 +470,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                   onCancel={closeDialog}
                   submitButtonText="作成"
                 />
-              </LoadingOverlay>
             </DialogContent>
           </DialogPortal>
         </Dialog>
@@ -493,7 +483,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
           <DialogPortal>
             <DialogOverlay />
             <DialogContent>
-              <LoadingOverlay isClient={isClient} isPending={isPending}>
                 <DialogHeader>
                   <DialogTitle>契約を編集</DialogTitle>
                 </DialogHeader>
@@ -503,7 +492,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                   onCancel={closeDialog}
                   submitButtonText="更新"
                 />
-              </LoadingOverlay>
             </DialogContent>
           </DialogPortal>
         </Dialog>
@@ -517,7 +505,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
           <DialogPortal>
             <DialogOverlay />
             <DialogContent>
-              <LoadingOverlay isClient={isClient} isPending={isPending}>
 
                 <DialogHeader>
                   <DialogTitle>契約の削除確認</DialogTitle>
@@ -530,11 +517,9 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                   <Button variant="outline" onClick={closeDialog}>キャンセル</Button>
                   <Button variant="destructive" onClick={onDeleteContract}>削除</Button>
                 </div>
-              </LoadingOverlay>
             </DialogContent>
           </DialogPortal>
         </Dialog>
-      </LoadingOverlay>
     </div>
   );
 } 

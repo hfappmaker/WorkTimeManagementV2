@@ -1,20 +1,19 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { updateWorkReportAction } from "@/actions/formAction";
 import { FormControl, FormField, FormItem, FormMessage, Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useIsClient } from "@/hooks/use-is-client";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
-import LoadingOverlay from "@/components/LoadingOverlay";
 import ExcelJS from 'exceljs';
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { convertTimeStrToFractionOfDay } from "@/lib/utils";
+import { useTransitionContext } from "@/contexts/TransitionContext";
 
 interface AttendanceEntry {
     start: string;
@@ -147,10 +146,9 @@ export default function ClientWorkReportPage({
     userName,
     clientEmail
 }: WorkReportClientProps) {
-    const isClient = useIsClient();
     const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
     const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-    const [isPending, startTransition] = useTransition();
+    const { startTransition } = useTransitionContext();
     // モーダルの状態管理
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
     // 一括編集用の状態
@@ -475,7 +473,6 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
     };
 
     return (
-        <LoadingOverlay isClient={isClient} isPending={isPending}>
             <div className="p-4">
                 <h1 className="text-xl font-bold mb-4 dark:text-white">
                     {contractName}の作業報告書
@@ -819,6 +816,5 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                     </DialogContent>
                 </Dialog>
             </div>
-        </LoadingOverlay>
     );
 }

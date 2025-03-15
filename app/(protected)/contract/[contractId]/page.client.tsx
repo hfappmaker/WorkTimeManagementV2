@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,13 +8,11 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { createWorkReportAction, getWorkReportsByContractIdAction, getContractByIdAction } from '@/actions/formAction';
 import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal } from '@/components/ui/dialog';
 import { Contract, WorkReport } from '@prisma/client';
-import LoadingOverlay from '@/components/LoadingOverlay';
-import { useIsClient } from '@/hooks/use-is-client';
 import { ComboBox } from '@/components/ui/select';
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { useRouter } from 'next/navigation';
-
+import { useTransitionContext } from '@/contexts/TransitionContext';
 interface ReportFormValues {
   year: string;
   month: string;
@@ -26,8 +24,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   const [workReports, setWorkReports] = useState<WorkReport[]>([]);
   const [contract, setContract] = useState<Contract | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const isClient = useIsClient();
-  const [isPending, startTransition] = useTransition();
+  const { startTransition } = useTransitionContext();
   const router = useRouter();
 
   // 現在の年月を取得
@@ -152,10 +149,9 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   };
 
   return (
-    <LoadingOverlay isClient={isClient} isPending={isPending}>
-      <div className="p-4">
-        <h1 className="text-xl font-bold mb-4">
-          作業報告書一覧（{contract?.name}）
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">
+        作業報告書一覧（{contract?.name}）
         </h1>
         {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
         {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
@@ -271,7 +267,6 @@ export default function ContractClientPage({ contractId }: { contractId: string 
           </DialogPortal>
         </Dialog>
       </div>
-    </LoadingOverlay>
   );
 }
 
