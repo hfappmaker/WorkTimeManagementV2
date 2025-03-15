@@ -127,3 +127,72 @@ export async function getWorkReportsByContractId(contractId: string) {
   });
   return workReports;
 }
+
+export async function getCurrentWorkReports() {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  const workReports = await db.workReport.findMany({
+    where: {
+      year: currentYear,
+      month: currentMonth,
+    },
+    include: {
+      contract: {
+        include: {
+          client: true,
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Group work reports by client and contract
+  const groupedReports = workReports.reduce((acc, report) => {
+    const clientId = report.contract.clientId;
+    const contractId = report.contractId;
+
+    if (!acc[clientId]) {
+      acc[clientId] = {
+        clientName: report.contract.client.name,
+        contracts: {},
+      };
+    }
+
+    if (!acc[clientId].contracts[contractId]) {
+      acc[clientId].contracts[contractId] = {
+        contractName: report.contract.name,
+        workReports: [],
+      };
+    }
+
+    acc[clientId].contracts[contractId].workReports.push({
+      id: report.id,
+      year: report.year,
+      month: report.month,
+      status: report.status,
+      userName: report.contract.user.name || "",
+    });
+
+    return acc;
+  }, {} as Record<string, {
+    clientName: string;
+    contracts: Record<string, {
+      contractName: string;
+      workReports: Array<{
+        id: string;
+        year: number;
+        month: number;
+        status: string;
+        userName: string;
+      }>;
+    }>;
+  }>);
+
+  return groupedReports;
+}

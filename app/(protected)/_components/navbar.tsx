@@ -1,16 +1,25 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import { MdMenu } from "react-icons/md";
-
 import { NAV_LINKS } from "../_constants";
 import { Button } from "@/components/ui/button";
 import UserButton from "@/components/auth/user-button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useTransitionContext } from "@/contexts/TransitionContext";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const Navbar = () => {
+  const { startTransition } = useTransitionContext();
+  const router = useRouter();
   const pathName = usePathname();
+
+  const handleNavigation = (path: string) => {
+    startTransition(() => {
+      router.push(path);
+    });
+  };
 
   return (
     <>
@@ -23,7 +32,7 @@ const Navbar = () => {
               variant={pathName === link.path ? "default" : "outline"}
               className="w-full hover:bg-sky-400 hover:text-primary-foreground"
             >
-              <Link href={link.path}>{link.title}</Link>
+              <Link href={link.path} onClick={() => handleNavigation(link.path)}>{link.title}</Link>
             </Button>
           ))}
         </div>
@@ -51,7 +60,7 @@ const Navbar = () => {
                   variant={pathName === link.path ? "default" : "outline"}
                   className="w-full hover:bg-sky-400 my-2 hover:text-primary-foreground"
                 >
-                  <Link href={link.path}>{link.title}</Link>
+                  <Link href={link.path} onClick={() => handleNavigation(link.path)}>{link.title}</Link>
                 </Button>
               ))}
             </div>

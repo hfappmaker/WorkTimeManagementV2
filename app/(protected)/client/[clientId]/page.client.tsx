@@ -339,7 +339,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
     });
   };
 
-  // Link クリック時の遷移処理
   const handleNavigation = (url: string) => {
     startTransition(() => {
       router.push(url);

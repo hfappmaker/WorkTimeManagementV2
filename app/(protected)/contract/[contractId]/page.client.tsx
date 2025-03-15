@@ -141,7 +141,6 @@ export default function ContractClientPage({ contractId }: { contractId: string 
     { value: '12', label: '12月' },
   ];
 
-  // Link クリック時の遷移処理
   const handleNavigation = (workReportId: string) => {
     startTransition(() => {
       router.push(`/workReport/${workReportId}`);

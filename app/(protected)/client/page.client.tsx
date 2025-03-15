@@ -172,7 +172,6 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     setActiveDialog("delete");
   };
 
-  // Link クリック時の遷移処理
   const handleNavigation = (clientId: string) => {
     startTransition(() => {
       router.push(`/client/${clientId}`);
