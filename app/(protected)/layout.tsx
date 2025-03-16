@@ -17,9 +17,9 @@ export default async function ProtectedLayout({
   return (
     <SessionProvider session={session}>
       <Navbar />
-        <main className="flex items-center justify-center mx-4 my-6 lg:mt-20">
-          {children}
-        </main>
+      <main className="flex items-center justify-center mx-4 my-6 lg:mt-20">
+        {children}
+      </main>
     </SessionProvider>
   );
 }

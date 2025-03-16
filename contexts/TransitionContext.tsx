@@ -58,7 +58,10 @@ function LoadingOverlay() {
     if (!isPending) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
+            // bg-black/50が効かないので、styleで指定
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+        >
             <Spinner />
         </div>,
         document.body
