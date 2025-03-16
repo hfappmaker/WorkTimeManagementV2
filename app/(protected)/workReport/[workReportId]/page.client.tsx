@@ -18,7 +18,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TimePickerField } from "@/components/ui/time-picker"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { DateInput } from "@/components/ui/date-input";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface AttendanceEntry {
     start: string;
@@ -822,7 +822,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             <FormItem>
                                                 <FormLabel>開始日</FormLabel>
                                                 <FormControl>
-                                                    <DateInput {...field} />
+                                                    <DatePicker {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -835,7 +835,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             <FormItem>
                                                 <FormLabel>終了日</FormLabel>
                                                 <FormControl>
-                                                    <DateInput {...field} />
+                                                    <DatePicker {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>

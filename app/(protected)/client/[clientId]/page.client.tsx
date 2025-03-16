@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { DateInput } from "@/components/ui/date-input";
+import { DatePicker } from "@/components/ui/date-picker";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from "@/components/ui/form";
@@ -86,7 +86,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
               <FormItem className="flex-1">
                 <FormLabel>開始日</FormLabel>
                 <FormControl>
-                  <DateInput
+                  <DatePicker
                     {...field}
                     value={field.value}
                     onChange={field.onChange}
@@ -105,7 +105,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
               <FormItem className="flex-1">
                 <FormLabel>終了日</FormLabel>
                 <FormControl>
-                  <DateInput
+                  <DatePicker
                     {...field}
                     value={field.value}
                     onChange={field.onChange}

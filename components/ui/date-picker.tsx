@@ -5,13 +5,13 @@ import { cn } from "@/lib/utils";
 import { FaCalendarAlt } from "react-icons/fa";
 import { FC, useRef } from "react";
 
-interface DateInputProps extends Omit<React.ComponentPropsWithRef<"input">, 'onChange' | 'value'> {
+interface DatePickerProps extends Omit<React.ComponentPropsWithRef<"input">, 'onChange' | 'value'> {
   value?: string | Date | null;
   onChange?: (date: Date | undefined) => void;
   placeholder?: string;
 }
 
-export const DateInput: FC<DateInputProps> = ({ 
+export const DatePicker: FC<DatePickerProps> = ({ 
   className, 
   value, 
   onChange,
@@ -99,4 +99,4 @@ export const DateInput: FC<DateInputProps> = ({
   );
 };
 
-DateInput.displayName = "DateInput";
+DatePicker.displayName = "DatePicker";
