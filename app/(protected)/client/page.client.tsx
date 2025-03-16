@@ -201,9 +201,11 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
                       {truncate(client.name, 30)}
                     </Label>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => openDetailsModal(client)}>
-                    詳細
-                  </Button>
+                  <div className="ml-4">
+                    <Button variant="outline" size="sm" onClick={() => openDetailsModal(client)}>
+                      詳細
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

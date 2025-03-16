@@ -555,7 +555,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
               {contracts.map((contract) => (
                 <div
                   key={contract.id}
-                  className="p-3 border rounded-md flex justify-between items-center"
+                  className="p-3 border rounded-md flex justify-between items-center gap-4"
                 >
                   <div className="cursor-pointer hover:text-blue-500" onClick={() => handleNavigation(`/contract/${contract.id}`)}>
                     <div className="font-medium">{contract.name}</div>
@@ -566,7 +566,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                         : ""}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 ml-4">
                     <Button variant="outline" size="sm" onClick={() => openDetailsDialog(contract)}>詳細</Button>
                   </div>
                 </div>

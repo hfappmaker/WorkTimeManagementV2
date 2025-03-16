@@ -94,8 +94,6 @@ function mergeAttendances(
     return defaults;
 }
 
-// ---- Begin moved helper functions ----
-
 const parseRangeReference = (ref: string | undefined): [string | null, string | null] => {
     if (!ref) {
         return [null, null];
@@ -141,23 +139,6 @@ const columnNameToNumber = (name: string): number => {
 function formatMonthDay(dateStr: string): string {
     const d = new Date(dateStr);
     return `${d.getMonth() + 1}月${d.getDate()}日`;
-}
-
-// ---- End moved helper functions ----
-
-// 時間間隔を設定するヘルパー関数（例：15分単位）
-function generateTimeOptions(intervalMinutes: number = 15) {
-    const options = [];
-    const totalMinutes = 24 * 60; // 24時間分の分数
-
-    for (let minutes = 0; minutes < totalMinutes; minutes += intervalMinutes) {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        const timeString = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-        options.push(timeString);
-    }
-
-    return options;
 }
 
 const editFormSchema = z.object({
@@ -215,6 +196,25 @@ const bulkEditFormSchema = z.object({
 
 type BulkEditFormValues = z.infer<typeof bulkEditFormSchema>;
 
+// 一括編集フォームのデフォルト値を定義
+const getBulkEditFormDefaults = (
+    basicStartTime: { hour: number; minute: number } | null,
+    basicEndTime: { hour: number; minute: number } | null,
+    basicBreakDuration: { hour: number; minute: number } | null
+) => ({
+    dateRangeMode: "weekday" as const,
+    selectedDays: [1, 2, 3, 4, 5],
+    startHour: basicStartTime?.hour?.toString() || "",
+    startMinute: basicStartTime?.minute?.toString() || "",
+    endHour: basicEndTime?.hour?.toString() || "",
+    endMinute: basicEndTime?.minute?.toString() || "",
+    breakHour: basicBreakDuration?.hour?.toString() || "",
+    breakMinute: basicBreakDuration?.minute?.toString() || "",
+    memo: "",
+    startDate: undefined,
+    endDate: undefined,
+});
+
 export default function ClientWorkReportPage({
     contractId,
     workReportId,
@@ -271,20 +271,14 @@ export default function ClientWorkReportPage({
     // 一括編集用フォーム
     const bulkEditForm = useForm<BulkEditFormValues>({
         resolver: zodResolver(bulkEditFormSchema),
-        defaultValues: {
-            dateRangeMode: "weekday",
-            selectedDays: [1, 2, 3, 4, 5],
-            startHour: basicStartTime?.hour?.toString() || "",
-            startMinute: basicStartTime?.minute?.toString() || "",
-            endHour: basicEndTime?.hour?.toString() || "",
-            endMinute: basicEndTime?.minute?.toString() || "",
-            breakHour: basicBreakDuration?.hour?.toString() || "",
-            breakMinute: basicBreakDuration?.minute?.toString() || "",
-            memo: "",
-            startDate: undefined,
-            endDate: undefined,
-        }
+        defaultValues: getBulkEditFormDefaults(basicStartTime, basicEndTime, basicBreakDuration)
     });
+
+    // 一括編集フォームをリセットする関数を追加
+    const resetBulkEditForm = () => {
+        bulkEditForm.reset(getBulkEditFormDefaults(basicStartTime, basicEndTime, basicBreakDuration));
+        setIsBulkEditModalOpen(false);
+    };
 
     const handleAttendanceSubmit = (data: AttendanceFormValues) => {
         startTransition(async () => {
@@ -330,7 +324,7 @@ export default function ClientWorkReportPage({
         });
 
         attendanceForm.reset(updatedValues);
-        setIsBulkEditModalOpen(false);
+        resetBulkEditForm();
         setSuccess({ message: "一括編集を適用しました", date: new Date() });
     };
 
@@ -736,7 +730,14 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
             </Form>
 
             {/* 一括編集用モーダルダイアログ */}
-            <Dialog open={isBulkEditModalOpen} onOpenChange={setIsBulkEditModalOpen}>
+            <Dialog 
+                open={isBulkEditModalOpen} 
+                onOpenChange={(open) => {
+                    if (!open) {
+                        resetBulkEditForm();
+                    }
+                }}
+            >
                 <DialogContent className="max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>勤怠情報の一括入力</DialogTitle>
@@ -914,7 +915,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => setIsBulkEditModalOpen(false)}
+                                    onClick={resetBulkEditForm}
                                 >
                                     キャンセル
                                 </Button>
