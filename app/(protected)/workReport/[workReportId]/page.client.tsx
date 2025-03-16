@@ -17,6 +17,8 @@ import { useTransitionContext } from "@/contexts/TransitionContext";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TimePickerField } from "@/components/ui/time-picker"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { DateInput } from "@/components/ui/date-input";
 
 interface AttendanceEntry {
     start: string;
@@ -177,8 +179,8 @@ const shouldUpdateDate = (
     date: Date,
     dateRangeMode: dateRangeMode,
     selectedDays?: number[],
-    startDate?: string,
-    endDate?: string
+    startDate?: Date,
+    endDate?: Date
 ): boolean => {
     const dayOfWeek = date.getDay();
 
@@ -189,9 +191,7 @@ const shouldUpdateDate = (
             return selectedDays?.includes(dayOfWeek) ?? false;
         case "custom":
             if (startDate && endDate) {
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                return date >= start && date <= end;
+                return date >= startDate && date <= endDate;
             }
             return false;
         default:
@@ -202,8 +202,8 @@ const shouldUpdateDate = (
 const bulkEditFormSchema = z.object({
     dateRangeMode: z.enum(dateRangeModes),
     selectedDays: z.array(z.number()).optional(),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
+    startDate: z.date().optional(),
+    endDate: z.date().optional(),
     startHour: z.string().optional(),
     startMinute: z.string().optional(),
     endHour: z.string().optional(),
@@ -281,8 +281,8 @@ export default function ClientWorkReportPage({
             breakHour: basicBreakDuration?.hour?.toString() || "",
             breakMinute: basicBreakDuration?.minute?.toString() || "",
             memo: "",
-            startDate: "",
-            endDate: "",
+            startDate: undefined,
+            endDate: undefined,
         }
     });
 
@@ -737,7 +737,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
 
             {/* 一括編集用モーダルダイアログ */}
             <Dialog open={isBulkEditModalOpen} onOpenChange={setIsBulkEditModalOpen}>
-                <DialogContent>
+                <DialogContent className="max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>勤怠情報の一括入力</DialogTitle>
                     </DialogHeader>
@@ -751,35 +751,24 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     render={({ field }) => (
                                         <FormItem className="flex space-x-4">
                                             <FormControl>
-                                                <div className="flex space-x-4">
-                                                    <Label className="flex items-center space-x-2">
-                                                        <Input
-                                                            type="radio"
-                                                            className="h-4 w-4"
-                                                            checked={field.value === "all"}
-                                                            onChange={() => field.onChange("all")}
-                                                        />
-                                                        <span>全日</span>
-                                                    </Label>
-                                                    <Label className="flex items-center space-x-2">
-                                                        <Input
-                                                            type="radio"
-                                                            className="h-4 w-4"
-                                                            checked={field.value === "weekday"}
-                                                            onChange={() => field.onChange("weekday")}
-                                                        />
-                                                        <span>曜日指定</span>
-                                                    </Label>
-                                                    <Label className="flex items-center space-x-2">
-                                                        <Input
-                                                            type="radio"
-                                                            className="h-4 w-4"
-                                                            checked={field.value === "custom"}
-                                                            onChange={() => field.onChange("custom")}
-                                                        />
-                                                        <span>期間指定</span>
-                                                    </Label>
-                                                </div>
+                                                <RadioGroup
+                                                    onValueChange={(value: "all" | "weekday" | "custom") => field.onChange(value)}
+                                                    value={field.value}
+                                                    className="flex space-x-4"
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="all" id="all" />
+                                                        <label htmlFor="all">全日</label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="weekday" id="weekday" />
+                                                        <label htmlFor="weekday">曜日指定</label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="custom" id="custom" />
+                                                        <label htmlFor="custom">期間指定</label>
+                                                    </div>
+                                                </RadioGroup>
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -832,7 +821,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             <FormItem>
                                                 <FormLabel>開始日</FormLabel>
                                                 <FormControl>
-                                                    <Input type="date" {...field} />
+                                                    <DateInput {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -845,7 +834,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             <FormItem>
                                                 <FormLabel>終了日</FormLabel>
                                                 <FormControl>
-                                                    <Input type="date" {...field} />
+                                                    <DateInput {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -1034,7 +1023,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
 
             {/* 編集用モーダルダイアログ */}
             <Dialog open={editingDate !== null} onOpenChange={(open) => !open && setEditingDate(null)}>
-                <DialogContent>
+                <DialogContent className="max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>勤怠情報の編集</DialogTitle>
                     </DialogHeader>
@@ -1051,12 +1040,12 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     </h3>
                                 </div>
                                 <div className="space-y-4">
-                                    <div className="flex space-x-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <FormField
                                             control={editForm.control}
                                             name="startHour"
                                             render={() => (
-                                                <FormItem>
+                                                <FormItem className="w-full">
                                                     <FormLabel>出勤時間</FormLabel>
                                                     <TimePickerField
                                                         control={editForm.control}
@@ -1072,7 +1061,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             control={editForm.control}
                                             name="endHour"
                                             render={() => (
-                                                <FormItem>
+                                                <FormItem className="w-full">
                                                     <FormLabel>退勤時間</FormLabel>
                                                     <TimePickerField
                                                         control={editForm.control}
@@ -1088,7 +1077,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             control={editForm.control}
                                             name="breakHour"
                                             render={() => (
-                                                <FormItem>
+                                                <FormItem className="w-full">
                                                     <FormLabel>休憩時間</FormLabel>
                                                     <TimePickerField
                                                         control={editForm.control}
