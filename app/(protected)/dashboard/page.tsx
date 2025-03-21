@@ -1,6 +1,10 @@
 import { getCurrentWorkReports } from "@/data/work-report";
 import DashboardClientPage from "./page.client";
 
+export const metadata = {
+    title: "ダッシュボード",
+};
+
 export default async function DashboardPage() {
     const groupedWorkReports = await getCurrentWorkReports();
     

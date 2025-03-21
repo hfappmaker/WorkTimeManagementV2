@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import LoginForm from "@/components/auth/login-form";
+import { useTransitionContext } from "@/contexts/TransitionContext";
 
 interface LoginButtonProps {
   children: React.ReactNode;
@@ -17,9 +18,12 @@ const LoginButton = ({
   asChild,
 }: LoginButtonProps) => {
   const router = useRouter();
+  const { startTransition } = useTransitionContext();
 
   const handleLogin = () => {
-    router.push("/auth/login");
+    startTransition(() => {
+      router.push("/auth/login");
+    });
   };
 
   if (mode === "modal") {

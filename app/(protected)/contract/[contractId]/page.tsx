@@ -2,6 +2,11 @@ import { getContractByIdAction } from "@/actions/formAction";
 import { currentUser } from "@/lib/auth";
 import ClientContractPage from "./page.client";
 import { notFound } from "next/navigation";
+
+export const metadata = {
+    title: "契約詳細",
+};
+
 export default async function ContractPage({ params }: { params: Promise<{ contractId: string }> }) {
     const { contractId } = await params;
     const user = await currentUser();
