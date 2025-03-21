@@ -71,12 +71,12 @@ export async function updateWorkReportAttendances(
   const attendanceUpserts = Object.entries(attendance).map(
     ([date, { start, end, breakDuration }]) => {
       const parsedDate = new Date(date);
-
+      console.log("breakDuration", breakDuration);
       // 開始時間の検証
       let startTime = null;
       if (start && start.trim()) {
         try {
-          const dateTime = new Date(`${date}T${start}:00.000Z`);
+          const dateTime = new Date(`${date} ${start}:00.000Z`);
           startTime = isNaN(dateTime.getTime()) ? null : dateTime;
         } catch (e) {
           startTime = null;
@@ -87,14 +87,23 @@ export async function updateWorkReportAttendances(
       let endTime = null;
       if (end && end.trim()) {
         try {
-          const dateTime = new Date(`${date}T${end}:00.000Z`);
+          const dateTime = new Date(`${date} ${end}:00.000Z`);
           endTime = isNaN(dateTime.getTime()) ? null : dateTime;
         } catch (e) {
           endTime = null;
         }
       }
 
-      const breakDurationMinutes = parseInt(breakDuration) || 0;
+      // breakDurationを時間:分形式から分単位に変換
+      let breakDurationMinutes = 0;
+      if (breakDuration && breakDuration.trim()) {
+        const [hours, minutes] = breakDuration.split(':').map(Number);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          breakDurationMinutes = hours * 60 + minutes;
+        } else {
+          breakDurationMinutes = parseInt(breakDuration) || 0;
+        }
+      }
 
       return {
         where: { date_workReportId: { date: parsedDate, workReportId } },
@@ -124,6 +133,13 @@ export async function updateWorkReportAttendances(
 export async function getWorkReportsByContractId(contractId: string) {
   const workReports = await db.workReport.findMany({
     where: { contractId },
+  });
+  return workReports;
+}
+
+export async function getWorkReportsByContractIdAndYearAndMonthRange(contractId: string, fromYear: number, fromMonth: number, toYear: number, toMonth: number) {
+  const workReports = await db.workReport.findMany({
+    where: { contractId, year: { gte: fromYear, lte: toYear }, month: { gte: fromMonth, lte: toMonth } },
   });
   return workReports;
 }

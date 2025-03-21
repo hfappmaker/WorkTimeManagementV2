@@ -69,7 +69,12 @@ function generateAttendanceDefaults(year: number, month: number, closingDay: num
     const current = closingDay ? new Date(year, month - 1, closingDay + 1) : new Date(year, month - 1, 1);
     const end = closingDay ? new Date(year, month, closingDay + 1) : new Date(year, month, 1);
     while (current < end) {
-        const dateKey = current.toLocaleDateString('ja-JP');
+        const dateKey = current.toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            timeZone: 'Asia/Tokyo'
+        }).replace(/\//g, '/');
         defaults[dateKey] = { start: "", end: "", breakDuration: "", memo: "" };
         current.setDate(current.getDate() + 1);
     }
@@ -83,6 +88,7 @@ function mergeAttendances(
 ): AttendanceFormValues {
     attendances.forEach((entry) => {
         if (defaults[entry.date]) {
+            console.log("entry", entry);
             defaults[entry.date] = {
                 start: entry.start ?? "",
                 end: entry.end ?? "",
@@ -204,12 +210,12 @@ const getBulkEditFormDefaults = (
 ) => ({
     dateRangeMode: "weekday" as const,
     selectedDays: [1, 2, 3, 4, 5],
-    startHour: basicStartTime?.hour?.toString() || "",
-    startMinute: basicStartTime?.minute?.toString() || "",
-    endHour: basicEndTime?.hour?.toString() || "",
-    endMinute: basicEndTime?.minute?.toString() || "",
-    breakHour: basicBreakDuration?.hour?.toString() || "",
-    breakMinute: basicBreakDuration?.minute?.toString() || "",
+    startHour: basicStartTime?.hour?.toString().padStart(2, '0') || "",
+    startMinute: basicStartTime?.minute?.toString().padStart(2, '0') || "",
+    endHour: basicEndTime?.hour?.toString().padStart(2, '0') || "",
+    endMinute: basicEndTime?.minute?.toString().padStart(2, '0') || "",
+    breakHour: basicBreakDuration?.hour?.toString().padStart(2, '0') || "",
+    breakMinute: basicBreakDuration?.minute?.toString().padStart(2, '0') || "",
     memo: "",
     startDate: undefined,
     endDate: undefined,
@@ -246,8 +252,12 @@ export default function ClientWorkReportPage({
 
     // Compute default attendance values for each day in the range…
     const defaults = generateAttendanceDefaults(workReport.year, workReport.month, closingDay);
+
+    console.log("defaults", defaults);
     // … then overwrite with attendance records fetched from the server.
     const initialAttendance = mergeAttendances(defaults, attendances);
+
+    console.log("initialAttendance", initialAttendance);
 
     // Use these merged defaults in your useForm hook.
     const attendanceForm = useForm<AttendanceFormValues>({
@@ -258,12 +268,12 @@ export default function ClientWorkReportPage({
     const editForm = useForm<EditFormValues>({
         resolver: zodResolver(editFormSchema),
         defaultValues: {
-            startHour: basicStartTime?.hour?.toString() || "",
-            startMinute: basicStartTime?.minute?.toString() || "",
-            endHour: basicEndTime?.hour?.toString() || "",
-            endMinute: basicEndTime?.minute?.toString() || "",
-            breakHour: basicBreakDuration?.hour?.toString() || "",
-            breakMinute: basicBreakDuration?.minute?.toString() || "",
+            startHour: basicStartTime?.hour?.toString().padStart(2, '0') || "",
+            startMinute: basicStartTime?.minute?.toString().padStart(2, '0') || "",
+            endHour: basicEndTime?.hour?.toString().padStart(2, '0') || "",
+            endMinute: basicEndTime?.minute?.toString().padStart(2, '0') || "",
+            breakHour: basicBreakDuration?.hour?.toString().padStart(2, '0') || "",
+            breakMinute: basicBreakDuration?.minute?.toString().padStart(2, '0') || "",
             memo: ""
         }
     });
@@ -284,11 +294,11 @@ export default function ClientWorkReportPage({
         startTransition(async () => {
             try {
                 await updateWorkReportAction(contractId, workReportId, data);
-                setSuccess({ message: "Attendance submitted successfully.", date: new Date() });
+                setSuccess({ message: "勤怠の更新が完了しました", date: new Date() });
                 setError({ message: "", date: new Date() });
             } catch (err) {
                 console.error(err);
-                setError({ message: "Failed to update attendance.", date: new Date() });
+                setError({ message: "勤怠の更新に失敗しました", date: new Date() });
                 setSuccess({ message: "", date: new Date() });
             }
         });
@@ -323,9 +333,12 @@ export default function ClientWorkReportPage({
             }
         });
 
-        attendanceForm.reset(updatedValues);
-        resetBulkEditForm();
-        setSuccess({ message: "一括編集を適用しました", date: new Date() });
+        startTransition(async () => {
+            attendanceForm.reset(updatedValues);
+            await updateWorkReportAction(contractId, workReportId, updatedValues);
+            resetBulkEditForm();
+            setSuccess({ message: "一括編集を適用しました", date: new Date() });
+        });
     };
 
     // 編集フォームの送信処理
@@ -607,7 +620,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
     return (
         <div className="p-4">
             <h1 className="text-xl font-bold mb-4 dark:text-white">
-                {contractName}の作業報告書
+                {contractName}の{workReport.year}年{workReport.month}月度作業報告書
             </h1>
             {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
             {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
@@ -672,7 +685,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     render={({ field, fieldState }) => (
                                         <FormItem className="flex flex-col justify-center">
                                             <FormControl>
-                                                <Input {...field} type="time" id={`start-${day}`} readOnly />
+                                                <Input {...field} type="time" id={`start-${day}`} readOnly/>
                                             </FormControl>
                                             <FormMessage>{fieldState.error?.message}</FormMessage>
                                         </FormItem>
@@ -686,7 +699,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     render={({ field, fieldState }) => (
                                         <FormItem className="flex flex-col justify-center">
                                             <FormControl>
-                                                <Input {...field} type="time" id={`end-${day}`} readOnly />
+                                                <Input {...field} type="time" id={`end-${day}`} readOnly/>
                                             </FormControl>
                                             <FormMessage>{fieldState.error?.message}</FormMessage>
                                         </FormItem>
@@ -700,7 +713,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     render={({ field, fieldState }) => (
                                         <FormItem className="flex flex-col justify-center">
                                             <FormControl>
-                                                <Input {...field} type="time" id={`break-${day}`} readOnly />
+                                                <Input {...field} type="time" id={`break-${day}`} readOnly/>
                                             </FormControl>
                                             <FormMessage>{fieldState.error?.message}</FormMessage>
                                         </FormItem>
@@ -714,7 +727,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     render={({ field, fieldState }) => (
                                         <FormItem className="flex flex-col justify-center">
                                             <FormControl>
-                                                <Input {...field} type="text" id={`memo-${day}`} className="w-[400px]" readOnly />
+                                                <Input {...field} type="text" id={`memo-${day}`} className="w-[400px]" readOnly/>
                                             </FormControl>
                                             <FormMessage>{fieldState.error?.message}</FormMessage>
                                         </FormItem>
@@ -723,15 +736,12 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                             </div>
                         </div>
                     ))}
-                    <div className="flex flex-col gap-2 mt-4">
-                        <Button type="submit">保存</Button>
-                    </div>
                 </form>
             </Form>
 
             {/* 一括編集用モーダルダイアログ */}
-            <Dialog 
-                open={isBulkEditModalOpen} 
+            <Dialog
+                open={isBulkEditModalOpen}
                 onOpenChange={(open) => {
                     if (!open) {
                         resetBulkEditForm();
@@ -847,81 +857,66 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                             <div className="space-y-4">
                                 <h3 className="text-sm font-medium">勤怠情報</h3>
                                 <div className="grid grid-cols-3 gap-4">
-                                    <FormField
-                                        control={bulkEditForm.control}
-                                        name="startHour"
-                                        render={() => (
-                                            <FormItem>
-                                                <FormLabel>出勤時間</FormLabel>
-                                                <TimePickerField
-                                                    control={bulkEditForm.control}
-                                                    hourFieldName="startHour"
-                                                    minuteFieldName="startMinute"
-                                                    minuteStep={dailyWorkMinutes}
-                                                />
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={bulkEditForm.control}
-                                        name="endHour"
-                                        render={() => (
-                                            <FormItem>
-                                                <FormLabel>退勤時間</FormLabel>
-                                                <TimePickerField
-                                                    control={bulkEditForm.control}
-                                                    hourFieldName="endHour"
-                                                    minuteFieldName="endMinute"
-                                                    minuteStep={dailyWorkMinutes}
-                                                />
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={bulkEditForm.control}
-                                        name="breakHour"
-                                        render={() => (
-                                            <FormItem>
-                                                <FormLabel>休憩時間</FormLabel>
-                                                <TimePickerField
-                                                    control={bulkEditForm.control}
-                                                    hourFieldName="breakHour"
-                                                    minuteFieldName="breakMinute"
-                                                    minuteStep={dailyWorkMinutes}
-                                                />
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={bulkEditForm.control}
-                                        name="memo"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>作業内容</FormLabel>
-                                                <FormControl>
-                                                    <Input type="text" className="w-[400px]" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                    <div className="flex flex-col gap-2">
+                                        <div>出勤時間</div>
+                                        <TimePickerField
+                                            control={bulkEditForm.control}
+                                            hourFieldName="startHour"
+                                            minuteFieldName="startMinute"
+                                            showClearButton={false}
+                                            minuteStep={dailyWorkMinutes}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <div>退勤時間</div>
+                                        <TimePickerField
+                                            control={bulkEditForm.control}
+                                            hourFieldName="endHour"
+                                            minuteFieldName="endMinute"
+                                            showClearButton={false}
+                                            minuteStep={dailyWorkMinutes}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <div>休憩時間</div>
+                                        <TimePickerField
+                                            control={bulkEditForm.control}
+                                            hourFieldName="breakHour"
+                                            minuteFieldName="breakMinute"
+                                            showClearButton={false}
+                                            minuteStep={dailyWorkMinutes}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <div>作業内容</div>
+                                        <FormField
+                                            control={bulkEditForm.control}
+                                            name="memo"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>作業内容</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="text" className="w-[400px]" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="flex justify-end space-x-2 mt-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={resetBulkEditForm}
-                                >
-                                    キャンセル
-                                </Button>
-                                <Button type="submit">
-                                    適用
-                                </Button>
+                                <div className="flex justify-end space-x-2 mt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={resetBulkEditForm}
+                                    >
+                                        キャンセル
+                                    </Button>
+                                    <Button type="submit">
+                                        適用
+                                    </Button>
+                                </div>
                             </div>
                         </form>
                     </Form>
@@ -1042,72 +1037,49 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                 </div>
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <FormField
-                                            control={editForm.control}
-                                            name="startHour"
-                                            render={() => (
-                                                <FormItem className="w-full">
-                                                    <FormLabel>出勤時間</FormLabel>
-                                                    <TimePickerField
-                                                        control={editForm.control}
-                                                        hourFieldName="startHour"
-                                                        minuteFieldName="startMinute"
-                                                        minuteStep={dailyWorkMinutes}
-                                                    />
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={editForm.control}
-                                            name="endHour"
-                                            render={() => (
-                                                <FormItem className="w-full">
-                                                    <FormLabel>退勤時間</FormLabel>
-                                                    <TimePickerField
-                                                        control={editForm.control}
-                                                        hourFieldName="endHour"
-                                                        minuteFieldName="endMinute"
-                                                        minuteStep={dailyWorkMinutes}
-                                                    />
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={editForm.control}
-                                            name="breakHour"
-                                            render={() => (
-                                                <FormItem className="w-full">
-                                                    <FormLabel>休憩時間</FormLabel>
-                                                    <TimePickerField
-                                                        control={editForm.control}
-                                                        hourFieldName="breakHour"
-                                                        minuteFieldName="breakMinute"
-                                                        minuteStep={dailyWorkMinutes}
-                                                    />
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                        <div className="flex flex-col gap-2">
+                                            <div>出勤時間</div>
+                                            <TimePickerField
+                                                control={editForm.control}
+                                                hourFieldName="startHour"
+                                                minuteFieldName="startMinute"
+                                                minuteStep={dailyWorkMinutes}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <div>退勤時間</div>
+                                            <TimePickerField
+                                                control={editForm.control}
+                                                hourFieldName="endHour"
+                                                minuteFieldName="endMinute"
+                                                minuteStep={dailyWorkMinutes}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <div>休憩時間</div>
+                                            <TimePickerField
+                                                control={editForm.control}
+                                                hourFieldName="breakHour"
+                                                minuteFieldName="breakMinute"
+                                                minuteStep={dailyWorkMinutes}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <FormField
+                                                control={editForm.control}
+                                                name="memo"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>作業内容</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="text" className="w-[400px]" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
                                     </div>
-                                    <FormField
-                                        control={editForm.control}
-                                        name="memo"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>作業内容</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        type="text"
-                                                        className="w-[400px]"
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
                                 </div>
                                 <div className="flex justify-end space-x-2 mt-4">
                                     <Button

@@ -13,6 +13,7 @@ import {
   createWorkReport,
   updateWorkReportAttendances,
   getWorkReportsByContractId,
+  getWorkReportsByContractIdAndYearAndMonthRange,
 } from "@/data/work-report";
 import {
   createEmailTemplate,
@@ -253,5 +254,14 @@ export const deleteEmailTemplateAction = async (id: string) => {
   } catch (error) {
     console.error("Error deleting email template:", error);
     throw new Error("Failed to delete email template");
+  }
+};
+
+export const getWorkReportsByContractIdAndYearAndMonthRangeAction = async (contractId: string, fromYear: number, fromMonth: number, toYear: number, toMonth: number) => {
+  try {
+    return await getWorkReportsByContractIdAndYearAndMonthRange(contractId, fromYear, fromMonth, toYear, toMonth);
+  } catch (error) {
+    console.error("Error fetching work reports:", error);
+    throw new Error("Failed to fetch work reports");
   }
 };

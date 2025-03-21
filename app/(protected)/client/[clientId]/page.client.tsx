@@ -588,15 +588,15 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       >
         <DialogPortal>
           <DialogOverlay />
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>契約詳細</DialogTitle>
             </DialogHeader>
             {activeContract && (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium">基本情報</h3>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
+                  <h3 className="text-lg font-medium mb-3">基本情報</h3>
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="font-semibold">契約名</div>
                     <div>{activeContract.name}</div>
                     <div className="font-semibold">開始日</div>
@@ -605,6 +605,43 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                     <div>{activeContract.endDate ? new Date(activeContract.endDate).toLocaleDateString() : 'なし'}</div>
                   </div>
                 </div>
+
+                <div>
+                  <h3 className="text-lg font-medium mb-3">精算情報</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="font-semibold">単価</div>
+                    <div>{activeContract.unitPrice ? `${activeContract.unitPrice}円` : 'なし'}</div>
+                    <div className="font-semibold">精算下限</div>
+                    <div>{activeContract.settlementMin ? `${activeContract.settlementMin}時間` : 'なし'}</div>
+                    <div className="font-semibold">精算上限</div>
+                    <div>{activeContract.settlementMax ? `${activeContract.settlementMax}時間` : 'なし'}</div>
+                    <div className="font-semibold">超過単価</div>
+                    <div>{activeContract.upperRate ? `${activeContract.upperRate}円` : 'なし'}</div>
+                    <div className="font-semibold">控除単価</div>
+                    <div>{activeContract.lowerRate ? `${activeContract.lowerRate}円` : 'なし'}</div>
+                    <div className="font-semibold">中間単価</div>
+                    <div>{activeContract.middleRate ? `${activeContract.middleRate}円` : 'なし'}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-medium mb-3">勤務設定</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="font-semibold">1日あたりの作業単位</div>
+                    <div>{activeContract.dailyWorkMinutes ? `${activeContract.dailyWorkMinutes}分` : 'なし'}</div>
+                    <div className="font-semibold">1ヶ月あたりの作業単位</div>
+                    <div>{activeContract.monthlyWorkMinutes ? `${activeContract.monthlyWorkMinutes}分` : 'なし'}</div>
+                    <div className="font-semibold">基本開始時刻</div>
+                    <div>{activeContract.basicStartTime || 'なし'}</div>
+                    <div className="font-semibold">基本終了時刻</div>
+                    <div>{activeContract.basicEndTime || 'なし'}</div>
+                    <div className="font-semibold">基本休憩時間</div>
+                    <div>{activeContract.basicBreakDuration ? `${activeContract.basicBreakDuration}分` : 'なし'}</div>
+                    <div className="font-semibold">締め日</div>
+                    <div>{activeContract.closingDay ? `${activeContract.closingDay}日` : '末日'}</div>
+                  </div>
+                </div>
+
                 <div className="flex justify-end gap-2 mt-4">
                   <Button variant="outline" onClick={() => setActiveDialog("edit")}>編集</Button>
                   <Button variant="destructive" onClick={() => setActiveDialog("delete")}>削除</Button>

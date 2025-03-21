@@ -82,13 +82,15 @@ interface TimePickerFieldProps {
     hourFieldName: string;
     minuteFieldName: string;
     minuteStep?: number;
+    showClearButton?: boolean;
 }
 
 export function TimePickerField({
     control,
     hourFieldName,
     minuteFieldName,
-    minuteStep = 1
+    minuteStep = 1,
+    showClearButton = true
 }: TimePickerFieldProps) {
     // 時間の選択肢を生成
     const hours = Array.from({ length: 24 }, (_, i) => ({
@@ -117,7 +119,7 @@ export function TimePickerField({
                     render={({ field }) => (
                         <FormItem>
                             <Select
-                                value={field.value}
+                                value={field.value || ""}
                                 onValueChange={field.onChange}
                             >
                                 <SelectTrigger className="w-[80px]">
@@ -141,7 +143,7 @@ export function TimePickerField({
                     render={({ field }) => (
                         <FormItem>
                             <Select
-                                value={field.value}
+                                value={field.value || ""}
                                 onValueChange={field.onChange}
                             >
                                 <SelectTrigger className="w-[80px]">
@@ -159,30 +161,32 @@ export function TimePickerField({
                     )}
                 />
             </div>
-            <FormField
-                control={control}
-                name={hourFieldName}
-                render={({ field: hourField }) => (
-                    <FormField
-                        control={control}
-                        name={minuteFieldName}
-                        render={({ field: minuteField }) => (
-                            <Button
-                                type="button"
-                                onClick={() => {
-                                    hourField.onChange("");
-                                    minuteField.onChange("");
-                                }}
-                                variant="outline"
-                                size="sm"
-                                className="self-start text-sm text-muted-foreground hover:text-foreground"
-                            >
-                                クリア
-                            </Button>
-                        )}
-                    />
-                )}
-            />
+            {showClearButton && (
+                <FormField
+                    control={control}
+                    name={hourFieldName}
+                    render={({ field: hourField }) => (
+                        <FormField
+                            control={control}
+                            name={minuteFieldName}
+                            render={({ field: minuteField }) => (
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        hourField.onChange("");
+                                        minuteField.onChange("");
+                                    }}
+                                    variant="outline"
+                                    size="sm"
+                                    className="self-start text-sm text-muted-foreground hover:text-foreground"
+                                >
+                                    クリア
+                                </Button>
+                            )}
+                        />
+                    )}
+                />
+            )}
         </div>
     );
 } 
