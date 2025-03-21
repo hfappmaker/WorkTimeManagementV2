@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,7 +18,8 @@ import { getClientsByUserIdAction, createClientAction, updateClientAction, delet
 import { useRouter } from "next/navigation";
 import { truncate } from "@/lib/utils";
 import { useTransitionContext } from "@/contexts/TransitionContext";
-
+import FormError from "@/components/form-error";
+import FormSuccess from "@/components/form-success";
 // クライアント作成/編集では ClientSchema (name, contactName, email, createUserId) を利用するので、
 // 担当者名 (contactName) とメールアドレス (email) も含むようにインターフェースを修正します。
 interface Client {
@@ -34,6 +33,8 @@ interface Client {
 type DialogType = "create" | "edit" | "delete" | "details" | null;
 
 export default function ClientClientListPage({ userId }: { userId: string }) {
+  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [clients, setClients] = useState<Client[]>([]);
   const { startTransition } = useTransitionContext();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -68,7 +69,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
       const data = await getClientsByUserIdAction(userId);
       setClients(data);
     } catch (error) {
-      toast.error("クライアント情報の取得に失敗しました");
+      setError({ message: "クライアント情報の取得に失敗しました", date: new Date() });
       console.error(error);
     }
   };
@@ -76,7 +77,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   // 作成時は必須項目 (クライアント名、担当者名、メールアドレス) の入力チェックを行い、ClientSchema通りのデータを渡します
   const handleCreateClient = async () => {
     if (!newClientName.trim()) {
-      toast.error("クライアント名を入力してください");
+      setError({ message: "クライアント名を入力してください", date: new Date() });
       return;
     }
     startTransition(async () => {
@@ -88,7 +89,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
           email: newEmail,
         });
 
-        toast.success("クライアントを作成しました");
+        setSuccess({ message: "クライアントを作成しました", date: new Date() });
         await fetchClients();
         closeDialog();
         // 入力欄をクリア
@@ -97,9 +98,9 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
         setNewEmail("");
       } catch (error) {
         if (error instanceof Error) {
-          toast.error(error.message);
+          setError({ message: error.message, date: new Date() });
         } else {
-          toast.error("クライアントの作成に失敗しました");
+          setError({ message: "クライアントの作成に失敗しました", date: new Date() });
         }
         console.error(error);
       }
@@ -109,7 +110,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   // 編集時も同様に、必須項目が入力されていることをチェックして更新します
   const handleEditClient = async () => {
     if (!selectedClient || !editClientName.trim()) {
-      toast.error("クライアント名を入力してください");
+      setError({ message: "クライアント名を入力してください", date: new Date() });
       return;
     }
     startTransition(async () => {
@@ -120,14 +121,14 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
           contactName: editContactName,
           email: editEmail,
         });
-        toast.success("クライアント情報を更新しました");
+        setSuccess({ message: "クライアント情報を更新しました", date: new Date() });
         await fetchClients();
         closeDialog();
       } catch (error) {
         if (error instanceof Error) {
-          toast.error(error.message);
+          setError({ message: error.message, date: new Date() });
         } else {
-          toast.error("クライアント情報の更新に失敗しました");
+          setError({ message: "クライアント情報の更新に失敗しました", date: new Date() });
         }
         console.error(error);
       }
@@ -139,14 +140,14 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     startTransition(async () => {
       try {
         await deleteClientAction(selectedClient.id);
-        toast.success("クライアントを削除しました");
+        setSuccess({ message: "クライアントを削除しました", date: new Date() });
         await fetchClients();
         closeDialog();
       } catch (error) {
         if (error instanceof Error) {
-          toast.error(error.message);
+          setError({ message: error.message, date: new Date() });
         } else {
-          toast.error("クライアントの削除に失敗しました");
+          setError({ message: "クライアントの削除に失敗しました", date: new Date() });
         }
         console.error(error);
       }
@@ -190,24 +191,31 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
               <p className="text-muted-foreground">クライアントがありません</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {clients.map((client) => (
-                <div
-                  key={client.id}
-                  className="flex items-center justify-between p-3 border rounded-md"
-                >
-                  <div className="font-medium hover:underline" onClick={() => handleNavigation(client.id)}>
-                    <Label className="truncate max-w-[300px]">
-                      {truncate(client.name, 30)}
-                    </Label>
+            <div className="p-4">
+              {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
+              {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
+              <div className="space-y-4">
+                {clients.map((client) => (
+                  <div
+                    key={client.id}
+                    className="flex items-center justify-between p-3 border rounded-md"
+                  >
+                    <div 
+                      className="font-medium hover:underline cursor-pointer" 
+                      onClick={() => handleNavigation(client.id)}
+                    >
+                      <Label className="truncate max-w-[300px] cursor-pointer">
+                        {truncate(client.name, 30)}
+                      </Label>
+                    </div>
+                    <div className="ml-4">
+                      <Button variant="outline" size="sm" onClick={() => openDetailsModal(client)}>
+                        詳細
+                      </Button>
+                    </div>
                   </div>
-                  <div className="ml-4">
-                    <Button variant="outline" size="sm" onClick={() => openDetailsModal(client)}>
-                      詳細
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </CardContent>

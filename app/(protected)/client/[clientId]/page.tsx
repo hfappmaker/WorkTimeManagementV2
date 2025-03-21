@@ -2,6 +2,12 @@ import { getClientByIdAction } from "@/actions/formAction";
 import ClientClientDetailsPage from "./page.client";
 import { currentUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "クライアント詳細",
+    description: "クライアント詳細",
+};
 
 export default async function ClientDetailsPage({
   params
