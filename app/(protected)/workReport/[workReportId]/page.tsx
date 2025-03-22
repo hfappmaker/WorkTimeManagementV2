@@ -39,8 +39,6 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
     }
   }));
 
-  console.log("attendances", attendances);
-  
   return (
     <ClientWorkReportPage 
       contractId={contract.id}
