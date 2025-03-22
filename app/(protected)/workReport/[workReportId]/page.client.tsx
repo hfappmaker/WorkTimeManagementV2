@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { updateWorkReportAction } from "@/actions/formAction";
+import { updateWorkReportAction } from "@/actions/work-report";
 import { FormControl, FormField, FormItem, FormMessage, Form, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
