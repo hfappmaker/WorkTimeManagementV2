@@ -1,10 +1,10 @@
-import LoginForm from "@/components/auth/login-form";
-import { Suspense } from 'react'
-
+import LoginPageClient from "./page.client";
 export const metadata = {
-  title: "Login",
+  title: "ログイン",
 };
 
 export default function LoginPage() {
-  return <Suspense><LoginForm /></Suspense>;
+  return (
+    <LoginPageClient />
+  );
 }

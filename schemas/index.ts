@@ -125,7 +125,10 @@ export const ContractSchema = z.object({
   userId: z.string().min(1, { message: "User is required" }),
   clientId: z.string().min(1, { message: "Client is required" }),
   name: z.string().min(1, { message: "Contract name is required" }),
-  startDate: z.date(),
+  startDate: z.date({
+    required_error: "開始日は必須項目です",
+    invalid_type_error: "開始日の形式が正しくありません",
+  }),
   endDate: z.date().nullable(),
   unitPrice: z.number().nullable(),
   settlementMin: z.number().nullable(),
