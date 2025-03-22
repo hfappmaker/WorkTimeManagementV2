@@ -1,4 +1,4 @@
-import SettingsPage from "./page.client";
+import SettingsForm from "./page.client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-    return <SettingsPage />;
+    return <SettingsForm />;
 }

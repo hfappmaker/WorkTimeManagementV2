@@ -27,7 +27,12 @@ export async function getContractById(contractId: string) {
 }
 
 export async function createContract(values: z.infer<typeof ContractSchema>) {
-  const { clientId, userId, ...rest } = values;
+  const {
+    clientId,
+    userId,
+    ...rest
+  } = values;
+
   await db.contract.create({
     data: {
       ...rest,
@@ -61,7 +66,12 @@ export async function updateContract(
   id: string,
   values: z.infer<typeof ContractSchema>
 ) {
-  const { clientId, userId, ...rest } = values;
+  const {
+    clientId,
+    userId,
+    ...rest
+  } = values;
+
   await db.contract.update({
     where: { id },
     data: {

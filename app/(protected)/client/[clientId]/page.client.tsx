@@ -16,27 +16,14 @@ import { createContractAction, deleteContractAction, updateContractAction, getCo
 import { ContractSchema } from '@/schemas';
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import { z } from "zod";
-import { ComboBox } from "@/components/ui/select";
-import { TimePickerField } from "@/components/ui/time-picker";
+import { ComboBoxField } from "@/components/ui/select";
+import { DateTimePickerField, NumberTimePickerField } from "@/components/ui/time-picker";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-interface Contract {
+type ContractFormValues = z.infer<typeof ContractSchema>;
+
+type Contract = ContractFormValues & {
   id: string;
-  name: string;
-  startDate: Date;
-  endDate: Date | undefined;
-  unitPrice: number | undefined;
-  settlementMin: number | undefined;
-  settlementMax: number | undefined;
-  upperRate: number | undefined;
-  lowerRate: number | undefined;
-  middleRate: number | undefined;
-  dailyWorkMinutes: number | undefined;
-  monthlyWorkMinutes: number | undefined;
-  basicStartTime: string | undefined;
-  basicEndTime: string | undefined;
-  basicBreakDuration: number | undefined;
-  closingDay: number | undefined;
 }
 
 interface Client {
@@ -47,8 +34,8 @@ interface Client {
 
 // 共通のContractFormコンポーネント
 type ContractFormProps = {
-  form: UseFormReturn<z.infer<typeof ContractSchema>>;
-  onSubmit: (data: z.infer<typeof ContractSchema>) => void;
+  form: UseFormReturn<ContractFormValues>;
+  onSubmit: (data: ContractFormValues) => void;
   onCancel: () => void;
   submitButtonText: string;
 };
@@ -87,9 +74,8 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
                 <FormLabel>開始日</FormLabel>
                 <FormControl>
                   <DatePicker
-                    {...field}
-                    value={field.value}
-                    onChange={field.onChange}
+                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : undefined}
+                    onChange={(date) => field.onChange(date ? new Date(date) : undefined)}
                     placeholder="開始日を選択"
                   />
                 </FormControl>
@@ -106,9 +92,8 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
                 <FormLabel>終了日</FormLabel>
                 <FormControl>
                   <DatePicker
-                    {...field}
-                    value={field.value}
-                    onChange={field.onChange}
+                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : undefined}
+                    onChange={(date) => field.onChange(date ? new Date(date) : undefined)}
                     placeholder="終了日を選択（任意）"
                   />
                 </FormControl>
@@ -167,7 +152,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
         <FormField
           control={form.control}
           name="rateType"
-          render={() => (  
+          render={() => (
             <FormItem className="space-y-3">
               <FormLabel>精算方式</FormLabel>
               <FormControl>
@@ -175,10 +160,10 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
                   onValueChange={(value: "upperLower" | "middle") => {
                     setRateType(value);
                     if (value === "upperLower") {
-                      form.setValue("middleRate", undefined);
+                      form.setValue("middleRate", null);
                     } else {
-                      form.setValue("upperRate", undefined);
-                      form.setValue("lowerRate", undefined);
+                      form.setValue("upperRate", null);
+                      form.setValue("lowerRate", null);
                     }
                   }}
                   defaultValue="upperLower"
@@ -252,100 +237,50 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
 
         {/* Daily Work Minutes and Monthly Work Minutes in the same row */}
         <div className="flex gap-4">
-          <FormField
+          <ComboBoxField
             control={form.control}
             name="dailyWorkMinutes"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>1日あたりの作業単位(分)</FormLabel>
-                <FormControl>
-                  <ComboBox
-                    {...field}
-                    options={[1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60].map(num => ({
-                      value: num.toString(),
-                      label: num.toString()
-                    }))}
-                    placeholder="（例）15"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            options={[1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60].map(num => ({
+              value: num,
+              label: num.toString()
+            }))}
+            placeholder="（例）15"
+            label="1日あたりの作業単位(分)"
           />
 
-          <FormField
+          <ComboBoxField
             control={form.control}
             name="monthlyWorkMinutes"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>1ヶ月あたりの作業単位(分)</FormLabel>
-                <FormControl>
-                  <ComboBox
-                    {...field}
-                    options={[1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60].map(num => ({
-                      value: num.toString(),
-                      label: num.toString()
-                    }))}
-                    placeholder="（例）15"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            options={[1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60].map(num => ({
+              value: num,
+              label: num.toString()
+            }))}
+            placeholder="（例）15"
+            label="1ヶ月あたりの作業単位(分)"
           />
         </div>
 
         {/* Basic Start Time, Basic End Time, and Basic Break Duration in the same row */}
         <div className="flex gap-4">
-          <FormField
+          <DateTimePickerField
             control={form.control}
             name="basicStartTime"
-            render={() => (
-              <FormItem className="flex-1">
-                <FormLabel>基本開始時刻</FormLabel>
-                <TimePickerField
-                  control={form.control}
-                  hourFieldName="basicStartTimeHour"
-                  minuteFieldName="basicStartTimeMinute"
-                  minuteStep={form.getValues("dailyWorkMinutes") || 1}
-                />  
-                <FormMessage />
-              </FormItem>
-            )}
+            minuteStep={form.getValues("dailyWorkMinutes") || 1}
+            label="基本開始時刻"
           />
 
-          <FormField
+          <DateTimePickerField
             control={form.control}
             name="basicEndTime"
-            render={() => (
-              <FormItem className="flex-1">
-                <FormLabel>基本終了時刻</FormLabel>
-                <TimePickerField
-                  control={form.control}
-                  hourFieldName="basicEndTimeHour"
-                  minuteFieldName="basicEndTimeMinute"
-                  minuteStep={form.getValues("dailyWorkMinutes") || 1}
-                />
-                <FormMessage />
-              </FormItem>
-            )}
+            minuteStep={form.getValues("dailyWorkMinutes") || 1}
+            label="基本終了時刻"
           />
 
-          <FormField
+          <NumberTimePickerField
             control={form.control}
             name="basicBreakDuration"
-            render={() => (
-              <FormItem className="flex-1">
-                <FormLabel>基本休憩時間(分)</FormLabel>
-                <TimePickerField
-                  control={form.control}
-                  hourFieldName="basicBreakDurationHour"
-                  minuteFieldName="basicBreakDurationMinute"
-                  minuteStep={form.getValues("dailyWorkMinutes") || 1}
-                />
-                <FormMessage />
-              </FormItem>
-            )}
+            minuteStep={form.getValues("dailyWorkMinutes") || 1}
+            label="基本休憩時間(分)"
           />
         </div>
 
@@ -383,33 +318,35 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   const router = useRouter();
 
   // フォームのデフォルト値
-  const defaultFormValues: any = {
+  const defaultFormValues: ContractFormValues = {
     userId: userId,
     clientId: client.id,
     name: "",
     startDate: new Date(),
-    endDate: undefined as Date | undefined,
-    unitPrice: undefined as number | undefined,
-    settlementMin: undefined as number | undefined,
-    settlementMax: undefined as number | undefined,
-    upperRate: undefined as number | undefined,
-    middleRate: undefined as number | undefined,
-    dailyWorkMinutes: undefined as number | undefined,
-    monthlyWorkMinutes: undefined as number | undefined,
-    basicStartTime: undefined as string | undefined,
-    basicEndTime: undefined as string | undefined,
-    basicBreakDuration: undefined as number | undefined,
-    closingDay: undefined as number | undefined,
+    endDate: null,
+    unitPrice: null,
+    settlementMin: null,
+    settlementMax: null,
+    upperRate: null,
+    lowerRate: null,
+    middleRate: null,
+    dailyWorkMinutes: null,
+    monthlyWorkMinutes: null,
+    basicStartTime: null,
+    basicEndTime: null,
+    basicBreakDuration: null,
+    closingDay: null,
+    rateType: "upperLower" as const,
   };
 
   // 契約作成フォーム
-  const createForm = useForm<z.infer<typeof ContractSchema>>({
+  const createForm = useForm<ContractFormValues>({
     resolver: zodResolver(ContractSchema),
     defaultValues: defaultFormValues,
   });
 
   // 編集フォーム
-  const editForm = useForm<z.infer<typeof ContractSchema>>({
+  const editForm = useForm<ContractFormValues>({
     resolver: zodResolver(ContractSchema),
     defaultValues: defaultFormValues,
   });
@@ -428,7 +365,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       if (jsonData) {
         // 念のための保険：クライアント側でも変換処理を行う
         const data = JSON.parse(JSON.stringify(jsonData));
-        setContracts(data.map((contract: Contract) => ({
+        setContracts(data.map((contract: ContractFormValues) => ({
           ...contract,
         })));
       }
@@ -450,7 +387,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   };
 
   // 契約作成
-  const onCreateContract = (data: any) => {
+  const onCreateContract = (data: ContractFormValues) => {
     startTransition(async () => {
       try {
         await createContractAction(data);
@@ -466,11 +403,11 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   };
 
   // 契約編集
-  const onEditContract = (data: any) => {
+  const onEditContract = (data: ContractFormValues) => {
     if (!activeContract) return;
     startTransition(async () => {
       try {
-        await updateContractAction(activeContract.id, { ...data });
+        await updateContractAction(activeContract.id, data);
         setSuccess({ message: `契約 '${data.name}' を編集しました`, date: new Date() });
         closeDialog();
         editForm.reset(defaultFormValues);
@@ -511,20 +448,21 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
         userId: userId,
         clientId: client.id,
         name: activeContract.name,
-        startDate: activeContract.startDate,
-        endDate: activeContract.endDate,
-        unitPrice: activeContract.unitPrice,
-        settlementMin: activeContract.settlementMin,
-        settlementMax: activeContract.settlementMax,
-        upperRate: activeContract.upperRate,
-        lowerRate: activeContract.lowerRate,
-        middleRate: activeContract.middleRate,
-        dailyWorkMinutes: activeContract.dailyWorkMinutes,
-        monthlyWorkMinutes: activeContract.monthlyWorkMinutes,
-        basicStartTime: activeContract.basicStartTime,
-        basicEndTime: activeContract.basicEndTime,
-        basicBreakDuration: activeContract.basicBreakDuration,
-        closingDay: activeContract.closingDay,
+        startDate: new Date(activeContract.startDate),
+        endDate: activeContract.endDate ? new Date(activeContract.endDate) : null,
+        unitPrice: activeContract.unitPrice ? Number(activeContract.unitPrice) : null,
+        settlementMin: activeContract.settlementMin ? Number(activeContract.settlementMin) : null,
+        settlementMax: activeContract.settlementMax ? Number(activeContract.settlementMax) : null,
+        upperRate: activeContract.upperRate ? Number(activeContract.upperRate) : null,
+        lowerRate: activeContract.lowerRate ? Number(activeContract.lowerRate) : null,
+        middleRate: activeContract.middleRate ? Number(activeContract.middleRate) : null,
+        dailyWorkMinutes: activeContract.dailyWorkMinutes ? Number(activeContract.dailyWorkMinutes) : null,
+        monthlyWorkMinutes: activeContract.monthlyWorkMinutes ? Number(activeContract.monthlyWorkMinutes) : null,
+        basicStartTime: activeContract.basicStartTime ? new Date(activeContract.basicStartTime) : null,
+        basicEndTime: activeContract.basicEndTime ? new Date(activeContract.basicEndTime) : null,
+        basicBreakDuration: activeContract.basicBreakDuration ? Number(activeContract.basicBreakDuration) : null,
+        closingDay: activeContract.closingDay ? Number(activeContract.closingDay) : null,
+        rateType: activeContract.rateType,
       });
     }
   }, [activeDialog, activeContract, editForm]);
@@ -632,9 +570,9 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                     <div className="font-semibold">1ヶ月あたりの作業単位</div>
                     <div>{activeContract.monthlyWorkMinutes ? `${activeContract.monthlyWorkMinutes}分` : 'なし'}</div>
                     <div className="font-semibold">基本開始時刻</div>
-                    <div>{activeContract.basicStartTime || 'なし'}</div>
+                    <div>{activeContract.basicStartTime ? new Date(activeContract.basicStartTime).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }) : 'なし'}</div>
                     <div className="font-semibold">基本終了時刻</div>
-                    <div>{activeContract.basicEndTime || 'なし'}</div>
+                    <div>{activeContract.basicEndTime ? new Date(activeContract.basicEndTime).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }) : 'なし'}</div>
                     <div className="font-semibold">基本休憩時間</div>
                     <div>{activeContract.basicBreakDuration ? `${activeContract.basicBreakDuration}分` : 'なし'}</div>
                     <div className="font-semibold">締め日</div>

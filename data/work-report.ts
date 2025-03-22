@@ -2,9 +2,9 @@ import { db } from "@/lib/db";
 import { WorkReportStatus } from "@prisma/client";
 
 interface AttendanceEntry {
-  start: string;
-  end: string;
-  breakDuration: string;
+  startTime: Date | null;
+  endTime: Date | null;
+  breakDuration: number | null;
 }
 
 interface AttendanceFormValues {
@@ -69,50 +69,21 @@ export async function updateWorkReportAttendances(
   attendance: AttendanceFormValues
 ) {
   const attendanceUpserts = Object.entries(attendance).map(
-    ([date, { start, end, breakDuration }]) => {
+    ([date, { startTime, endTime, breakDuration }]) => {
       const parsedDate = new Date(date);
-      console.log("breakDuration", breakDuration);
-      // 開始時間の検証
-      let startTime = null;
-      if (start && start.trim()) {
-        try {
-          const dateTime = new Date(`${date} ${start}:00.000Z`);
-          startTime = isNaN(dateTime.getTime()) ? null : dateTime;
-        } catch (e) {
-          startTime = null;
-        }
-      }
-
-      // 終了時間の検証
-      let endTime = null;
-      if (end && end.trim()) {
-        try {
-          const dateTime = new Date(`${date} ${end}:00.000Z`);
-          endTime = isNaN(dateTime.getTime()) ? null : dateTime;
-        } catch (e) {
-          endTime = null;
-        }
-      }
-
-      // breakDurationを時間:分形式から分単位に変換
-      let breakDurationMinutes = 0;
-      if (breakDuration && breakDuration.trim()) {
-        const [hours, minutes] = breakDuration.split(':').map(Number);
-        if (!isNaN(hours) && !isNaN(minutes)) {
-          breakDurationMinutes = hours * 60 + minutes;
-        } else {
-          breakDurationMinutes = parseInt(breakDuration) || 0;
-        }
-      }
 
       return {
         where: { date_workReportId: { date: parsedDate, workReportId } },
-        update: { startTime, endTime, breakDuration: breakDurationMinutes },
+        update: {
+          startTime: startTime,
+          endTime: endTime,
+          breakDuration: breakDuration,
+        },
         create: {
           date: parsedDate,
-          startTime,
-          endTime,
-          breakDuration: breakDurationMinutes,
+          startTime: startTime,
+          endTime: endTime,
+          breakDuration: breakDuration,
         },
       };
     }
@@ -137,9 +108,19 @@ export async function getWorkReportsByContractId(contractId: string) {
   return workReports;
 }
 
-export async function getWorkReportsByContractIdAndYearAndMonthRange(contractId: string, fromYear: number, fromMonth: number, toYear: number, toMonth: number) {
+export async function getWorkReportsByContractIdAndYearAndMonthRange(
+  contractId: string,
+  fromYear: number,
+  fromMonth: number,
+  toYear: number,
+  toMonth: number
+) {
   const workReports = await db.workReport.findMany({
-    where: { contractId, year: { gte: fromYear, lte: toYear }, month: { gte: fromMonth, lte: toMonth } },
+    where: {
+      contractId,
+      year: { gte: fromYear, lte: toYear },
+      month: { gte: fromMonth, lte: toMonth },
+    },
   });
   return workReports;
 }
@@ -169,46 +150,55 @@ export async function getCurrentWorkReports() {
   });
 
   // Group work reports by client and contract
-  const groupedReports = workReports.reduce((acc, report) => {
-    const clientId = report.contract.clientId;
-    const contractId = report.contractId;
+  const groupedReports = workReports.reduce(
+    (acc, report) => {
+      const clientId = report.contract.clientId;
+      const contractId = report.contractId;
 
-    if (!acc[clientId]) {
-      acc[clientId] = {
-        clientName: report.contract.client.name,
-        contracts: {},
-      };
-    }
+      if (!acc[clientId]) {
+        acc[clientId] = {
+          clientName: report.contract.client.name,
+          contracts: {},
+        };
+      }
 
-    if (!acc[clientId].contracts[contractId]) {
-      acc[clientId].contracts[contractId] = {
-        contractName: report.contract.name,
-        workReports: [],
-      };
-    }
+      if (!acc[clientId].contracts[contractId]) {
+        acc[clientId].contracts[contractId] = {
+          contractName: report.contract.name,
+          workReports: [],
+        };
+      }
 
-    acc[clientId].contracts[contractId].workReports.push({
-      id: report.id,
-      year: report.year,
-      month: report.month,
-      status: report.status,
-      userName: report.contract.user.name || "",
-    });
+      acc[clientId].contracts[contractId].workReports.push({
+        id: report.id,
+        year: report.year,
+        month: report.month,
+        status: report.status,
+        userName: report.contract.user.name || "",
+      });
 
-    return acc;
-  }, {} as Record<string, {
-    clientName: string;
-    contracts: Record<string, {
-      contractName: string;
-      workReports: Array<{
-        id: string;
-        year: number;
-        month: number;
-        status: string;
-        userName: string;
-      }>;
-    }>;
-  }>);
+      return acc;
+    },
+    {} as Record<
+      string,
+      {
+        clientName: string;
+        contracts: Record<
+          string,
+          {
+            contractName: string;
+            workReports: Array<{
+              id: string;
+              year: number;
+              month: number;
+              status: string;
+              userName: string;
+            }>;
+          }
+        >;
+      }
+    >
+  );
 
   return groupedReports;
 }

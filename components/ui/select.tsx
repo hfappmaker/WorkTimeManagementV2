@@ -12,7 +12,9 @@ import * as SelectPrimitive from "@radix-ui/react-select"
 import { cn } from "@/lib/utils"
 import { ComponentPropsWithRef, FC } from "react"
 import { SelectProps } from "@radix-ui/react-select"
-import { ControllerRenderProps, FieldValues } from "react-hook-form"
+import { Control, ControllerRenderProps, FieldValues, Path, UseFormReturn } from "react-hook-form"
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./form"
+import { Button } from "./button"
 
 const Select = SelectPrimitive.Root
 
@@ -138,65 +140,67 @@ const SelectSeparator: FC<ComponentPropsWithRef<typeof SelectPrimitive.Separator
   )
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 
-export type Option = {
-  label: string;
-  value: string;
-};
-
-export interface ComboBoxProps
-  extends Omit<SelectProps, "name" | "value">,
-    ControllerRenderProps<FieldValues> {
-  /** 選択肢の配列 */
-  options: Option[];
-  /** プレースホルダー（未選択時に表示される文字） */
+export interface ComboBoxFieldProps<T extends FieldValues, V> {
+  control: Control<T>;
+  name: Path<T> & {
+    [P in Path<T>]: T[P] extends (V | null) ? P : never;
+  }[Path<T>];
+  options: { label: string, value: V }[];
   placeholder?: string;
-  /** Trigger のクラス名。幅などをこちらで上書きできます。 */
   triggerClassName?: string;
+  label: string;
+  defaultValue?: V;
+  showClearButton?: boolean;
 }
 
-export const ComboBox: React.FC<ComboBoxProps> = ({
-  name,
-  options,
-  placeholder = "Select an option",
-  defaultValue,
-  onValueChange,
-  onChange,
-  value,
-  triggerClassName,
-  ...props
-}) => {
-  const handleChange = (value: string) => {
-    onValueChange?.(value);
-    onChange?.(value);
-  };
-
+export const ComboBoxField = <T extends FieldValues, V extends string | number | bigint | null>(props: ComboBoxFieldProps<T, V>) => {
+  const { control, name, options, placeholder, triggerClassName, label, defaultValue, showClearButton = true } = props;
   return (
-    <div className="flex flex-col">
-      <Select name={name} {...props} onValueChange={handleChange} value={value}>
-        <SelectTrigger
-          className={cn(
-            "truncate border rounded-md py-2 px-3 border-gray-300",
-            triggerClassName
-          )}
-        >
-          <SelectValue placeholder={placeholder} className="truncate" />
-        </SelectTrigger>
-        <SelectContent defaultValue={defaultValue}>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <input
-        type="hidden"
-        name={`${name}Label`}
-        value={options.find((opt) => opt.value === value)?.label || ""}
-      />
-    </div>
-  );
-};
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) =>
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <Select
+            onValueChange={(value) => {
+              const option = options.find(opt => opt.value?.toString() === value);
+              if (option) {
+                field.onChange(option.value);
+              }
+            }}
+            value={field.value?.toString() ?? ""}
+          >
+            <FormControl>
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue placeholder={<span className="text-muted-foreground">{placeholder}</span>} className="truncate" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent defaultValue={defaultValue?.toString()}>
+              {options.map((option) => (
+                <SelectItem key={option.value} value={option.value?.toString() ?? ""}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {showClearButton && (
+                                <Button
+                                    type="button"
+                                    onClick={() => field.onChange(null)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-sm text-muted-foreground hover:text-foreground w-fit"
+                                >
+                                    クリア
+                                </Button>
+                            )}
+          <FormMessage />
+        </FormItem>
+      }
+    />
+  )
+}
 
 export {
   Select,

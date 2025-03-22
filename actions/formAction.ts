@@ -36,9 +36,9 @@ import {
 } from "@/data/client";
 
 interface AttendanceEntry {
-  start: string;
-  end: string;
-  breakDuration: string;
+  startTime: Date | null;
+  endTime: Date | null;
+  breakDuration: number | null;
 }
 
 interface AttendanceFormValues {

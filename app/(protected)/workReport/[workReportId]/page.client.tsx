@@ -12,18 +12,17 @@ import FormSuccess from "@/components/form-success";
 import ExcelJS from 'exceljs';
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { convertTimeStrToFractionOfDay } from "@/lib/utils";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { TimePickerField } from "@/components/ui/time-picker"
+import { DateTimePickerField, NumberTimePickerField } from "@/components/ui/time-picker"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DatePicker } from "@/components/ui/date-picker";
 
 interface AttendanceEntry {
-    start: string;
-    end: string;
-    breakDuration: string;
+    startTime: Date | null;
+    endTime: Date | null;
+    breakDuration: number | null;
     memo: string;
 }
 
@@ -40,10 +39,7 @@ interface WorkReportData {
 
 interface AttendanceRecord {
     date: string;
-    start: string | null;
-    end: string | null;
-    breakDuration: string | null;
-    memo: string | null;
+    attendanceEntry: AttendanceEntry;
 }
 
 interface WorkReportClientProps {
@@ -58,9 +54,9 @@ interface WorkReportClientProps {
     clientEmail: string;
     dailyWorkMinutes: number;
     monthlyWorkMinutes: number;
-    basicStartTime: { hour: number; minute: number } | null;
-    basicEndTime: { hour: number; minute: number } | null;
-    basicBreakDuration: { hour: number; minute: number } | null;
+    basicStartTime: Date | null;
+    basicEndTime: Date | null;
+    basicBreakDuration: number | null;
 }
 
 // Helper to generate a key for each day between startDate and endDate (inclusive)
@@ -75,7 +71,7 @@ function generateAttendanceDefaults(year: number, month: number, closingDay: num
             day: '2-digit',
             timeZone: 'Asia/Tokyo'
         }).replace(/\//g, '/');
-        defaults[dateKey] = { start: "", end: "", breakDuration: "", memo: "" };
+        defaults[dateKey] = { startTime: null, endTime: null, breakDuration: null, memo: "" };
         current.setDate(current.getDate() + 1);
     }
     return defaults;
@@ -90,10 +86,7 @@ function mergeAttendances(
         if (defaults[entry.date]) {
             console.log("entry", entry);
             defaults[entry.date] = {
-                start: entry.start ?? "",
-                end: entry.end ?? "",
-                breakDuration: entry.breakDuration ?? "",
-                memo: entry.memo ?? ""
+                ...entry.attendanceEntry
             };
         }
     });
@@ -148,13 +141,10 @@ function formatMonthDay(dateStr: string): string {
 }
 
 const editFormSchema = z.object({
-    startHour: z.string().optional(),
-    startMinute: z.string().optional(),
-    endHour: z.string().optional(),
-    endMinute: z.string().optional(),
-    breakHour: z.string().optional(),
-    breakMinute: z.string().optional(),
-    memo: z.string().optional(),
+    startTime: z.date().nullable(),
+    endTime: z.date().nullable(),
+    breakDuration: z.number().nullable(),
+    memo: z.string(),
 });
 
 type EditFormValues = z.infer<typeof editFormSchema>;
@@ -166,8 +156,8 @@ const shouldUpdateDate = (
     date: Date,
     dateRangeMode: dateRangeMode,
     selectedDays?: number[],
-    startDate?: Date,
-    endDate?: Date
+    startDate?: Date | null,
+    endDate?: Date | null
 ): boolean => {
     const dayOfWeek = date.getDay();
 
@@ -189,36 +179,30 @@ const shouldUpdateDate = (
 const bulkEditFormSchema = z.object({
     dateRangeMode: z.enum(dateRangeModes),
     selectedDays: z.array(z.number()).optional(),
-    startDate: z.date().optional(),
-    endDate: z.date().optional(),
-    startHour: z.string().optional(),
-    startMinute: z.string().optional(),
-    endHour: z.string().optional(),
-    endMinute: z.string().optional(),
-    breakHour: z.string().optional(),
-    breakMinute: z.string().optional(),
-    memo: z.string().optional()
+    startDate: z.date().nullable(),
+    endDate: z.date().nullable(),
+    startTime: z.date().nullable(),
+    endTime: z.date().nullable(),
+    breakDuration: z.number().nullable(),
+    memo: z.string()
 });
 
 type BulkEditFormValues = z.infer<typeof bulkEditFormSchema>;
 
 // 一括編集フォームのデフォルト値を定義
 const getBulkEditFormDefaults = (
-    basicStartTime: { hour: number; minute: number } | null,
-    basicEndTime: { hour: number; minute: number } | null,
-    basicBreakDuration: { hour: number; minute: number } | null
+    basicStartTime: Date | null,
+    basicEndTime: Date | null,
+    basicBreakDuration: number | null
 ) => ({
     dateRangeMode: "weekday" as const,
     selectedDays: [1, 2, 3, 4, 5],
-    startHour: basicStartTime?.hour?.toString().padStart(2, '0') || "",
-    startMinute: basicStartTime?.minute?.toString().padStart(2, '0') || "",
-    endHour: basicEndTime?.hour?.toString().padStart(2, '0') || "",
-    endMinute: basicEndTime?.minute?.toString().padStart(2, '0') || "",
-    breakHour: basicBreakDuration?.hour?.toString().padStart(2, '0') || "",
-    breakMinute: basicBreakDuration?.minute?.toString().padStart(2, '0') || "",
+    startTime: basicStartTime,
+    endTime: basicEndTime,
+    breakDuration: basicBreakDuration,
     memo: "",
-    startDate: undefined,
-    endDate: undefined,
+    startDate: null,
+    endDate: null,
 });
 
 export default function ClientWorkReportPage({
@@ -268,12 +252,9 @@ export default function ClientWorkReportPage({
     const editForm = useForm<EditFormValues>({
         resolver: zodResolver(editFormSchema),
         defaultValues: {
-            startHour: basicStartTime?.hour?.toString().padStart(2, '0') || "",
-            startMinute: basicStartTime?.minute?.toString().padStart(2, '0') || "",
-            endHour: basicEndTime?.hour?.toString().padStart(2, '0') || "",
-            endMinute: basicEndTime?.minute?.toString().padStart(2, '0') || "",
-            breakHour: basicBreakDuration?.hour?.toString().padStart(2, '0') || "",
-            breakMinute: basicBreakDuration?.minute?.toString().padStart(2, '0') || "",
+            startTime: basicStartTime,
+            endTime: basicEndTime,
+            breakDuration: basicBreakDuration,
             memo: ""
         }
     });
@@ -325,10 +306,10 @@ export default function ClientWorkReportPage({
             if (shouldUpdate) {
                 updatedValues[dateStr] = {
                     ...updatedValues[dateStr],
-                    start: data.startHour && data.startMinute ? `${data.startHour}:${data.startMinute}` : updatedValues[dateStr].start,
-                    end: data.endHour && data.endMinute ? `${data.endHour}:${data.endMinute}` : updatedValues[dateStr].end,
-                    breakDuration: data.breakHour && data.breakMinute ? `${data.breakHour}:${data.breakMinute}` : updatedValues[dateStr].breakDuration,
-                    memo: data.memo || updatedValues[dateStr].memo
+                    startTime: data.startTime,
+                    endTime: data.endTime,
+                    breakDuration: data.breakDuration,
+                    memo: data.memo
                 };
             }
         });
@@ -350,10 +331,10 @@ export default function ClientWorkReportPage({
                 const formValues = attendanceForm.getValues();
                 const updatedValues = { ...formValues };
                 updatedValues[editingDate] = {
-                    start: `${data.startHour}:${data.startMinute}`,
-                    end: `${data.endHour}:${data.endMinute}`,
-                    breakDuration: `${data.breakHour}:${data.breakMinute}`,
-                    memo: data.memo || ""
+                    startTime: data.startTime,
+                    endTime: data.endTime,
+                    breakDuration: data.breakDuration,
+                    memo: data.memo
                 };
                 // フォームの値を更新
                 await updateWorkReportAction(contractId, workReportId, updatedValues);
@@ -379,12 +360,9 @@ export default function ClientWorkReportPage({
             const entry = formValues[editingDate];
 
             editForm.reset({
-                startHour: entry.start.split(':')[0] || '',
-                startMinute: entry.start.split(':')[1] || '',
-                endHour: entry.end.split(':')[0] || '',
-                endMinute: entry.end.split(':')[1] || '',
-                breakHour: entry.breakDuration.split(':')[0] || '',
-                breakMinute: entry.breakDuration.split(':')[1] || '',
+                startTime: entry.startTime,
+                endTime: entry.endTime,
+                breakDuration: entry.breakDuration,
                 memo: entry.memo
             });
         }
@@ -494,26 +472,26 @@ export default function ClientWorkReportPage({
                                     if (fieldName === "日付") {
                                         value = formatMonthDay(dateKey);
                                     } else if (fieldName === "開始時刻") {
-                                        if (entry.start) {
-                                            value = convertTimeStrToFractionOfDay(entry.start);
+                                        if (entry.startTime) {
+                                            value = entry.startTime.getTime();
                                             sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
                                         }
                                     } else if (fieldName === "終了時刻") {
-                                        if (entry.end) {
-                                            value = convertTimeStrToFractionOfDay(entry.end);
+                                        if (entry.endTime) {
+                                            value = entry.endTime.getTime();
                                             sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
                                         }
                                     } else if (fieldName === "休憩時間") {
                                         if (entry.breakDuration) {
-                                            value = convertTimeStrToFractionOfDay(entry.breakDuration);
+                                            value = entry.breakDuration * 60000;
                                             sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
                                         }
                                     } else if (fieldName === "稼働時間") {
-                                        if (entry.start && entry.end) {
-                                            const startMs = convertTimeStrToFractionOfDay(entry.start);
-                                            const endMs = convertTimeStrToFractionOfDay(entry.end);
+                                        if (entry.startTime && entry.endTime) {
+                                            const startMs = entry.startTime.getTime();
+                                            const endMs = entry.endTime.getTime();
                                             if (entry.breakDuration) {
-                                                const breakMs = convertTimeStrToFractionOfDay(entry.breakDuration);
+                                                const breakMs = entry.breakDuration * 60000;
                                                 value = endMs - startMs - breakMs;
                                             } else {
                                                 value = endMs - startMs;
@@ -681,11 +659,11 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                             <div className="flex-1">
                                 <FormField
                                     control={attendanceForm.control}
-                                    name={`${day}.start`}
+                                    name={`${day}.startTime`}
                                     render={({ field, fieldState }) => (
                                         <FormItem className="flex flex-col justify-center">
                                             <FormControl>
-                                                <Input {...field} type="time" id={`start-${day}`} readOnly/>
+                                                <Input {...field} type="time" id={`start-${day}`} readOnly value={field.value ? field.value.toISOString().split('T')[1].substring(0, 5) : ''}/>
                                             </FormControl>
                                             <FormMessage>{fieldState.error?.message}</FormMessage>
                                         </FormItem>
@@ -695,11 +673,11 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                             <div className="flex-1">
                                 <FormField
                                     control={attendanceForm.control}
-                                    name={`${day}.end`}
+                                    name={`${day}.endTime`}
                                     render={({ field, fieldState }) => (
                                         <FormItem className="flex flex-col justify-center">
                                             <FormControl>
-                                                <Input {...field} type="time" id={`end-${day}`} readOnly/>
+                                                <Input {...field} type="time" id={`end-${day}`} readOnly value={field.value ? field.value.toISOString().split('T')[1].substring(0, 5) : ''}/>
                                             </FormControl>
                                             <FormMessage>{fieldState.error?.message}</FormMessage>
                                         </FormItem>
@@ -713,7 +691,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                     render={({ field, fieldState }) => (
                                         <FormItem className="flex flex-col justify-center">
                                             <FormControl>
-                                                <Input {...field} type="time" id={`break-${day}`} readOnly/>
+                                                <Input {...field} type="time" id={`break-${day}`} readOnly value={field.value ? `${Math.floor(field.value / 60).toString().padStart(2, '0')}:${(field.value % 60).toString().padStart(2, '0')}` : ''}/>
                                             </FormControl>
                                             <FormMessage>{fieldState.error?.message}</FormMessage>
                                         </FormItem>
@@ -832,7 +810,10 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             <FormItem>
                                                 <FormLabel>開始日</FormLabel>
                                                 <FormControl>
-                                                    <DatePicker {...field} />
+                                                    <DatePicker
+                                                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : undefined}
+                                                        onChange={(date) => field.onChange(date ? new Date(date) : undefined)}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -845,7 +826,10 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             <FormItem>
                                                 <FormLabel>終了日</FormLabel>
                                                 <FormControl>
-                                                    <DatePicker {...field} />
+                                                    <DatePicker
+                                                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : undefined}
+                                                        onChange={(date) => field.onChange(date ? new Date(date) : undefined)}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -858,33 +842,30 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                 <h3 className="text-sm font-medium">勤怠情報</h3>
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="flex flex-col gap-2">
-                                        <div>出勤時間</div>
-                                        <TimePickerField
+                                        <DateTimePickerField
                                             control={bulkEditForm.control}
-                                            hourFieldName="startHour"
-                                            minuteFieldName="startMinute"
+                                            name="startTime"
                                             showClearButton={false}
                                             minuteStep={dailyWorkMinutes}
+                                            label="出勤時間"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <div>退勤時間</div>
-                                        <TimePickerField
+                                        <DateTimePickerField
                                             control={bulkEditForm.control}
-                                            hourFieldName="endHour"
-                                            minuteFieldName="endMinute"
+                                            name="endTime"
                                             showClearButton={false}
                                             minuteStep={dailyWorkMinutes}
+                                            label="退勤時間"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <div>休憩時間</div>
-                                        <TimePickerField
+                                        <NumberTimePickerField
                                             control={bulkEditForm.control}
-                                            hourFieldName="breakHour"
-                                            minuteFieldName="breakMinute"
+                                            name="breakDuration"
                                             showClearButton={false}
                                             minuteStep={dailyWorkMinutes}
+                                            label="休憩時間"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
@@ -1038,29 +1019,26 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <div className="flex flex-col gap-2">
-                                            <div>出勤時間</div>
-                                            <TimePickerField
+                                            <DateTimePickerField
                                                 control={editForm.control}
-                                                hourFieldName="startHour"
-                                                minuteFieldName="startMinute"
+                                                name="startTime"
+                                                label="出勤時間"
                                                 minuteStep={dailyWorkMinutes}
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <div>退勤時間</div>
-                                            <TimePickerField
+                                            <DateTimePickerField
                                                 control={editForm.control}
-                                                hourFieldName="endHour"
-                                                minuteFieldName="endMinute"
+                                                name="endTime"
+                                                label="退勤時間"
                                                 minuteStep={dailyWorkMinutes}
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <div>休憩時間</div>
-                                            <TimePickerField
+                                            <NumberTimePickerField
                                                 control={editForm.control}
-                                                hourFieldName="breakHour"
-                                                minuteFieldName="breakMinute"
+                                                name="breakDuration"
+                                                label="休憩時間"
                                                 minuteStep={dailyWorkMinutes}
                                             />
                                         </div>

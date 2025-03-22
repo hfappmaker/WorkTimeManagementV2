@@ -4,12 +4,6 @@ import { getWorkReportById, getAttendancesByWorkReportId } from "@/data/work-rep
 import { currentUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-// Helper function to format minutes as "HH:MM"
-function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-}
 
 export const metadata: Metadata = {
   title: "作業報告書",
@@ -37,10 +31,12 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
   // Map each attendance to the expected AttendanceRecord type.
   const attendances = rawAttendances.map(att => ({
     date: att.date.toISOString().split('T')[0].replace(/-/g, '/'),
-    start: att.startTime ? att.startTime.toISOString().split('T')[1].substring(0, 5) : null,
-    end: att.endTime ? att.endTime.toISOString().split('T')[1].substring(0, 5) : null,
-    breakDuration: att.breakDuration ? formatDuration(att.breakDuration) : null,
-    memo: att.memo ? att.memo : null
+    attendanceEntry: {
+      startTime: att.startTime ? att.startTime : null,
+      endTime: att.endTime ? att.endTime : null,
+      breakDuration: att.breakDuration ? att.breakDuration : null,
+      memo: att.memo ? att.memo : ""
+    }
   }));
 
   console.log("attendances", attendances);
@@ -58,14 +54,11 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
       contractName={contract.name}
       clientName={contract.client.name}
       clientEmail={contract.client.email}
-      dailyWorkMinutes={contract.dailyWorkMinutes ?? 15}
-      monthlyWorkMinutes={contract.monthlyWorkMinutes ?? 15}
-      basicStartTime={contract.basicStartTime ? { hour: contract.basicStartTime.getHours(), minute: contract.basicStartTime.getMinutes() } : { hour: 9, minute: 0 }}
-      basicEndTime={contract.basicEndTime ? { hour: contract.basicEndTime.getHours(), minute: contract.basicEndTime.getMinutes() } : { hour: 18, minute: 0 }}
-      basicBreakDuration={contract.basicBreakDuration ? { 
-        hour: Math.floor(contract.basicBreakDuration / 60), 
-        minute: contract.basicBreakDuration % 60 
-      } : { hour: 1, minute: 0 }}
+      dailyWorkMinutes={contract.dailyWorkMinutes ?? 1}
+      monthlyWorkMinutes={contract.monthlyWorkMinutes ?? 1}
+      basicStartTime={contract.basicStartTime}
+      basicEndTime={contract.basicEndTime}
+      basicBreakDuration={contract.basicBreakDuration}
       closingDay={contract.closingDay}
     />
   );

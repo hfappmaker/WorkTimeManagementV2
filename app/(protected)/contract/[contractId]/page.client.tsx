@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import { createWorkReportAction, getWorkReportsByContractIdAction, getContractByIdAction, getWorkReportsByContractIdAndYearAndMonthRangeAction } from '@/actions/formAction';
 import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal, DialogHeader } from '@/components/ui/dialog';
 import { Contract, WorkReport } from '@prisma/client';
-import { ComboBox } from '@/components/ui/select';
+import { ComboBoxField } from '@/components/ui/select';
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { useRouter } from 'next/navigation';
@@ -187,85 +187,41 @@ export default function ContractClientPage({ contractId }: { contractId: string 
             className="flex-grow flex items-center gap-4"
           >
             <div className="flex items-center gap-2">
-              <FormField
+              <ComboBoxField
                 control={searchForm.control}
                 name="fromYear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <ComboBox
-                        {...field}
-                        name="fromYear"
-                        triggerClassName="w-24"
-                        options={yearOptions()}
-                        placeholder="年"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
+                triggerClassName="w-24"
+                options={yearOptions()}
+                placeholder="年"
+                label="年"
               />
-              <FormField
+              <ComboBoxField
                 control={searchForm.control}
                 name="fromMonth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <ComboBox
-                        {...field}
-                        name="fromMonth"
-                        triggerClassName="w-20"
-                        options={monthOptions}
-                        placeholder="月"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
+                triggerClassName="w-20"
+                options={monthOptions}
+                placeholder="月"
+                label="月"
               />
               <span>から</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <FormField
+              <ComboBoxField
                 control={searchForm.control}
                 name="toYear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <ComboBox
-                        {...field}
-                        name="toYear"
-                        triggerClassName="w-24"
-                        options={yearOptions()}
-                        placeholder="年"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
+                triggerClassName="w-24"
+                options={yearOptions()}
+                placeholder="年"
+                label="年"
               />
-              <FormField
+              <ComboBoxField
                 control={searchForm.control}
                 name="toMonth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <ComboBox
-                        {...field}
-                        name="toMonth"
-                        triggerClassName="w-20"
-                        options={monthOptions}
-                        placeholder="月"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
+                triggerClassName="w-20"
+                options={monthOptions}
+                placeholder="月"
+                label="月"
               />
               <span>まで</span>
             </div>
@@ -304,49 +260,21 @@ export default function ContractClientPage({ contractId }: { contractId: string 
             <Form {...reportForm}>
               <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
                 <div className="flex gap-4">
-                  <FormField
+                  <ComboBoxField
                     control={reportForm.control}
                     name="year"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>年</FormLabel>
-                        <FormControl>
-                          <ComboBox
-                            {...field}
-                            name="year"
-                            triggerClassName="w-48"
-                            options={yearOptions()}
-                            defaultValue={currentYear}
-                            placeholder="年を選択"
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    triggerClassName="w-48"
+                    options={yearOptions()}
+                    placeholder="年"
+                    label="年"
                   />
-                  <FormField
+                  <ComboBoxField
                     control={reportForm.control}
                     name="month"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>月</FormLabel>
-                        <FormControl>
-                          <ComboBox
-                            {...field}
-                            name="month"
-                            triggerClassName="w-48"
-                            options={monthOptions}
-                            defaultValue={currentMonth}
-                            placeholder="月を選択"
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    triggerClassName="w-48"
+                    options={monthOptions}
+                    placeholder="月"
+                    label="月"
                   />
                 </div>
 
