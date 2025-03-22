@@ -126,7 +126,7 @@ const TimePickerFieldBase = <T extends FieldValues, V>({
 };
 
 // Date型用のTimePickerField
-export function DateTimePickerField<T extends FieldValues>(props: TimePickerFieldProps<T, Date | undefined | null>) {
+export function TimePickerFieldForDate<T extends FieldValues>(props: TimePickerFieldProps<T, Date | undefined | null>) {
     return TimePickerFieldBase<T, Date | undefined | null>({
         ...props,
         valueToTime: (value) => {
@@ -152,7 +152,7 @@ export function DateTimePickerField<T extends FieldValues>(props: TimePickerFiel
 }
 
 // number型用のTimePickerField
-export function NumberTimePickerField<T extends FieldValues>(props: TimePickerFieldProps<T, number | undefined | null>) {
+export function TimePickerFieldForNumber<T extends FieldValues>(props: TimePickerFieldProps<T, number | undefined | null>) {
     return TimePickerFieldBase<T, number | undefined | null>({
         ...props,
         valueToTime: (value) => {

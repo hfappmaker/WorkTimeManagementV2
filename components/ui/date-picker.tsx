@@ -4,14 +4,16 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FaCalendarAlt } from "react-icons/fa";
 import { FC, useRef } from "react";
+import { FieldValues, Control, Path } from "react-hook-form";
+import { FormControl, FormField, FormMessage, FormItem, FormLabel } from "./form";
 
 interface DatePickerProps extends Omit<React.ComponentPropsWithRef<"input">, 'onChange' | 'value'> {
   value?: string;
   onChange?: (date: string) => void;
 }
 
-export const DatePicker: FC<DatePickerProps> = ({ 
-  className, 
+export const DatePicker: FC<DatePickerProps> = ({
+  className,
   onChange,
   ...props
 }) => {
@@ -56,3 +58,34 @@ export const DatePicker: FC<DatePickerProps> = ({
 };
 
 DatePicker.displayName = "DatePicker";
+
+interface DatePickerFieldProps<T extends FieldValues, V extends Date | null> {
+  control: Control<T>;
+  name: Path<T> & {
+    [P in Path<T>]: T[P] extends (V | null) ? P : never;
+  }[Path<T>];
+  label: string;
+  placeholder?: string;
+}
+
+export const DatePickerField = <T extends FieldValues, V extends Date | null>(props: DatePickerFieldProps<T, V>) => {
+  return (
+    <FormField
+      control={props.control}
+      name={props.name}
+      render={({ field }) => (
+        <FormItem className="flex-1">
+          <FormLabel>{props.label}</FormLabel>
+          <FormControl>
+            <DatePicker
+              value={field.value ? new Date(field.value).toISOString().split('T')[0] : ""}
+              onChange={(date) => field.onChange(date ? new Date(date) : null)}
+              placeholder={props.placeholder}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
+}

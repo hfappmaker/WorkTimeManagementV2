@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePickerField } from "@/components/ui/date-picker";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from "@/components/ui/form";
@@ -17,9 +17,9 @@ import { ContractSchema } from '@/schemas';
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import { z } from "zod";
 import { ComboBoxField } from "@/components/ui/select";
-import { DateTimePickerField, NumberTimePickerField } from "@/components/ui/time-picker";
+import { TimePickerFieldForDate, TimePickerFieldForNumber } from "@/components/ui/time-picker";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-
+import { NumberInputField } from "@/components/ui/input";
 type ContractFormValues = z.infer<typeof ContractSchema>;
 
 type Contract = ContractFormValues & {
@@ -66,85 +66,41 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
 
         {/* Start Date and End Date in the same row */}
         <div className="flex gap-6">
-          <FormField
+          <DatePickerField
             control={form.control}
             name="startDate"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>開始日</FormLabel>
-                <FormControl>
-                  <DatePicker
-                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : undefined}
-                    onChange={(date) => field.onChange(date ? new Date(date) : undefined)}
-                    placeholder="開始日を選択"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="開始日"
+            placeholder="開始日を選択"
           />
-
-          <FormField
+          <DatePickerField
             control={form.control}
             name="endDate"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>終了日</FormLabel>
-                <FormControl>
-                  <DatePicker
-                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : undefined}
-                    onChange={(date) => field.onChange(date ? new Date(date) : undefined)}
-                    placeholder="終了日を選択（任意）"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="終了日"
+            placeholder="終了日を選択（任意）"
           />
         </div>
 
         {/* Unit Price, Settlement Min, Settlement Max in the same row */}
         <div className="flex gap-4">
-          <FormField
+          <NumberInputField
             control={form.control}
             name="unitPrice"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>単価（円）</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="単価（円）"
+            placeholder="（例）500000"
           />
 
-          <FormField
+          <NumberInputField
             control={form.control}
             name="settlementMin"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>精算下限（時間）</FormLabel>
-                <FormControl>
-                  <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）140" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="精算下限（時間）"
+            placeholder="（例）140"
           />
 
-          <FormField
+          <NumberInputField
             control={form.control}
             name="settlementMax"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>精算上限（時間）</FormLabel>
-                <FormControl>
-                  <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）180" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="精算上限（時間）"
+            placeholder="（例）180"
           />
         </div>
 
@@ -188,49 +144,28 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
         <div className="flex gap-4">
           {rateType === "upperLower" && (
             <>
-              <FormField
+              <NumberInputField
                 control={form.control}
                 name="upperRate"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>超過単価（円）</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="超過単価（円）"
+                placeholder="（例）5000"
               />
 
-              <FormField
+              <NumberInputField
                 control={form.control}
                 name="lowerRate"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>控除単価（円）</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value ?? ""} type="number" placeholder="（例）5000" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="控除単価（円）"
+                placeholder="（例）5000"
               />
             </>
           )}
 
           {rateType === "middle" && (
-            <FormField
+            <NumberInputField
               control={form.control}
               name="middleRate"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>中間単価（円）</FormLabel>
-                  <FormControl>
-                    <Input {...field} value={field.value ?? ""} type="number" step="0.01" placeholder="（例）5000" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="中間単価（円）"
+              placeholder="（例）5000"
             />
           )}
         </div>
@@ -262,21 +197,21 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
 
         {/* Basic Start Time, Basic End Time, and Basic Break Duration in the same row */}
         <div className="flex gap-4">
-          <DateTimePickerField
+          <TimePickerFieldForDate
             control={form.control}
             name="basicStartTime"
             minuteStep={form.getValues("dailyWorkMinutes") || 1}
             label="基本開始時刻"
           />
 
-          <DateTimePickerField
+          <TimePickerFieldForDate
             control={form.control}
             name="basicEndTime"
             minuteStep={form.getValues("dailyWorkMinutes") || 1}
             label="基本終了時刻"
           />
 
-          <NumberTimePickerField
+          <TimePickerFieldForNumber
             control={form.control}
             name="basicBreakDuration"
             minuteStep={form.getValues("dailyWorkMinutes") || 1}
@@ -285,18 +220,11 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
         </div>
 
         {/* Closing Day */}
-        <FormField
+        <NumberInputField
           control={form.control}
           name="closingDay"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormLabel>締め日</FormLabel>
-              <FormControl>
-                <Input  {...field} value={field.value ?? ""} type="number" placeholder="（例）20（未入力の場合は末日）" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="締め日"
+          placeholder="（例）20（未入力の場合は末日）"
         />
 
         <div className="flex justify-end gap-2 mt-4">

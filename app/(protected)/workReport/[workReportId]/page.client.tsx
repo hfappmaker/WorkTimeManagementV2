@@ -15,9 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DateTimePickerField, NumberTimePickerField } from "@/components/ui/time-picker"
+import { TimePickerFieldForDate, TimePickerFieldForNumber } from "@/components/ui/time-picker"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePickerField } from "@/components/ui/date-picker";
 
 interface AttendanceEntry {
     startTime: Date | null;
@@ -803,37 +803,18 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
 
                             {bulkEditForm.watch("dateRangeMode") === "custom" && (
                                 <div className="grid grid-cols-2 gap-4">
-                                    <FormField
+                                    <DatePickerField
                                         control={bulkEditForm.control}
                                         name="startDate"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>開始日</FormLabel>
-                                                <FormControl>
-                                                    <DatePicker
-                                                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : undefined}
-                                                        onChange={(date) => field.onChange(date ? new Date(date) : undefined)}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
+                                        label="開始日"
+                                        placeholder="開始日を選択(任意)"
                                     />
-                                    <FormField
+
+                                    <DatePickerField
                                         control={bulkEditForm.control}
                                         name="endDate"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>終了日</FormLabel>
-                                                <FormControl>
-                                                    <DatePicker
-                                                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : undefined}
-                                                        onChange={(date) => field.onChange(date ? new Date(date) : undefined)}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
+                                        label="終了日"
+                                        placeholder="終了日を選択(任意)"
                                     />
                                 </div>
                             )}
@@ -842,7 +823,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                 <h3 className="text-sm font-medium">勤怠情報</h3>
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="flex flex-col gap-2">
-                                        <DateTimePickerField
+                                        <TimePickerFieldForDate
                                             control={bulkEditForm.control}
                                             name="startTime"
                                             showClearButton={false}
@@ -851,7 +832,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <DateTimePickerField
+                                        <TimePickerFieldForDate
                                             control={bulkEditForm.control}
                                             name="endTime"
                                             showClearButton={false}
@@ -860,7 +841,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <NumberTimePickerField
+                                        <TimePickerFieldForNumber
                                             control={bulkEditForm.control}
                                             name="breakDuration"
                                             showClearButton={false}
@@ -1019,7 +1000,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <div className="flex flex-col gap-2">
-                                            <DateTimePickerField
+                                            <TimePickerFieldForDate
                                                 control={editForm.control}
                                                 name="startTime"
                                                 label="出勤時間"
@@ -1027,7 +1008,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <DateTimePickerField
+                                            <TimePickerFieldForDate
                                                 control={editForm.control}
                                                 name="endTime"
                                                 label="退勤時間"
@@ -1035,7 +1016,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <NumberTimePickerField
+                                            <TimePickerFieldForNumber
                                                 control={editForm.control}
                                                 name="breakDuration"
                                                 label="休憩時間"
