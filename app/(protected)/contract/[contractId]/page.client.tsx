@@ -4,27 +4,23 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { createWorkReportAction, getWorkReportsByContractIdAction, getWorkReportsByContractIdAndYearAndMonthRangeAction } from '@/actions/work-report';
+import { createWorkReportAction, getWorkReportsByContractIdAction, getWorkReportsByContractIdAndYearMonthDateRangeAction } from '@/actions/work-report';
 import { getContractByIdAction } from '@/actions/contract';
 import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal, DialogHeader } from '@/components/ui/dialog';
 import { Contract, WorkReport } from '@prisma/client';
-import { ComboBoxField } from '@/components/ui/select';
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { useRouter } from 'next/navigation';
 import { useTransitionContext } from '@/contexts/TransitionContext';
-
+import { YearMonthPickerField } from '@/components/ui/date-picker';
 interface ReportFormValues {
-  year: string;
-  month: string;
+  yearMonth: Date;
 }
 
 // 検索フォームの型定義を追加
 interface SearchFormValues {
-  fromYear: string;
-  fromMonth: string;
-  toYear: string;
-  toMonth: string;
+  from: Date;
+  to: Date;
 }
 
 export default function ContractClientPage({ contractId }: { contractId: string }) {
@@ -38,23 +34,26 @@ export default function ContractClientPage({ contractId }: { contractId: string 
 
   // 現在の年月を取得
   const currentDate = new Date();
-  const currentYear = currentDate.getFullYear().toString();
-  const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+  const currentYearMonth = new Date(Date.UTC(currentYear, currentMonth, 1));
+  const currentYearMonthMinusOne = new Date(Date.UTC(
+    currentMonth === 0 ? currentYear - 1 : currentYear,
+    currentMonth === 0 ? 11 : currentMonth - 1,
+    1
+  ));
 
   const reportForm = useForm<ReportFormValues>({
     defaultValues: {
-      year: currentYear,
-      month: currentMonth,
+      yearMonth: currentYearMonth,
     },
   });
 
   // 検索フォームの初期値を設定
   const searchForm = useForm<SearchFormValues>({
     defaultValues: {
-      fromYear: currentYear,
-      fromMonth: '01',
-      toYear: currentYear,
-      toMonth: currentMonth,
+      from: currentYearMonthMinusOne,
+      to: currentYearMonth,
     }
   });
 
@@ -99,16 +98,10 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   const onSearchSubmit = async (data: SearchFormValues) => {
     startTransition(async () => {
       try {
-        const fromDate = {
-          year: parseInt(data.fromYear),
-          month: parseInt(data.fromMonth)
-        };
-        const toDate = {
-          year: parseInt(data.toYear),
-          month: parseInt(data.toMonth)
-        };
+        const fromDate = data.from;
+        const toDate = data.to;
         // 検索条件を追加してfetchReportsを呼び出す
-        await getWorkReportsByContractIdAndYearAndMonthRangeAction(contractId, fromDate.year, fromDate.month, toDate.year, toDate.month);
+        await getWorkReportsByContractIdAndYearMonthDateRangeAction(contractId, fromDate, toDate);
       } catch (error: any) {
         setError({ message: error.message || '検索に失敗しました', date: new Date() });
       }
@@ -123,50 +116,23 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         return;
       }
 
-      // 年と月が文字列の場合は数値に変換する
-      const yearInt = parseInt(values.year);
-      const monthInt = parseInt(values.month);
+      const targetDate = values.yearMonth;
 
       startTransition(async () => {
-        await createWorkReportAction(contractId, yearInt, monthInt);
+        await createWorkReportAction(contractId, targetDate);
         setSuccess({ message: '作業報告書を作成しました', date: new Date() });
         // Refresh report list after creation
         await fetchReports();
         // Close dialog and reset the creation form
         setShowCreateDialog(false);
         reportForm.reset({
-          year: currentYear,
-          month: currentMonth,
+          yearMonth: currentYearMonth,
         });
       });
     } catch (error: any) {
       setError({ message: error.message || '作業報告書の作成に失敗しました', date: new Date() });
     }
   };
-
-  // 年の選択肢を生成 (2025年から2099年までの範囲)
-  const yearOptions = () => {
-    return Array.from({ length: 75 }, (_, i) => ({
-      value: (2025 + i).toString(),
-      label: `${2025 + i}年`
-    }));
-  };
-
-  // 月の選択肢を生成（ComboBox用にオブジェクト形式で）
-  const monthOptions = [
-    { value: '01', label: '1月' },
-    { value: '02', label: '2月' },
-    { value: '03', label: '3月' },
-    { value: '04', label: '4月' },
-    { value: '05', label: '5月' },
-    { value: '06', label: '6月' },
-    { value: '07', label: '7月' },
-    { value: '08', label: '8月' },
-    { value: '09', label: '9月' },
-    { value: '10', label: '10月' },
-    { value: '11', label: '11月' },
-    { value: '12', label: '12月' },
-  ];
 
   const handleNavigation = (workReportId: string) => {
     startTransition(() => {
@@ -187,45 +153,19 @@ export default function ContractClientPage({ contractId }: { contractId: string 
             onSubmit={searchForm.handleSubmit(onSearchSubmit)}
             className="flex-grow flex items-center gap-4"
           >
-            <div className="flex items-center gap-2">
-              <ComboBoxField
-                control={searchForm.control}
-                name="fromYear"
-                triggerClassName="w-24"
-                options={yearOptions()}
-                placeholder="年"
-                label="年"
-              />
-              <ComboBoxField
-                control={searchForm.control}
-                name="fromMonth"
-                triggerClassName="w-20"
-                options={monthOptions}
-                placeholder="月"
-                label="月"
-              />
-              <span>から</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <ComboBoxField
-                control={searchForm.control}
-                name="toYear"
-                triggerClassName="w-24"
-                options={yearOptions()}
-                placeholder="年"
-                label="年"
-              />
-              <ComboBoxField
-                control={searchForm.control}
-                name="toMonth"
-                triggerClassName="w-20"
-                options={monthOptions}
-                placeholder="月"
-                label="月"
-              />
-              <span>まで</span>
-            </div>
+            <YearMonthPickerField
+              control={searchForm.control}
+              name="from"
+              yearTriggerClassName="w-24"
+              monthTriggerClassName="w-20"
+            />
+            <span>から</span>
+            <YearMonthPickerField
+              control={searchForm.control}
+              name="to"
+              yearTriggerClassName="w-24"
+              monthTriggerClassName="w-20"
+            />
             <Button type="submit">検索</Button>
           </form>
         </Form>
@@ -244,7 +184,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
                 onClick={() => handleNavigation(workReport.id)}
                 className="cursor-pointer hover:text-blue-500"
               >
-                {workReport.year}年{workReport.month}月分
+                {workReport.targetDate.getFullYear()}年{workReport.targetDate.getMonth() + 1}月分
               </div>
             </li>
           ))}
@@ -261,21 +201,13 @@ export default function ContractClientPage({ contractId }: { contractId: string 
             <Form {...reportForm}>
               <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
                 <div className="flex gap-4">
-                  <ComboBoxField
+                  <YearMonthPickerField
                     control={reportForm.control}
-                    name="year"
-                    triggerClassName="w-48"
-                    options={yearOptions()}
-                    placeholder="年"
-                    label="年"
-                  />
-                  <ComboBoxField
-                    control={reportForm.control}
-                    name="month"
-                    triggerClassName="w-48"
-                    options={monthOptions}
-                    placeholder="月"
-                    label="月"
+                    name="yearMonth"
+                    yearTriggerClassName="w-24"
+                    monthTriggerClassName="w-20"
+                    defaultValue={currentYearMonth}
+                    showClearButton={false}
                   />
                 </div>
 

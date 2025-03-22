@@ -50,14 +50,12 @@ export async function getOpenedWorkReport(contractId: string) {
 
 export async function createWorkReport(
   contractId: string,
-  year: number,
-  month: number
+  targetDate: Date
 ) {
   const workReport = await db.workReport.create({
     data: {
       contractId: contractId,
-      year: year,
-      month: month,
+      targetDate: targetDate,
     },
   });
 
@@ -108,18 +106,15 @@ export async function getWorkReportsByContractId(contractId: string) {
   return workReports;
 }
 
-export async function getWorkReportsByContractIdAndYearAndMonthRange(
+export async function getWorkReportsByContractIdAndYearMonthDateRange(
   contractId: string,
-  fromYear: number,
-  fromMonth: number,
-  toYear: number,
-  toMonth: number
+  fromDate: Date,
+  toDate: Date
 ) {
   const workReports = await db.workReport.findMany({
     where: {
       contractId,
-      year: { gte: fromYear, lte: toYear },
-      month: { gte: fromMonth, lte: toMonth },
+      targetDate: { gte: fromDate, lte: toDate },
     },
   });
   return workReports;
@@ -128,12 +123,11 @@ export async function getWorkReportsByContractIdAndYearAndMonthRange(
 export async function getCurrentWorkReports() {
   const now = new Date();
   const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-
+  const currentMonth = now.getMonth();
+  const currentDate = new Date(currentYear, currentMonth, 1);
   const workReports = await db.workReport.findMany({
     where: {
-      year: currentYear,
-      month: currentMonth,
+      targetDate: currentDate,
     },
     include: {
       contract: {
@@ -171,8 +165,7 @@ export async function getCurrentWorkReports() {
 
       acc[clientId].contracts[contractId].workReports.push({
         id: report.id,
-        year: report.year,
-        month: report.month,
+        targetDate: report.targetDate,
         status: report.status,
         userName: report.contract.user.name || "",
       });
@@ -189,8 +182,7 @@ export async function getCurrentWorkReports() {
             contractName: string;
             workReports: Array<{
               id: string;
-              year: number;
-              month: number;
+              targetDate: Date;
               status: string;
               userName: string;
             }>;

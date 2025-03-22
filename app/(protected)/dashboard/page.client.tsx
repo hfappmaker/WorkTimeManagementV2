@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 interface WorkReport {
     id: string;
-    year: number;
-    month: number;
+    targetDate: Date;
     status: string;
     userName: string;
 }
@@ -65,17 +64,17 @@ export default function DashboardClientPage({ groupedWorkReports }: DashboardCli
                                 <div key={contractId} className="border rounded-lg p-4">
                                     <h3 className="text-lg font-semibold mb-2">{contract.contractName}</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {contract.workReports.map((report) => (
+                                        {contract.workReports.map((workReport) => (
                                             <div
-                                                key={report.id}
+                                                key={workReport.id}
                                                 className="block p-4 border rounded-lg transition-colors cursor-pointer"
                                             >
                                                 <div className="flex justify-between items-start mb-2 space-x-2">
-                                                    <div className="text-lg font-medium hover:underline" onClick={() => handleNavigation(report.id)}>
-                                                        {report.year}年{report.month}月
+                                                    <div className="text-lg font-medium hover:underline" onClick={() => handleNavigation(workReport.id)}>
+                                                        {workReport.targetDate.getFullYear()}年{workReport.targetDate.getMonth() + 1}月
                                                     </div>
-                                                    <Badge className={getStatusColor(report.status)}>
-                                                        {report.status}
+                                                    <Badge className={getStatusColor(workReport.status)}>
+                                                        {workReport.status}
                                                     </Badge>
                                                 </div>
                                             </div>

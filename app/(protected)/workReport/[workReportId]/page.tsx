@@ -44,8 +44,8 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
       contractId={contract.id}
       workReportId={workReportId}
       workReport={{
-        year: workReport.year,
-        month: workReport.month,
+        year: workReport.targetDate.getFullYear(),
+        month: workReport.targetDate.getMonth() + 1,
       }}
       userName={user.name}
       attendances={attendances}

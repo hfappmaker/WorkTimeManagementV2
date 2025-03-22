@@ -6,15 +6,14 @@ import {
   createWorkReport,
   updateWorkReportAttendances,
   getWorkReportsByContractId,
-  getWorkReportsByContractIdAndYearAndMonthRange,
+  getWorkReportsByContractIdAndYearMonthDateRange,
 } from "@/data/work-report";
 
 export const createWorkReportAction = async (
   contractId: string,
-  year: number,
-  month: number
+  targetDate: Date
 ) => {
-  await createWorkReport(contractId, year, month);
+  await createWorkReport(contractId, targetDate);
   revalidatePath(`/workReport/${contractId}`);
 };
 
@@ -36,20 +35,16 @@ export const getWorkReportsByContractIdAction = async (contractId: string) => {
   }
 };
 
-export const getWorkReportsByContractIdAndYearAndMonthRangeAction = async (
+export const getWorkReportsByContractIdAndYearMonthDateRangeAction = async (
   contractId: string,
-  fromYear: number,
-  fromMonth: number,
-  toYear: number,
-  toMonth: number
+  fromDate: Date,
+  toDate: Date
 ) => {
   try {
-    return await getWorkReportsByContractIdAndYearAndMonthRange(
+    return await getWorkReportsByContractIdAndYearMonthDateRange(
       contractId,
-      fromYear,
-      fromMonth,
-      toYear,
-      toMonth
+      fromDate,
+      toDate
     );
   } catch (error) {
     console.error("Error fetching work reports:", error);
