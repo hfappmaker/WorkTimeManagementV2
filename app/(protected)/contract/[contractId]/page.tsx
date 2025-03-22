@@ -1,4 +1,4 @@
-import { getContractByIdAction } from "@/actions/formAction";
+import { getContractByIdAction } from "@/actions/contract";
 import { currentUser } from "@/lib/auth";
 import ClientContractPage from "./page.client";
 import { notFound } from "next/navigation";

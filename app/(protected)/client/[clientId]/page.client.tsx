@@ -12,7 +12,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from "@/components/ui/form";
-import { createContractAction, deleteContractAction, updateContractAction, getContractsByClientIdAction } from '@/actions/formAction';
+import { createContractAction, deleteContractAction, updateContractAction, getContractsByClientIdAction } from '@/actions/contract';
 import { ContractSchema } from '@/schemas';
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import { z } from "zod";

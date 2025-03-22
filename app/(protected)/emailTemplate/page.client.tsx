@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createEmailTemplateAction, updateEmailTemplateAction, deleteEmailTemplateAction, getEmailTemplatesByCreateUserIdAction } from "@/actions/formAction";
+import { createEmailTemplateAction, updateEmailTemplateAction, deleteEmailTemplateAction, getEmailTemplatesByCreateUserIdAction } from "@/actions/email-template";
 import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { TextArea } from "@/components/ui/textarea";

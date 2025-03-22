@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getClientsByUserIdAction, createClientAction, updateClientAction, deleteClientAction } from "@/actions/formAction";
+import { getClientsByUserIdAction, createClientAction, updateClientAction, deleteClientAction } from "@/actions/client";
 import { useRouter } from "next/navigation";
 import { truncate } from "@/lib/utils";
 import { useTransitionContext } from "@/contexts/TransitionContext";
