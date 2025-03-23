@@ -13,17 +13,49 @@ import FormSuccess from "@/components/form-success";
 import { useRouter } from 'next/navigation';
 import { useTransitionContext } from '@/contexts/TransitionContext';
 import { YearMonthPickerField } from '@/components/ui/date-picker';
-interface ReportFormValues {
-  yearMonth: Date;
-}
+import { z } from 'zod';
 
-// 検索フォームの型定義を追加
-interface SearchFormValues {
-  from?: Date;
-  to?: Date;
-}
+const createWorkReportFormSchema = z.object({
+  yearMonth: z.date(),
+});
+
+type CreateWorkReportFormValues = z.infer<typeof createWorkReportFormSchema>;
+
+const searchFormSchema = z.object({
+  from: z.date().optional(),
+  to: z.date().optional(),
+});
+
+type SearchFormValues = z.infer<typeof searchFormSchema>;
 
 type DialogType = "create" | "search" | null;
+
+// 共通のダイアログコンポーネント
+const CommonDialog = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <Dialog open={isOpen} onOpenChange={(open) => {
+    if (!open) onClose();
+  }}>
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </DialogPortal>
+  </Dialog>
+);
 
 export default function ContractClientPage({ contractId }: { contractId: string }) {
   const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
@@ -51,7 +83,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
     to: currentYearMonth,
   });
 
-  const reportForm = useForm<ReportFormValues>({
+  const createWorkReportForm = useForm<CreateWorkReportFormValues>({
     defaultValues: {
       yearMonth: currentYearMonth,
     },
@@ -118,7 +150,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   };
 
   // Handle creation of a new work time report
-  const handleCreateReport = async (values: ReportFormValues) => {
+  const handleCreateReport = async (values: CreateWorkReportFormValues) => {
     try {
       if (!contract) {
         setError({ message: '契約情報がありません', date: new Date() });
@@ -134,7 +166,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         await fetchReports(searchFormValues.from, searchFormValues.to);
         // Close dialog and reset the creation form
         setActiveDialog(null);
-        reportForm.reset({
+        createWorkReportForm.reset({
           yearMonth: currentYearMonth,
         });
       });
@@ -193,92 +225,82 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         </ul>
       )}
 
-      <Dialog open={activeDialog === "search"} onOpenChange={(open) => {
-        if (!open) setActiveDialog(null);
-      }}>
-        <DialogPortal>
-          <DialogOverlay />
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>作業報告書を検索</DialogTitle>
-            </DialogHeader>
-            <Form {...searchForm}>
-              <form
-                onSubmit={searchForm.handleSubmit((data) => {
-                  onSearchSubmit(data);
-                  setActiveDialog(null);
-                })}
-                className="space-y-4"
-              >
-                <div className="flex items-center gap-4">
-                  <YearMonthPickerField
-                    control={searchForm.control}
-                    name="from"
-                    yearTriggerClassName="w-24"
-                    monthTriggerClassName="w-20"
-                  />
-                  <span>から</span>
-                  <YearMonthPickerField
-                    control={searchForm.control}
-                    name="to"
-                    yearTriggerClassName="w-24"
-                    monthTriggerClassName="w-20"
-                  />
-                  <span>まで</span>
-                </div>
+      {/* 検索ダイアログ */}
+      <CommonDialog
+        isOpen={activeDialog === "search"}
+        onClose={() => setActiveDialog(null)}
+        title="作業報告書を検索"
+      >
+        <Form {...searchForm}>
+          <form
+            onSubmit={searchForm.handleSubmit((data) => {
+              onSearchSubmit(data);
+              setActiveDialog(null);
+            })}
+            className="space-y-4"
+          >
+            <div className="flex items-center gap-4">
+              <YearMonthPickerField
+                control={searchForm.control}
+                name="from"
+                yearTriggerClassName="w-24"
+                monthTriggerClassName="w-20"
+              />
+              <span>から</span>
+              <YearMonthPickerField
+                control={searchForm.control}
+                name="to"
+                yearTriggerClassName="w-24"
+                monthTriggerClassName="w-20"
+              />
+              <span>まで</span>
+            </div>
 
-                <div className="flex justify-end gap-2">
-                  <Button type="button" onClick={() => {
-                    setActiveDialog(null);
-                    searchForm.reset(searchFormValues);
-                  }}>
-                    キャンセル
-                  </Button>
-                  <Button type="submit">検索</Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
+            <div className="flex justify-end gap-2">
+              <Button type="button" onClick={() => {
+                setActiveDialog(null);
+                searchForm.reset(searchFormValues);
+              }}>
+                キャンセル
+              </Button>
+              <Button type="submit">検索</Button>
+            </div>
+          </form>
+        </Form>
+      </CommonDialog>
 
-      <Dialog open={activeDialog === "create"} onOpenChange={(open) => {
-        if (!open) setActiveDialog(null);
-      }}>
-        <DialogPortal>
-          <DialogOverlay />
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>作業報告書を作成</DialogTitle>
-            </DialogHeader>
-            <Form {...reportForm}>
-              <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
-                <div className="flex gap-4">
-                  <YearMonthPickerField
-                    control={reportForm.control}
-                    name="yearMonth"
-                    yearTriggerClassName="w-24"
-                    monthTriggerClassName="w-20"
-                    showClearButton={false}
-                  />
-                </div>
+      {/* 作成ダイアログ */}
+      <CommonDialog
+        isOpen={activeDialog === "create"}
+        onClose={() => setActiveDialog(null)}
+        title="作業報告書を作成"
+      >
+        <Form {...createWorkReportForm}>
+          <form onSubmit={createWorkReportForm.handleSubmit(handleCreateReport)} className="space-y-4">
+            <div className="flex gap-4">
+              <YearMonthPickerField
+                control={createWorkReportForm.control}
+                name="yearMonth"
+                yearTriggerClassName="w-24"
+                monthTriggerClassName="w-20"
+                showClearButton={false}
+              />
+            </div>
 
-                <div className="flex justify-end gap-2">
-                  <Button type="button" onClick={() => {
-                    setActiveDialog(null);
-                    reportForm.reset({
-                      yearMonth: currentYearMonth,
-                    });
-                  }}>
-                    キャンセル
-                  </Button>
-                  <Button type="submit">作成</Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
+            <div className="flex justify-end gap-2">
+              <Button type="button" onClick={() => {
+                setActiveDialog(null);
+                createWorkReportForm.reset({
+                  yearMonth: currentYearMonth,
+                });
+              }}>
+                キャンセル
+              </Button>
+              <Button type="submit">作成</Button>
+            </div>
+          </form>
+        </Form>
+      </CommonDialog>
     </div>
   );
 }

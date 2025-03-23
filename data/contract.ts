@@ -1,15 +1,14 @@
 import { db } from "@/lib/db";
-import { ContractSchema } from "@/schemas";
-import { z } from "zod";
+import { Contract } from "@prisma/client";
 
-function processContractValues(values: z.infer<typeof ContractSchema>) {
+function processContractValues(values: Omit<Contract, 'id' | 'createdAt' | 'updatedAt'>) {
   const {
     clientId,
     userId,
     ...rest
   } = values;
 
-  const processedRest = Object.entries(ContractSchema.shape).reduce((acc, [key, schema]) => {
+  const processedRest = Object.entries(values).reduce((acc, [key, schema]) => {
     if (key !== 'clientId' && key !== 'userId') {
       acc[key as keyof typeof rest] = rest[key as keyof typeof rest] ?? null;
     }
@@ -47,7 +46,7 @@ export async function getContractById(contractId: string) {
   return contract;
 }
 
-export async function createContract(values: z.infer<typeof ContractSchema>) {
+export async function createContract(values: Omit<Contract, 'id' | 'createdAt' | 'updatedAt'>) {
   const { processedRest, clientId, userId } = processContractValues(values);
 
   await db.contract.create({
@@ -81,7 +80,7 @@ export async function searchContracts(userId: string, searchQuery: string) {
 
 export async function updateContract(
   id: string,
-  values: z.infer<typeof ContractSchema>
+  values: Omit<Contract, 'id' | 'createdAt' | 'updatedAt'>
 ) {
   const { processedRest, clientId, userId } = processContractValues(values);
 

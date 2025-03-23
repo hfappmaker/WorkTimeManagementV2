@@ -4,22 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useTransitionContext } from "@/contexts/TransitionContext";
-interface WorkReport {
-    id: string;
-    targetDate: Date;
-    status: string;
-    userName: string;
-}
+import { WorkReport as PrismaWorkReport, Contract as PrismaContract, Client as PrismaClient } from "@prisma/client";
 
-interface Contract {
-    contractName: string;
+type WorkReport = Omit<PrismaWorkReport, 'createdAt' | 'updatedAt'>;
+
+type Contract = Pick<PrismaContract, 'id' | 'name'> & {
     workReports: WorkReport[];
-}
+};
 
-interface Client {
-    clientName: string;
+type Client = Pick<PrismaClient, 'id' | 'name'> & {
     contracts: Record<string, Contract>;
-}
+};
 
 interface DashboardClientPageProps {
     groupedWorkReports: Record<string, Client>;
@@ -56,13 +51,13 @@ export default function DashboardClientPage({ groupedWorkReports }: DashboardCli
             {Object.entries(groupedWorkReports).map(([clientId, client]) => (
                 <Card key={clientId} className="mb-6">
                     <CardHeader>
-                        <CardTitle>{client.clientName}</CardTitle>
+                        <CardTitle>{client.name}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
                             {Object.entries(client.contracts).map(([contractId, contract]) => (
                                 <div key={contractId} className="border rounded-lg p-4">
-                                    <h3 className="text-lg font-semibold mb-2">{contract.contractName}</h3>
+                                    <h3 className="text-lg font-semibold mb-2">{contract.name}</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {contract.workReports.map((workReport) => (
                                             <div

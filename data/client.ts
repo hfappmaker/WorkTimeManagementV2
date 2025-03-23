@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
-import { ClientSchema } from "@/schemas";
-import { z } from "zod";
+import { Client } from "@prisma/client";
 
 export async function getClientsByUserId(userId: string) {
   const clients = await db.client.findMany({
@@ -16,7 +15,7 @@ export async function getClientById(clientId: string) {
   return client;
 }
 
-export async function createClient(values: z.infer<typeof ClientSchema>) {
+export async function createClient(values: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {
   await db.client.create({
     data: {
       name: values.name,
@@ -27,14 +26,19 @@ export async function createClient(values: z.infer<typeof ClientSchema>) {
           id: values.createUserId,
         },
       },
+      defaultEmailTemplate: {
+        connect: {
+          id: values.defaultEmailTemplateId || undefined,
+        },
+      },
     },
   });
 }
 
-export async function updateClient(id: string, values: z.infer<typeof ClientSchema>) {
+export async function updateClient(id: string, values: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {
   await db.client.update({
     where: { id },
-    data: { name: values.name, contactName: values.contactName || "", email: values.email || "" },
+    data: { name: values.name, contactName: values.contactName || "", email: values.email || "", defaultEmailTemplateId: values.defaultEmailTemplateId || null },
   });
 }
 

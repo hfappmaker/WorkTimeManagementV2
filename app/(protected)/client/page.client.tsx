@@ -31,15 +31,10 @@ import { truncate } from "@/lib/utils";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
-// クライアント作成/編集では ClientSchema (name, contactName, email, createUserId) を利用するので、
-// 担当者名 (contactName) とメールアドレス (email) も含むようにインターフェースを修正します。
-interface Client {
-  id: string;
-  name: string;
-  contactName: string;
-  email: string;
-  createUserId: string;
-}
+import { Client as PrismaClient } from "@prisma/client";
+
+type ClientFormValues = z.infer<typeof clientFormSchema>;
+type Client = Omit<PrismaClient, 'createdAt' | 'updatedAt'>;
 
 type DialogType = "details" | "create" | "edit" | "delete" | null;
 
@@ -69,14 +64,11 @@ const ClientDialog = ({ type, isOpen, onClose, children }: ClientDialogProps) =>
   </Dialog>
 );
 
-// Add form schema
 const clientFormSchema = z.object({
   name: z.string().min(1, "クライアント名は必須です"),
   contactName: z.string(),
   email: z.string().email("有効なメールアドレスを入力してください"),
 });
-
-type ClientFormValues = z.infer<typeof clientFormSchema>;
 
 interface ClientFormProps {
   defaultValues?: ClientFormValues;
@@ -182,59 +174,46 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     }
   };
 
-  // 作成時は必須項目 (クライアント名、担当者名、メールアドレス) の入力チェックを行い、ClientSchema通りのデータを渡します
-  const handleCreateClient = async (values: ClientFormValues) => {
+  // クライアントデータを変換する関数
+  const convertClientData = (data: ClientFormValues, userId: string) => {
+    return {
+      name: data.name,
+      contactName: data.contactName || "",
+      email: data.email || "",
+      defaultEmailTemplateId: null,
+      createUserId: userId,
+    };
+  };
+
+  // クライアント作成
+  const onCreateClient = async (values: ClientFormValues) => {
     startTransition(async () => {
       try {
-        await createClientAction({
-          createUserId: userId,
-          name: values.name,
-          contactName: values.contactName,
-          email: values.email,
-        });
-
-        setSuccess({ message: "クライアントを作成しました", date: new Date() });
-        await fetchClients();
+        const clientData = convertClientData(values, userId);
+        await createClientAction(clientData);
+        setSuccess({ message: `クライアント '${values.name}' を作成しました`, date: new Date() });
         closeDialog();
-      } catch (error) {
-        if (error instanceof Error) {
-          setError({ message: error.message, date: new Date() });
-        } else {
-          setError({ message: "クライアントの作成に失敗しました", date: new Date() });
-        }
-        console.error(error);
+        await fetchClients();
+      } catch (err) {
+        console.error(err);
+        setError({ message: "クライアントの作成に失敗しました", date: new Date() });
       }
     });
   };
 
-  // Update openEditModal to set form values
-  const openEditModal = () => {
-    if (selectedClient) {
-      setActiveDialog("edit");
-    }
-  };
-
-  // Update handleEditClient to use form values
-  const handleEditClient = async (values: ClientFormValues) => {
+  // クライアント編集
+  const onEditClient = async (values: ClientFormValues) => {
     if (!selectedClient) return;
     startTransition(async () => {
       try {
-        await updateClientAction(selectedClient.id, {
-          createUserId: userId,
-          name: values.name,
-          contactName: values.contactName,
-          email: values.email,
-        });
-        setSuccess({ message: "クライアント情報を更新しました", date: new Date() });
-        await fetchClients();
+        const clientData = convertClientData(values, userId);
+        await updateClientAction(selectedClient.id, clientData);
+        setSuccess({ message: `クライアント '${values.name}' を編集しました`, date: new Date() });
         closeDialog();
-      } catch (error) {
-        if (error instanceof Error) {
-          setError({ message: error.message, date: new Date() });
-        } else {
-          setError({ message: "クライアント情報の更新に失敗しました", date: new Date() });
-        }
-        console.error(error);
+        await fetchClients();
+      } catch (err) {
+        console.error(err);
+        setError({ message: "クライアントの更新に失敗しました", date: new Date() });
       }
     });
   };
@@ -345,7 +324,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
         )}
         <DialogFooter className="flex space-x-2 justify-between">
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={openEditModal}>
+            <Button variant="outline" onClick={() => setActiveDialog("edit")}>
               編集
             </Button>
             <Button variant="destructive" onClick={openDeleteConfirm}>
@@ -365,7 +344,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
         onClose={closeDialog}
       >
         <ClientForm
-          onSubmit={handleCreateClient}
+          onSubmit={onCreateClient}
           submitButtonText="作成"
           onCancel={closeDialog}
         />
@@ -383,7 +362,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
             contactName: selectedClient.contactName,
             email: selectedClient.email,
           } : undefined}
-          onSubmit={handleEditClient}
+          onSubmit={onEditClient}
           submitButtonText="保存"
           onCancel={closeDialog}
         />

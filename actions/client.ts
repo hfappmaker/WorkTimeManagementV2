@@ -1,8 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { ClientSchema } from "@/schemas";
 import {
   getClientById,
   getClientsByUserId,
@@ -10,7 +8,7 @@ import {
   updateClient,
   deleteClient,
 } from "@/data/client";
-
+import { Client } from "@prisma/client";
 export const getClientByIdAction = async (clientId: string) => {
   try {
     return await getClientById(clientId);
@@ -30,7 +28,7 @@ export const getClientsByUserIdAction = async (userId: string) => {
 };
 
 export const createClientAction = async (
-  values: z.infer<typeof ClientSchema>
+  values: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>
 ) => {
   await createClient(values);
   revalidatePath("/client");
@@ -38,7 +36,7 @@ export const createClientAction = async (
 
 export const updateClientAction = async (
   id: string,
-  values: z.infer<typeof ClientSchema>
+  values: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>
 ) => {
   await updateClient(id, values);
   revalidatePath("/client");

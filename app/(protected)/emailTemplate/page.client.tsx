@@ -12,44 +12,202 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { EmailTemplateSchema } from "@/schemas";
 import { useTransitionContext } from "@/contexts/TransitionContext";
+import { EmailTemplate } from "@prisma/client";
 // Define dialog types
 type DialogType = "create" | "edit" | "delete" | "details" | null;
+type EmailTemplateData = Omit<EmailTemplate, 'createdAt' | 'updatedAt'>;
 
-interface EmailTemplate {
-    id: string;
-    name: string;
-    subject: string;
-    body: string;
-    createUserId: string;
+const emailTemplateFormSchema = z.object({
+    name: z.string().min(1, "メールテンプレート名は必須です"),
+    subject: z.string().min(1, "件名は必須です"),
+    body: z.string().min(1, "本文は必須です"),
+  });
+  
+  type EmailTemplateFormValues = z.infer<typeof emailTemplateFormSchema>;
+
+interface EmailTemplateFormDialogProps {
+  defaultValues?: EmailTemplateFormValues;
+  onSubmit: (values: EmailTemplateFormValues) => void;
+  submitButtonText: string;
+  onCancel: () => void;
 }
+
+const EmailTemplateFormDialog = ({ defaultValues, onSubmit, submitButtonText, onCancel }: EmailTemplateFormDialogProps) => {
+  const form = useForm<EmailTemplateFormValues>({
+    resolver: zodResolver(emailTemplateFormSchema),
+    defaultValues: defaultValues || {
+      name: "",
+      subject: "",
+      body: "",
+    },
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Name" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="subject"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Subject</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Subject" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="body"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Body</FormLabel>
+              <FormControl>
+                <TextArea {...field} placeholder="Body" rows={4} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-end gap-2 mt-4">
+          <Button type="button" variant="outline" onClick={onCancel}>キャンセル</Button>
+          <Button type="submit">{submitButtonText}</Button>
+        </div>
+      </form>
+    </Form>
+  );
+};
+
+interface EmailTemplateDialogProps {
+  type: DialogType;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  template?: EmailTemplateData | null;
+  onSubmit?: (values: EmailTemplateFormValues) => void;
+  onDelete?: () => void;
+  onCancel: () => void;
+}
+
+const EmailTemplateDialog = ({ type, isOpen, onOpenChange, template, onSubmit, onDelete, onCancel }: EmailTemplateDialogProps) => {
+  const getDialogTitle = () => {
+    switch (type) {
+      case "create":
+        return "新規メールテンプレート作成";
+      case "edit":
+        return "メールテンプレートを編集";
+      case "delete":
+        return "メールテンプレートの削除確認";
+      case "details":
+        return "メールテンプレート詳細";
+      default:
+        return "";
+    }
+  };
+
+  const renderContent = () => {
+    switch (type) {
+      case "create":
+        return (
+          <EmailTemplateFormDialog
+            onSubmit={onSubmit!}
+            submitButtonText="作成"
+            onCancel={onCancel}
+          />
+        );
+      case "edit":
+        return (
+          <EmailTemplateFormDialog
+            defaultValues={template ? {
+              name: template.name,
+              subject: template.subject,
+              body: template.body,
+            } : undefined}
+            onSubmit={onSubmit!}
+            submitButtonText="更新"
+            onCancel={onCancel}
+          />
+        );
+      case "delete":
+        return (
+          <>
+            <div>
+              <p>本当にメールテンプレート "{template?.name}" を削除しますか？</p>
+              <p className="text-sm text-gray-500 mt-2">この操作は元に戻すことができません。</p>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={onCancel}>キャンセル</Button>
+              <Button variant="destructive" onClick={onDelete}>削除</Button>
+            </div>
+          </>
+        );
+      case "details":
+        return (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium">基本情報</h3>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className="font-semibold">Name</div>
+                <div>{template?.name}</div>
+                <div className="font-semibold">Subject</div>
+                <div>{template?.subject}</div>
+                <div className="font-semibold">Body</div>
+                <div>{template?.body}</div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>閉じる</Button>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onCancel();
+      }}
+    >
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogContent className="w-96 p-6">
+          <DialogHeader>
+            <DialogTitle>{getDialogTitle()}</DialogTitle>
+          </DialogHeader>
+          {renderContent()}
+        </DialogContent>
+      </DialogPortal>
+    </Dialog>
+  );
+};
 
 export default function EmailTemplateClientPage({ userId }: { userId: string }) {
     // Local state for templates, dialogs, active template etc.
-    const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+    const [templates, setTemplates] = useState<EmailTemplateData[]>([]);
     const [activeDialog, setActiveDialog] = useState<DialogType>(null);
-    const [activeEmailTemplate, setActiveEmailTemplate] = useState<EmailTemplate | null>(null);
+    const [activeEmailTemplate, setActiveEmailTemplate] = useState<EmailTemplateData | null>(null);
     const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
     const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
     const { startTransition } = useTransitionContext();
-
-    const defaultFormValues = {
-        name: "",
-        subject: "",
-        body: "",
-        createUserId: userId,
-    };
-
-    const createForm = useForm<z.infer<typeof EmailTemplateSchema>>({
-        resolver: zodResolver(EmailTemplateSchema),
-        defaultValues: defaultFormValues,
-    });
-
-    const editForm = useForm<z.infer<typeof EmailTemplateSchema>>({
-        resolver: zodResolver(EmailTemplateSchema),
-        defaultValues: defaultFormValues,
-    });
 
     // Refresh email templates from the server
     const refreshTemplates = async () => {
@@ -75,13 +233,23 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
         setActiveEmailTemplate(null);
     };
 
-    // Create email template
-    const onCreateEmailTemplate = (data: z.infer<typeof EmailTemplateSchema>) => {
+    // メールテンプレートデータを変換する関数
+    const convertEmailTemplateData = (data: EmailTemplateFormValues, userId: string) => {
+        return {
+            name: data.name,
+            subject: data.subject,
+            body: data.body,
+            createUserId: userId,
+        };
+    };
+
+    // メールテンプレート作成
+    const onCreateEmailTemplate = (data: EmailTemplateFormValues) => {
         startTransition(async () => {
             try {
-                await createEmailTemplateAction(data);
+                const templateData = convertEmailTemplateData(data, userId);
+                await createEmailTemplateAction(templateData);
                 setSuccess({ message: `メールテンプレート '${data.name}' を作成しました`, date: new Date() });
-                createForm.reset(defaultFormValues);
                 closeDialog();
                 await refreshTemplates();
             } catch (err) {
@@ -91,15 +259,15 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
         });
     };
 
-    // Edit email template
-    const onEditEmailTemplate = (data: z.infer<typeof EmailTemplateSchema>) => {
+    // メールテンプレート編集
+    const onEditEmailTemplate = (data: EmailTemplateFormValues) => {
         if (!activeEmailTemplate) return;
         startTransition(async () => {
             try {
-                await updateEmailTemplateAction(activeEmailTemplate.id, data);
+                const templateData = convertEmailTemplateData(data, userId);
+                await updateEmailTemplateAction(activeEmailTemplate.id, templateData);
                 setSuccess({ message: `メールテンプレート '${data.name}' を編集しました`, date: new Date() });
                 closeDialog();
-                editForm.reset(defaultFormValues);
                 await refreshTemplates();
             } catch (err) {
                 console.error(err);
@@ -108,7 +276,7 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
         });
     };
 
-    // Delete email template
+    // メールテンプレート削除
     const onDeleteEmailTemplate = () => {
         if (!activeEmailTemplate) return;
         startTransition(async () => {
@@ -124,18 +292,6 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
         });
     };
 
-    // Initialize edit form when edit dialog opens
-    useEffect(() => {
-        if (activeDialog === "edit" && activeEmailTemplate) {
-            editForm.reset({
-                name: activeEmailTemplate.name,
-                subject: activeEmailTemplate.subject,
-                body: activeEmailTemplate.body,
-                createUserId: activeEmailTemplate.createUserId,
-            });
-        }
-    }, [activeDialog, activeEmailTemplate, editForm]);
-
     return (
         <div className="p-4">
                 <h1 className="text-2xl font-bold mb-4">メールテンプレート一覧</h1>
@@ -148,7 +304,7 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
                     <ul>
                         {templates.map((template) => (
                             <li key={template.id} className="border p-3 mb-2 flex justify-between items-center">
-                                <div className="cursor-pointer">
+                                <div className="cursor-pointer" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("details"); }}>
                                     <div className="font-medium">{template.name}</div>
                                     <div className="text-sm text-muted-foreground">Subject: {template.subject}</div>
                                 </div>
@@ -162,195 +318,17 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
                     <p>メールテンプレートがありません。</p>
                 )}
 
-                {/* Details Dialog */}
-                <Dialog
-                    open={activeDialog === "details"}
+                <EmailTemplateDialog
+                    type={activeDialog!}
+                    isOpen={activeDialog !== null}
                     onOpenChange={(open) => {
                         if (!open) closeDialog();
                     }}
-                >
-                    <DialogPortal>
-                        <DialogOverlay />
-                        <DialogContent className="w-96 p-6">
-                            <DialogHeader>
-                                <DialogTitle>メールテンプレート詳細</DialogTitle>
-                            </DialogHeader>
-                            {activeEmailTemplate && (
-                                <div className="space-y-4">
-                                    <div>
-                                        <h3 className="text-lg font-medium">基本情報</h3>
-                                        <div className="grid grid-cols-2 gap-2 mt-2">
-                                            <div className="font-semibold">Name</div>
-                                            <div>{activeEmailTemplate.name}</div>
-                                            <div className="font-semibold">Subject</div>
-                                            <div>{activeEmailTemplate.subject}</div>
-                                            <div className="font-semibold">Body</div>
-                                            <div>{activeEmailTemplate.body}</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-end gap-2 mt-4">
-                                        <Button variant="outline" onClick={() => setActiveDialog("edit")}>編集</Button>
-                                        <Button variant="destructive" onClick={() => setActiveDialog("delete")}>削除</Button>
-                                        <Button variant="outline" onClick={closeDialog}>閉じる</Button>
-                                    </div>
-                                </div>
-                            )}
-                        </DialogContent>
-                    </DialogPortal>
-                </Dialog>
-
-                {/* Create Dialog */}
-                <Dialog
-                    open={activeDialog === "create"}
-                    onOpenChange={(open) => {
-                        if (!open) closeDialog();
-                    }}
-                >
-                    <DialogPortal>
-                        <DialogOverlay />
-                        <DialogContent className="w-96 p-6">
-                            <DialogHeader>
-                                <DialogTitle>新規メールテンプレート作成</DialogTitle>
-                            </DialogHeader>
-                            <Form {...createForm}>
-                                <form onSubmit={createForm.handleSubmit(onCreateEmailTemplate)} className="space-y-4">
-                                    <FormField
-                                        control={createForm.control}
-                                        name="name"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Name</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Name" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={createForm.control}
-                                        name="subject"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Subject</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Subject" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={createForm.control}
-                                        name="body"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Body</FormLabel>
-                                                <FormControl>
-                                                    <TextArea {...field} placeholder="Body" rows={4} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <div className="flex justify-end gap-2 mt-4">
-                                        <Button type="button" variant="outline" onClick={closeDialog}>キャンセル</Button>
-                                        <Button type="submit">作成</Button>
-                                    </div>
-                                </form>
-                            </Form>
-                        </DialogContent>
-                    </DialogPortal>
-                </Dialog>
-
-                {/* Edit Dialog */}
-                <Dialog
-                    open={activeDialog === "edit"}
-                    onOpenChange={(open) => {
-                        if (!open) closeDialog();
-                    }}
-                >
-                    <DialogPortal>
-                        <DialogOverlay />
-                        <DialogContent className="w-96 p-6">
-                            <DialogHeader>
-                                <DialogTitle>メールテンプレートを編集</DialogTitle>
-                            </DialogHeader>
-                            <Form {...editForm}>
-                                <form onSubmit={editForm.handleSubmit(onEditEmailTemplate)} className="space-y-4">
-                                    <FormField
-                                        control={editForm.control}
-                                        name="name"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Name</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Name" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={editForm.control}
-                                        name="subject"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Subject</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Subject" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={editForm.control}
-                                        name="body"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Body</FormLabel>
-                                                <FormControl>
-                                                    <TextArea {...field} placeholder="Body" rows={4} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <div className="flex justify-end gap-2 mt-4">
-                                        <Button type="button" variant="outline" onClick={closeDialog}>キャンセル</Button>
-                                        <Button type="submit">更新</Button>
-                                    </div>
-                                </form>
-                            </Form>
-                        </DialogContent>
-                    </DialogPortal>
-                </Dialog>
-
-                {/* Delete Dialog */}
-                <Dialog
-                    open={activeDialog === "delete"}
-                    onOpenChange={(open) => {
-                        if (!open) closeDialog();
-                    }}
-                >
-                    <DialogPortal>
-                        <DialogOverlay />
-                        <DialogContent className="w-96 p-6">
-                            <DialogHeader>
-                                <DialogTitle>メールテンプレートの削除確認</DialogTitle>
-                            </DialogHeader>
-                            <div>
-                                <p>本当にメールテンプレート "{activeEmailTemplate?.name}" を削除しますか？</p>
-                                <p className="text-sm text-gray-500 mt-2">この操作は元に戻すことができません。</p>
-                            </div>
-                            <div className="flex justify-end gap-2 mt-4">
-                                <Button variant="outline" onClick={closeDialog}>キャンセル</Button>
-                                <Button variant="destructive" onClick={onDeleteEmailTemplate}>削除</Button>
-                            </div>
-                        </DialogContent>
-                    </DialogPortal>
-                </Dialog>
+                    template={activeEmailTemplate}
+                    onSubmit={activeDialog === "create" ? onCreateEmailTemplate : onEditEmailTemplate}
+                    onDelete={onDeleteEmailTemplate}
+                    onCancel={closeDialog}
+                />
         </div>
     );
 }

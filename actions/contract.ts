@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { ContractSchema } from "@/schemas";
 import {
   createContract,
   updateContract,
@@ -12,9 +11,9 @@ import {
   getContractById,
   getContractsByClientId,
 } from "@/data/contract";
-
+import { Contract } from "@prisma/client";
 export const createContractAction = async (
-  values: z.infer<typeof ContractSchema>
+  values: Omit<Contract, 'id' | 'createdAt' | 'updatedAt'>
 ) => {
   await createContract(values);
   console.log("Contract created successfully");
@@ -23,7 +22,7 @@ export const createContractAction = async (
 
 export const updateContractAction = async (
   id: string,
-  values: z.infer<typeof ContractSchema>
+  values: Omit<Contract, 'id' | 'createdAt' | 'updatedAt'>
 ) => {
   await updateContract(id, values);
   revalidatePath(`/client/${values.clientId}`);

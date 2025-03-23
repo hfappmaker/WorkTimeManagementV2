@@ -1,15 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { EmailTemplateSchema } from "@/schemas";
 import {
   createEmailTemplate,
   deleteEmailTemplate,
   updateEmailTemplate,
   getEmailTemplatesByCreateUserId,
 } from "@/data/email-template";
-
+import { EmailTemplate } from "@prisma/client";
 export const getEmailTemplatesByCreateUserIdAction = async (
   createUserId: string
 ) => {
@@ -25,7 +23,7 @@ export const getEmailTemplatesByCreateUserIdAction = async (
 };
 
 export const createEmailTemplateAction = async (
-  values: z.infer<typeof EmailTemplateSchema>
+  values: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>
 ) => {
   const name = values.name;
   const subject = values.subject;
@@ -48,7 +46,7 @@ export const createEmailTemplateAction = async (
 
 export const updateEmailTemplateAction = async (
   id: string,
-  values: z.infer<typeof EmailTemplateSchema>
+  values: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>
 ) => {
   const name = values.name;
   const subject = values.subject;
