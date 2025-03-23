@@ -32,19 +32,40 @@ interface Client {
   createUserId: string;
 }
 
-// 共通のContractFormコンポーネント
-type ContractFormProps = {
-  form: UseFormReturn<ContractFormValues>;
-  onSubmit: (data: ContractFormValues) => void;
+interface ContractFormProps {
+  defaultValues?: ContractFormValues;
+  onSubmit: (values: ContractFormValues) => Promise<void>;
   onCancel: () => void;
   submitButtonText: string;
-};
+}
 
 type DialogType = "create" | "edit" | "delete" | "details" | null;
 
-const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFormProps) => {
-  // Add state for rate type
-  const [rateType, setRateType] = useState<"upperLower" | "middle">("upperLower");
+const ContractForm = ({ defaultValues, onSubmit, onCancel, submitButtonText }: ContractFormProps) => {
+  const form = useForm<ContractFormValues>({
+    resolver: zodResolver(ContractSchema),
+    defaultValues: defaultValues || {
+      name: "",
+      startDate: undefined,
+      endDate: undefined,
+      unitPrice: undefined,
+      settlementMin: undefined,
+      settlementMax: undefined,
+      rateType: "upperLower",
+      upperRate: undefined,
+      lowerRate: undefined,
+      middleRate: undefined,
+      dailyWorkMinutes: 15,
+      monthlyWorkMinutes: 15,
+      basicStartTime: undefined,
+      basicEndTime: undefined,
+      basicBreakDuration: undefined,
+      closingDay: undefined,
+    },
+  });
+
+  // rateTypeの状態をformの値から取得
+  const rateType = form.watch("rateType");
 
   return (
     <Form {...form}>
@@ -114,7 +135,7 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
               <FormControl>
                 <RadioGroup
                   onValueChange={(value: "upperLower" | "middle") => {
-                    setRateType(value);
+                    form.setValue("rateType", value);
                   }}
                   defaultValue={form.getValues("rateType")}
                   className="flex flex-row space-x-4"
@@ -230,6 +251,35 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
   );
 };
 
+const ContractDialog = ({ 
+  type, 
+  isOpen, 
+  onClose, 
+  children 
+}: { 
+  type: DialogType;
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) => (
+  <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogContent className="max-h-[90vh] w-[95vw] max-w-[1400px] overflow-y-auto p-8">
+        <DialogHeader>
+          <DialogTitle>
+            {type === "create" && "契約を作成"}
+            {type === "edit" && "契約を編集"}
+            {type === "delete" && "契約の削除確認"}
+            {type === "details" && "契約詳細"}
+          </DialogTitle>
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </DialogPortal>
+  </Dialog>
+);
+
 export default function ClientClientDetailsPage({ client, userId }: { client: Client, userId: string }) {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [activeContract, setActiveContract] = useState<Contract | null>(null);
@@ -238,40 +288,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const { startTransition } = useTransitionContext();
   const router = useRouter();
-
-  // フォームのデフォルト値
-  const defaultFormValues: ContractFormValues = {
-    userId: userId,
-    clientId: client.id,
-    name: "",
-    startDate: new Date(),
-    endDate: undefined,
-    unitPrice: undefined,
-    settlementMin: undefined,
-    settlementMax: undefined,
-    upperRate: undefined,
-    lowerRate: undefined,
-    middleRate: undefined,
-    dailyWorkMinutes: undefined,
-    monthlyWorkMinutes: undefined,
-    basicStartTime: undefined,
-    basicEndTime: undefined,
-    basicBreakDuration: undefined,
-    closingDay: undefined,
-    rateType: "upperLower" as const,
-  };
-
-  // 契約作成フォーム
-  const createForm = useForm<ContractFormValues>({
-    resolver: zodResolver(ContractSchema),
-    defaultValues: defaultFormValues,
-  });
-
-  // 編集フォーム
-  const editForm = useForm<ContractFormValues>({
-    resolver: zodResolver(ContractSchema),
-    defaultValues: defaultFormValues,
-  });
 
   // 初期データ読み込み
   useEffect(() => {
@@ -309,12 +325,11 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   };
 
   // 契約作成
-  const onCreateContract = (data: ContractFormValues) => {
+  const onCreateContract = async (data: ContractFormValues) => {
     startTransition(async () => {
       try {
         await createContractAction(data);
         setSuccess({ message: `契約 '${data.name}' を作成しました`, date: new Date() });
-        createForm.reset(defaultFormValues);
         closeDialog();
         await refreshContracts();
       } catch (err) {
@@ -325,14 +340,13 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   };
 
   // 契約編集
-  const onEditContract = (data: ContractFormValues) => {
+  const onEditContract = async (data: ContractFormValues) => {
     if (!activeContract) return;
     startTransition(async () => {
       try {
         await updateContractAction(activeContract.id, data);
         setSuccess({ message: `契約 '${data.name}' を編集しました`, date: new Date() });
         closeDialog();
-        editForm.reset(defaultFormValues);
         await refreshContracts();
       } catch (err) {
         console.error(err);
@@ -362,32 +376,6 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       router.push(url);
     });
   };
-
-  // 編集ダイアログが開かれたときのフォーム初期化
-  useEffect(() => {
-    if (activeDialog === "edit" && activeContract) {
-      editForm.reset({
-        userId: userId,
-        clientId: client.id,
-        name: activeContract.name,
-        startDate: new Date(activeContract.startDate),
-        endDate: activeContract.endDate ? new Date(activeContract.endDate) : undefined,
-        unitPrice: activeContract.unitPrice ? Number(activeContract.unitPrice) : undefined,
-        settlementMin: activeContract.settlementMin ? Number(activeContract.settlementMin) : undefined,
-        settlementMax: activeContract.settlementMax ? Number(activeContract.settlementMax) : undefined,
-        upperRate: activeContract.upperRate ? Number(activeContract.upperRate) : undefined,
-        lowerRate: activeContract.lowerRate ? Number(activeContract.lowerRate) : undefined,
-        middleRate: activeContract.middleRate ? Number(activeContract.middleRate) : undefined,
-        dailyWorkMinutes: activeContract.dailyWorkMinutes ? Number(activeContract.dailyWorkMinutes) : undefined,
-        monthlyWorkMinutes: activeContract.monthlyWorkMinutes ? Number(activeContract.monthlyWorkMinutes) : undefined,
-        basicStartTime: activeContract.basicStartTime ? new Date(activeContract.basicStartTime) : undefined,
-        basicEndTime: activeContract.basicEndTime ? new Date(activeContract.basicEndTime) : undefined,
-        basicBreakDuration: activeContract.basicBreakDuration ? Number(activeContract.basicBreakDuration) : undefined,
-        closingDay: activeContract.closingDay ? Number(activeContract.closingDay) : undefined,
-        rateType: activeContract.rateType,
-      });
-    }
-  }, [activeDialog, activeContract, editForm]);
 
   return (
     <div className="p-6 space-y-6">
@@ -439,147 +427,110 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
         <Button onClick={() => setActiveDialog("create")}>契約を作成</Button>
       </div>
 
-      <Dialog
-        open={activeDialog === "details"}
-        onOpenChange={(open) => {
-          if (!open) closeDialog();
-        }}
+      <ContractDialog
+        type="details"
+        isOpen={activeDialog === "details"}
+        onClose={closeDialog}
       >
-        <DialogPortal>
-          <DialogOverlay />
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>契約詳細</DialogTitle>
-            </DialogHeader>
-            {activeContract && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-3">基本情報</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="font-semibold">契約名</div>
-                    <div>{activeContract.name}</div>
-                    <div className="font-semibold">開始日</div>
-                    <div>{new Date(activeContract.startDate).toLocaleDateString()}</div>
-                    <div className="font-semibold">終了日</div>
-                    <div>{activeContract.endDate ? new Date(activeContract.endDate).toLocaleDateString() : 'なし'}</div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-medium mb-3">精算情報</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="font-semibold">単価</div>
-                    <div>{activeContract.unitPrice ? `${activeContract.unitPrice}円` : 'なし'}</div>
-                    <div className="font-semibold">精算下限</div>
-                    <div>{activeContract.settlementMin ? `${activeContract.settlementMin}時間` : 'なし'}</div>
-                    <div className="font-semibold">精算上限</div>
-                    <div>{activeContract.settlementMax ? `${activeContract.settlementMax}時間` : 'なし'}</div>
-                    <div className="font-semibold">超過単価</div>
-                    <div>{activeContract.upperRate ? `${activeContract.upperRate}円` : 'なし'}</div>
-                    <div className="font-semibold">控除単価</div>
-                    <div>{activeContract.lowerRate ? `${activeContract.lowerRate}円` : 'なし'}</div>
-                    <div className="font-semibold">中間単価</div>
-                    <div>{activeContract.middleRate ? `${activeContract.middleRate}円` : 'なし'}</div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-medium mb-3">勤務設定</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="font-semibold">1日あたりの作業単位</div>
-                    <div>{activeContract.dailyWorkMinutes ? `${activeContract.dailyWorkMinutes}分` : 'なし'}</div>
-                    <div className="font-semibold">1ヶ月あたりの作業単位</div>
-                    <div>{activeContract.monthlyWorkMinutes ? `${activeContract.monthlyWorkMinutes}分` : 'なし'}</div>
-                    <div className="font-semibold">基本開始時刻</div>
-                    <div>{activeContract.basicStartTime ? new Date(activeContract.basicStartTime).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }) : 'なし'}</div>
-                    <div className="font-semibold">基本終了時刻</div>
-                    <div>{activeContract.basicEndTime ? new Date(activeContract.basicEndTime).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }) : 'なし'}</div>
-                    <div className="font-semibold">基本休憩時間</div>
-                    <div>{activeContract.basicBreakDuration ? `${activeContract.basicBreakDuration}分` : 'なし'}</div>
-                    <div className="font-semibold">締め日</div>
-                    <div>{activeContract.closingDay ? `${activeContract.closingDay}日` : '末日'}</div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={() => setActiveDialog("edit")}>編集</Button>
-                  <Button variant="destructive" onClick={() => setActiveDialog("delete")}>削除</Button>
-                  <Button variant="outline" onClick={closeDialog}>閉じる</Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
-
-      <Dialog
-        open={activeDialog === "create"}
-        onOpenChange={(open) => {
-          if (!open) closeDialog();
-        }}
-      >
-        <DialogPortal>
-          <DialogOverlay />
-          <DialogContent className="max-h-[90vh] w-[95vw] max-w-[1400px] overflow-y-auto p-8">
-            <DialogHeader>
-              <DialogTitle>契約を作成</DialogTitle>
-            </DialogHeader>
-            <ContractForm
-              form={createForm}
-              onSubmit={onCreateContract}
-              onCancel={closeDialog}
-              submitButtonText="作成"
-            />
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
-
-      <Dialog
-        open={activeDialog === "edit"}
-        onOpenChange={(open) => {
-          if (!open) closeDialog();
-        }}
-      >
-        <DialogPortal>
-          <DialogOverlay />
-          <DialogContent className="max-h-[90vh] w-[95vw] max-w-[1400px] overflow-y-auto p-8">
-            <DialogHeader>
-              <DialogTitle>契約を編集</DialogTitle>
-            </DialogHeader>
-            <ContractForm
-              form={editForm}
-              onSubmit={onEditContract}
-              onCancel={closeDialog}
-              submitButtonText="更新"
-            />
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
-
-      <Dialog
-        open={activeDialog === "delete"}
-        onOpenChange={(open) => {
-          if (!open) closeDialog();
-        }}
-      >
-        <DialogPortal>
-          <DialogOverlay />
-          <DialogContent>
-
-            <DialogHeader>
-              <DialogTitle>契約の削除確認</DialogTitle>
-            </DialogHeader>
+        {activeContract && (
+          <div className="space-y-6">
             <div>
-              <p>本当に契約 "{activeContract?.name}" を削除しますか？</p>
-              <p className="text-sm text-gray-500 mt-2">この操作は元に戻すことができません。</p>
+              <h3 className="text-lg font-medium mb-3">基本情報</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="font-semibold">契約名</div>
+                <div>{activeContract.name}</div>
+                <div className="font-semibold">開始日</div>
+                <div>{new Date(activeContract.startDate).toLocaleDateString()}</div>
+                <div className="font-semibold">終了日</div>
+                <div>{activeContract.endDate ? new Date(activeContract.endDate).toLocaleDateString() : 'なし'}</div>
+              </div>
             </div>
+
+            <div>
+              <h3 className="text-lg font-medium mb-3">精算情報</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="font-semibold">単価</div>
+                <div>{activeContract.unitPrice ? `${activeContract.unitPrice}円` : 'なし'}</div>
+                <div className="font-semibold">精算下限</div>
+                <div>{activeContract.settlementMin ? `${activeContract.settlementMin}時間` : 'なし'}</div>
+                <div className="font-semibold">精算上限</div>
+                <div>{activeContract.settlementMax ? `${activeContract.settlementMax}時間` : 'なし'}</div>
+                <div className="font-semibold">超過単価</div>
+                <div>{activeContract.upperRate ? `${activeContract.upperRate}円` : 'なし'}</div>
+                <div className="font-semibold">控除単価</div>
+                <div>{activeContract.lowerRate ? `${activeContract.lowerRate}円` : 'なし'}</div>
+                <div className="font-semibold">中間単価</div>
+                <div>{activeContract.middleRate ? `${activeContract.middleRate}円` : 'なし'}</div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium mb-3">勤務設定</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="font-semibold">1日あたりの作業単位</div>
+                <div>{activeContract.dailyWorkMinutes ? `${activeContract.dailyWorkMinutes}分` : 'なし'}</div>
+                <div className="font-semibold">1ヶ月あたりの作業単位</div>
+                <div>{activeContract.monthlyWorkMinutes ? `${activeContract.monthlyWorkMinutes}分` : 'なし'}</div>
+                <div className="font-semibold">基本開始時刻</div>
+                <div>{activeContract.basicStartTime ? new Date(activeContract.basicStartTime).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }) : 'なし'}</div>
+                <div className="font-semibold">基本終了時刻</div>
+                <div>{activeContract.basicEndTime ? new Date(activeContract.basicEndTime).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }) : 'なし'}</div>
+                <div className="font-semibold">基本休憩時間</div>
+                <div>{activeContract.basicBreakDuration ? `${activeContract.basicBreakDuration}分` : 'なし'}</div>
+                <div className="font-semibold">締め日</div>
+                <div>{activeContract.closingDay ? `${activeContract.closingDay}日` : '末日'}</div>
+              </div>
+            </div>
+
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={closeDialog}>キャンセル</Button>
-              <Button variant="destructive" onClick={onDeleteContract}>削除</Button>
+              <Button variant="outline" onClick={() => setActiveDialog("edit")}>編集</Button>
+              <Button variant="destructive" onClick={() => setActiveDialog("delete")}>削除</Button>
+              <Button variant="outline" onClick={closeDialog}>閉じる</Button>
             </div>
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
+          </div>
+        )}
+      </ContractDialog>
+
+      <ContractDialog
+        type="create"
+        isOpen={activeDialog === "create"}
+        onClose={closeDialog}
+      >
+        <ContractForm
+          defaultValues={undefined}
+          onSubmit={onCreateContract}
+          onCancel={closeDialog}
+          submitButtonText="作成"
+        />
+      </ContractDialog>
+
+      <ContractDialog
+        type="edit"
+        isOpen={activeDialog === "edit"}
+        onClose={closeDialog}
+      >
+        <ContractForm
+          defaultValues={activeContract ? activeContract : undefined}
+          onSubmit={onEditContract}
+          onCancel={closeDialog}
+          submitButtonText="更新"
+        />
+      </ContractDialog>
+
+      <ContractDialog
+        type="delete"
+        isOpen={activeDialog === "delete"}
+        onClose={closeDialog}
+      >
+        <div>
+          <p>本当に契約 "{activeContract?.name}" を削除しますか？</p>
+          <p className="text-sm text-gray-500 mt-2">この操作は元に戻すことができません。</p>
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline" onClick={closeDialog}>キャンセル</Button>
+          <Button variant="destructive" onClick={onDeleteContract}>削除</Button>
+        </div>
+      </ContractDialog>
     </div>
   );
 } 
