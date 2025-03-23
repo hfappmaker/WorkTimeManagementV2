@@ -1,5 +1,5 @@
 import { currentUser } from "./auth";
-import { baseDb } from "./db-instance";
+import { baseDb } from "./base-db";
 
 declare global {
   var prisma: ExtendedPrismaClient | undefined;

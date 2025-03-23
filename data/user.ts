@@ -1,4 +1,4 @@
-import { baseDb } from "@/lib/db-instance";
+import { baseDb } from "@/lib/base-db";
 
 export const getUserByEmail = async (email: string) => {
   try {
