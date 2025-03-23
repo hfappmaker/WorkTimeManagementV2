@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FaCalendarAlt } from "react-icons/fa";
-import { FC, useRef } from "react";
+import { FC, useCallback, useRef, useState } from "react";
 import { FieldValues, Control, Path } from "react-hook-form";
 import { FormControl, FormField, FormMessage, FormItem, FormLabel } from "./form";
 import { SelectItem } from "./select";
@@ -64,46 +64,107 @@ export const DatePicker: FC<DatePickerProps> = ({
 
 DatePicker.displayName = "DatePicker";
 
-interface DatePickerFieldProps<T extends FieldValues, V extends Date | null> {
+interface DatePickerFieldProps<T extends FieldValues> {
   control: Control<T>;
   name: Path<T> & {
-    [P in Path<T>]: T[P] extends (V | null) ? P : never;
+    [P in Path<T>]: T[P] extends (Date | undefined) ? P : never;
   }[Path<T>];
   label: string;
   placeholder?: string;
 }
 
-export const DatePickerField = <T extends FieldValues, V extends Date | null>(props: DatePickerFieldProps<T, V>) => {
+export const DatePickerField = <T extends FieldValues>(props: DatePickerFieldProps<T>) => {
+  const { control, name, label, placeholder } = props;
   return (
     <FormField
-      control={props.control}
-      name={props.name}
-      render={({ field }) => (
-        <FormItem className="flex-1">
-          <FormLabel>{props.label}</FormLabel>
-          <FormControl>
-            <DatePicker
-              value={field.value ? new Date(field.value).toISOString().split('T')[0] : ""}
-              onChange={(date) => field.onChange(date ? new Date(date) : null)}
-              placeholder={props.placeholder}
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
+      control={control}
+      name={name}
+      render={({ field }) => {
+        const [selectedDate, setSelectedDate] = useState<string>(field.value ? new Date(field.value).toISOString().split('T')[0] : "");
+        
+        return (
+          <FormItem className="flex-1">
+            <FormLabel>{label}</FormLabel>
+            <FormControl>
+              <DatePicker
+                value={selectedDate}
+                onChange={(date) => {
+                  setSelectedDate(date);
+                  field.onChange(date ? new Date(date) : undefined);
+                }}
+                placeholder={placeholder}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
-  )
+  );
+};
+
+interface CommonSelectProps {
+  value?: string;
+  onValueChange: (value: string) => void;
+  placeholder: React.ReactNode;
+  className?: string;
+  options: Array<{ value: string; label: string }>;
 }
+
+const CommonSelect = React.memo(({ value, onValueChange, placeholder, className, options }: CommonSelectProps) => {
+  const items = React.useMemo(() =>
+    options.map((option) => (
+      <SelectItem key={option.value} value={option.value}>
+        {option.label}
+      </SelectItem>
+    )),
+    [options]
+  );
+
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <FormControl>
+        <SelectTrigger className={className}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+      </FormControl>
+      <SelectContent>
+        {items}
+      </SelectContent>
+    </Select>
+  );
+});
+
+// 年の選択肢を生成 (2025年から2099年までの範囲)
+const YEAR_OPTIONS = Array.from({ length: 75 }, (_, i) => ({
+  value: (2025 + i).toString(),
+  label: `${2025 + i}年`
+}));
+
+// 月の選択肢を生成
+const MONTH_OPTIONS = [
+  { value: '0', label: '1月' },
+  { value: '1', label: '2月' },
+  { value: '2', label: '3月' },
+  { value: '3', label: '4月' },
+  { value: '4', label: '5月' },
+  { value: '5', label: '6月' },
+  { value: '6', label: '7月' },
+  { value: '7', label: '8月' },
+  { value: '8', label: '9月' },
+  { value: '9', label: '10月' },
+  { value: '10', label: '11月' },
+  { value: '11', label: '12月' },
+];
 
 interface YearMonthPickerFieldProps<T extends FieldValues> {
   control: Control<T>;
   name: Path<T> & {
-    [P in Path<T>]: T[P] extends (Date | null) ? P : never;
+    [P in Path<T>]: T[P] extends (Date | undefined) ? P : never;
   }[Path<T>];
   label?: string;
   yearPlaceholder?: string;
   monthPlaceholder?: string;
-  defaultValue?: Date;
   showClearButton?: boolean;
   yearTriggerClassName?: string;
   monthTriggerClassName?: string;
@@ -116,101 +177,77 @@ export const YearMonthPickerField = <T extends FieldValues>(props: YearMonthPick
     yearPlaceholder = "年",
     monthPlaceholder = "月",
     label,
-    defaultValue,
     showClearButton = true,
     yearTriggerClassName,
     monthTriggerClassName } = props;
-  // 年の選択肢を生成 (2025年から2099年までの範囲)
-  const startYear = 2025;
-  const endYear = 2099;
-  const yearOptions = Array.from({ length: endYear - startYear + 1 }, (_, i) => ({
-    value: (startYear + i),
-    label: `${startYear + i}年`
-  }));
-
-  // 月の選択肢を生成（ComboBox用にオブジェクト形式で）
-  const monthOptions = [
-    { value: 0, label: '1月' },
-    { value: 1, label: '2月' },
-    { value: 2, label: '3月' },
-    { value: 3, label: '4月' },
-    { value: 4, label: '5月' },
-    { value: 5, label: '6月' },
-    { value: 6, label: '7月' },
-    { value: 7, label: '8月' },
-    { value: 8, label: '9月' },
-    { value: 9, label: '10月' },
-    { value: 10, label: '11月' },
-    { value: 11, label: '12月' },
-  ];
 
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field }) =>
-        <FormItem className="flex flex-col gap-2">
-          <FormLabel>{label ?? ""}</FormLabel>
-          <div className="flex gap-2">
-            <Select
-              onValueChange={(value) => {
-                const option = yearOptions.find(opt => opt.value?.toString() === value);
-                if (option) {
-                  field.onChange(new Date(Date.UTC(option.value, field.value?.getMonth() ?? 0, 1)));
-                }
-              }}
-              value={field.value?.getFullYear().toString() ?? ""}
-            >
-              <FormControl>
-                <SelectTrigger className={yearTriggerClassName}>
-                  <SelectValue placeholder={<span className="text-muted-foreground">{yearPlaceholder}</span>} className="truncate" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent defaultValue={defaultValue?.getFullYear().toString()}>
-                {yearOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value?.toString() ?? ""}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              onValueChange={(value) => {
-                const option = monthOptions.find(opt => opt.value?.toString() === value);
-                if (option) {
-                  field.onChange(new Date(Date.UTC(field.value?.getFullYear() ?? startYear, option.value, 1)));
-                }
-              }}
-              value={field.value?.getMonth().toString() ?? ""}
-            >
-              <FormControl>
-                <SelectTrigger className={monthTriggerClassName}>
-                  <SelectValue placeholder={<span className="text-muted-foreground">{monthPlaceholder}</span>} className="truncate" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent defaultValue={defaultValue?.getMonth().toString()}>
-                {monthOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value?.toString() ?? ""}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {showClearButton && (
-            <Button
-              type="button"
-              onClick={() => field.onChange(null)}
-              variant="outline"
-              size="sm"
-              className="text-sm text-muted-foreground hover:text-foreground w-fit"
-            >
-              クリア
-            </Button>
-          )}
-          <FormMessage />
-        </FormItem>
-      }
+      render={({ field }) => {
+        const date = field.value as Date | undefined;
+        const selectedYear = date?.getFullYear().toString();
+        const selectedMonth = date?.getMonth().toString();
+
+        const handleYearChange = React.useCallback((value: string) => {
+          if (value && selectedMonth) {
+            field.onChange(new Date(Date.UTC(parseInt(value), parseInt(selectedMonth), 1)));
+          }
+        }, [field, selectedMonth]);
+
+        const handleMonthChange = React.useCallback((value: string) => {
+          if (selectedYear && value) {
+            field.onChange(new Date(Date.UTC(parseInt(selectedYear), parseInt(value), 1)));
+          }
+        }, [field, selectedYear]);
+
+        const handleClear = React.useCallback(() => {
+          field.onChange(undefined);
+        }, [field]);
+
+        const yearPlaceholderElement = React.useMemo(() => (
+          <span className="text-muted-foreground">{yearPlaceholder}</span>
+        ), [yearPlaceholder]);
+
+        const monthPlaceholderElement = React.useMemo(() => (
+          <span className="text-muted-foreground">{monthPlaceholder}</span>
+        ), [monthPlaceholder]);
+
+        return (
+          <FormItem className="flex flex-col gap-2">
+            <FormLabel>{label ?? ""}</FormLabel>
+            <div className="flex gap-2">
+              <CommonSelect
+                value={selectedYear}
+                onValueChange={handleYearChange}
+                placeholder={yearPlaceholderElement}
+                className={yearTriggerClassName}
+                options={YEAR_OPTIONS}
+              />
+              <CommonSelect
+                value={selectedMonth}
+                onValueChange={handleMonthChange}
+                placeholder={monthPlaceholderElement}
+                className={monthTriggerClassName}
+                options={MONTH_OPTIONS}
+              />
+            </div>
+            {showClearButton && (
+              <Button
+                type="button"
+                onClick={handleClear}
+                variant="outline"
+                size="sm"
+                className="text-sm text-muted-foreground hover:text-foreground w-fit"
+              >
+                クリア
+              </Button>
+            )}
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
-  )
-}
+  );
+};

@@ -2,12 +2,12 @@ import { FormControl, FormField, FormItem, FormMessage, FormLabel } from "@/comp
 import { Control, Path, FieldValues } from "react-hook-form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "./button";
-
+import { useState, memo, useCallback } from "react";
 // 共通の型定義
 type TimePickerFieldProps<T extends FieldValues, V> = {
     control: Control<T>;
     name: Path<T> & {
-        [P in Path<T>]: T[P] extends V ? P : never;
+        [P in Path<T>]: T[P] extends (V | undefined) ? P : never;
     }[Path<T>];
     minuteStep?: number;
     showClearButton?: boolean;
@@ -16,12 +16,12 @@ type TimePickerFieldProps<T extends FieldValues, V> = {
 
 // 共通のオプション生成関数
 const createTimeOptions = (minuteStep: number) => {
-    const hours = Array.from({ length: 24 }, (_, i) => ({
+    const hourOptions = Array.from({ length: 24 }, (_, i) => ({
         value: i.toString().padStart(2, '0'),
         label: i.toString().padStart(2, '0')
     }));
 
-    const minutes = Array.from(
+    const minuteOptions = Array.from(
         { length: Math.floor(60 / minuteStep) },
         (_, i) => {
             const value = (i * minuteStep).toString().padStart(2, '0');
@@ -32,83 +32,121 @@ const createTimeOptions = (minuteStep: number) => {
         }
     );
 
-    return { hours, minutes };
+    return { hourOptions, minuteOptions };
 };
 
+const TimeSelect = memo(({ 
+    hourOptions, 
+    minuteOptions, 
+    selectedHour, 
+    selectedMinute, 
+    onHourChange, 
+    onMinuteChange 
+}: {
+    hourOptions: { value: string; label: string; }[];
+    minuteOptions: { value: string; label: string; }[];
+    selectedHour: string;
+    selectedMinute: string;
+    onHourChange: (value: string) => void;
+    onMinuteChange: (value: string) => void;
+}) => (
+    <div className="flex items-center space-x-2">
+        <FormControl>
+            <Select
+                value={!selectedHour && selectedMinute ? "00" : selectedHour}
+                onValueChange={onHourChange}
+            >
+                <SelectTrigger className="w-[80px]">
+                    <SelectValue placeholder="時" />
+                </SelectTrigger>
+                <SelectContent>
+                    {hourOptions.map(hour => (
+                        <SelectItem key={hour.value} value={hour.value}>
+                            {hour.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </FormControl>
+        <span className="self-center">:</span>
+        <FormControl>
+            <Select
+                value={!selectedMinute && selectedHour ? "00" : selectedMinute}
+                onValueChange={onMinuteChange}
+            >
+                <SelectTrigger className="w-[80px]">
+                    <SelectValue placeholder="分" />
+                </SelectTrigger>
+                <SelectContent>
+                    {minuteOptions.map(minute => (
+                        <SelectItem key={minute.value} value={minute.value}>
+                            {minute.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </FormControl>
+    </div>
+));
+
+TimeSelect.displayName = "TimeSelect";
+
 // 共通のTimePickerFieldコンポーネント
-const TimePickerFieldBase = <T extends FieldValues, V>({
+const TimePickerFieldBase = <T extends FieldValues, V extends number | Date>({
     control,
     name,
     minuteStep = 1,
     showClearButton = true,
     valueToTime,
     timeToValue,
-    clearValue,
-    label
+    label,
 }: TimePickerFieldProps<T, V> & {
-    valueToTime: (value: V | undefined | null) => { hour: string; minute: string };
-    timeToValue: (hour: string, minute: string, currentValue: V | undefined | null) => V;
-    clearValue: V;
+    valueToTime: (value: V) => { hour: string; minute: string };
+    timeToValue: (hour: string, minute: string) => V;
     label: string;
 }) => {
-    const { hours, minutes } = createTimeOptions(minuteStep);
-
     return (
         <div className="flex flex-col space-y-2">
             <FormField
                 control={control}
                 name={name}
                 render={({ field }) => {
-                    const { hour, minute } = valueToTime(field.value as V | undefined | null);
+                    const { hourOptions, minuteOptions } = createTimeOptions(minuteStep);
+                    const defaultValueTime = field.value ? valueToTime(field.value) : { hour: "", minute: "" };
+                    const [selectedHour, setSelectedHour] = useState(defaultValueTime.hour);
+                    const [selectedMinute, setSelectedMinute] = useState(defaultValueTime.minute);
+
+                    const handleHourChange = useCallback((newHour: string) => {
+                        setSelectedHour(newHour);
+                        field.onChange(timeToValue(newHour, selectedMinute || "00"));
+                    }, [selectedMinute, field, timeToValue]);
+
+                    const handleMinuteChange = useCallback((newMinute: string) => {
+                        setSelectedMinute(newMinute);
+                        field.onChange(timeToValue(selectedHour || "00", newMinute));
+                    }, [selectedHour, field, timeToValue]);
+
+                    const handleClear = useCallback(() => {
+                        setSelectedHour("");
+                        setSelectedMinute("");
+                        field.onChange(undefined);
+                    }, [field]);
 
                     return (
                         <FormItem className="flex flex-col space-y-2">
                             <FormLabel>{label}</FormLabel>
-                            <div className="flex items-center space-x-2">
-                                <FormControl>
-                                <Select
-                                    value={hour}
-                                    onValueChange={(newHour) => {
-                                        field.onChange(timeToValue(newHour, minute, field.value as V | undefined | null));
-                                    }}
-                                >
-                                    <SelectTrigger className="w-[80px]">
-                                        <SelectValue placeholder="時" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {hours.map(hour => (
-                                            <SelectItem key={hour.value} value={hour.value}>
-                                                {hour.label}
-                                            </SelectItem>
-                                        ))}
-                                        </SelectContent>
-                                    </Select>
-                                </FormControl>
-                                <span className="self-center">:</span>
-                                <FormControl>
-                                    <Select
-                                        value={minute}
-                                    onValueChange={(newMinute) => {
-                                        field.onChange(timeToValue(hour, newMinute, field.value as V | undefined | null));
-                                    }}
-                                >
-                                    <SelectTrigger className="w-[80px]">
-                                        <SelectValue placeholder="分" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {minutes.map(minute => (
-                                            <SelectItem key={minute.value} value={minute.value}>
-                                                {minute.label}
-                                            </SelectItem>
-                                        ))}
-                                        </SelectContent>
-                                    </Select>
-                                </FormControl>
-                            </div>
+                            <TimeSelect
+                                hourOptions={hourOptions}
+                                minuteOptions={minuteOptions}
+                                selectedHour={selectedHour}
+                                selectedMinute={selectedMinute}
+                                onHourChange={handleHourChange}
+                                onMinuteChange={handleMinuteChange}
+                            />
                             {showClearButton && (
                                 <Button
                                     type="button"
-                                    onClick={() => field.onChange(clearValue)}
+                                    onClick={handleClear}
                                     variant="outline"
                                     size="sm"
                                     className="text-sm text-muted-foreground hover:text-foreground w-fit"
@@ -126,51 +164,34 @@ const TimePickerFieldBase = <T extends FieldValues, V>({
 };
 
 // Date型用のTimePickerField
-export function TimePickerFieldForDate<T extends FieldValues>(props: TimePickerFieldProps<T, Date | undefined | null>) {
-    return TimePickerFieldBase<T, Date | undefined | null>({
+export function TimePickerFieldForDate<T extends FieldValues>(props: TimePickerFieldProps<T, Date>) {
+    return TimePickerFieldBase<T, Date>({
         ...props,
         valueToTime: (value) => {
-            if (value === null || value === undefined) {
-                return { hour: "", minute: "" };
-            }
             const realValue = value instanceof Date ? value : new Date(value);
             return {
                 hour: realValue.getUTCHours().toString().padStart(2, '0'),
                 minute: realValue.getUTCMinutes().toString().padStart(2, '0')
             };
         },
-        timeToValue: (hour, minute, currentValue) => {
-            if (hour === "" && minute === "") {
-                return null;
-            }
-
-            const newDate = new Date(Date.UTC(1970, 0, 1, parseInt(hour) || 0, parseInt(minute) || 0));
-            return newDate;
+        timeToValue: (hour, minute) => {
+            return new Date(Date.UTC(1970, 0, 1, parseInt(hour), parseInt(minute)));
         },
-        clearValue: null
     });
 }
 
 // number型用のTimePickerField
-export function TimePickerFieldForNumber<T extends FieldValues>(props: TimePickerFieldProps<T, number | undefined | null>) {
-    return TimePickerFieldBase<T, number | undefined | null>({
+export function TimePickerFieldForNumber<T extends FieldValues>(props: TimePickerFieldProps<T, number>) {
+    return TimePickerFieldBase<T, number>({
         ...props,
         valueToTime: (value) => {
-            if (value === null || value === undefined) {
-                return { hour: "", minute: "" };
-            }
             return {
                 hour: Math.floor(value / 60).toString().padStart(2, '0'),
                 minute: (value % 60).toString().padStart(2, '0')
             };
         },
-        timeToValue: (hour, minute, currentValue) => {
-            if (hour === "" && minute === "") {
-                return null;
-            }
-
-            return (parseInt(hour) || 0) * 60 + (parseInt(minute) || 0);
+        timeToValue: (hour, minute) => {
+            return (parseInt(hour) * 60 + parseInt(minute));
         },
-        clearValue: null
     });
 } 

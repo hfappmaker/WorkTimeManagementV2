@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { AttendanceFormValues } from "@/types/attendance";
+import { AttendanceEntry, AttendanceFormValues } from "@/types/attendance";
 import {
   createWorkReport,
   updateWorkReportAttendances,
+  updateWorkReportAttendance,
   getWorkReportsByContractId,
   getWorkReportsByContractIdAndYearMonthDateRange,
 } from "@/data/work-report";
@@ -26,6 +27,16 @@ export const updateWorkReportAction = async (
   revalidatePath(`/workReport/${contractId}/${workReportId}`);
 };
 
+export const updateWorkReportAttendanceAction = async (
+  contractId: string,
+  workReportId: string,
+  date: Date,
+  attendance: AttendanceEntry 
+) => {
+  await updateWorkReportAttendance(workReportId, date, attendance);
+  revalidatePath(`/workReport/${contractId}/${workReportId}`);
+};
+
 export const getWorkReportsByContractIdAction = async (contractId: string) => {
   try {
     return await getWorkReportsByContractId(contractId);
@@ -37,8 +48,8 @@ export const getWorkReportsByContractIdAction = async (contractId: string) => {
 
 export const getWorkReportsByContractIdAndYearMonthDateRangeAction = async (
   contractId: string,
-  fromDate: Date,
-  toDate: Date
+  fromDate?: Date,
+  toDate?: Date
 ) => {
   try {
     return await getWorkReportsByContractIdAndYearMonthDateRange(

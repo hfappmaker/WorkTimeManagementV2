@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { updateWorkReportAction } from "@/actions/work-report";
+import { updateWorkReportAction, updateWorkReportAttendanceAction } from "@/actions/work-report";
 import { FormControl, FormField, FormItem, FormMessage, Form, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,17 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { TimePickerFieldForDate, TimePickerFieldForNumber } from "@/components/ui/time-picker"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DatePickerField } from "@/components/ui/date-picker";
-
-interface AttendanceEntry {
-    startTime: Date | null;
-    endTime: Date | null;
-    breakDuration: number | null;
-    memo: string;
-}
-
-export interface AttendanceFormValues {
-    [day: string]: AttendanceEntry;
-}
+import { AttendanceEntry, AttendanceFormValues } from "@/types/attendance";
 
 // Adjust the types as needed; here we assume workReport contains startDate and endDate as strings
 // and attendances is an array of records with a "date" field.
@@ -49,18 +39,19 @@ interface WorkReportClientProps {
     attendances: AttendanceRecord[];
     contractName: string;
     clientName: string;
-    closingDay: number | null;
+    contactName: string;
+    closingDay: number | undefined;
     userName: string;
     clientEmail: string;
     dailyWorkMinutes: number;
     monthlyWorkMinutes: number;
-    basicStartTime: Date | null;
-    basicEndTime: Date | null;
-    basicBreakDuration: number | null;
+    basicStartTime: Date | undefined;
+    basicEndTime: Date | undefined;
+    basicBreakDuration: number | undefined;
 }
 
 // Helper to generate a key for each day between startDate and endDate (inclusive)
-function generateAttendanceDefaults(year: number, month: number, closingDay: number | null): AttendanceFormValues {
+function generateAttendanceDefaults(year: number, month: number, closingDay: number | undefined): AttendanceFormValues {
     const defaults: AttendanceFormValues = {};
     const current = closingDay ? new Date(year, month - 1, closingDay + 1) : new Date(year, month - 1, 1);
     const end = closingDay ? new Date(year, month, closingDay + 1) : new Date(year, month, 1);
@@ -71,7 +62,7 @@ function generateAttendanceDefaults(year: number, month: number, closingDay: num
             day: '2-digit',
             timeZone: 'Asia/Tokyo'
         }).replace(/\//g, '/');
-        defaults[dateKey] = { startTime: null, endTime: null, breakDuration: null, memo: "" };
+        defaults[dateKey] = { startTime: undefined, endTime: undefined, breakDuration: undefined, memo: "" };
         current.setDate(current.getDate() + 1);
     }
     return defaults;
@@ -141,13 +132,12 @@ function formatMonthDay(dateStr: string): string {
 }
 
 const editFormSchema = z.object({
-    startTime: z.date().nullable(),
-    endTime: z.date().nullable(),
-    breakDuration: z.number().nullable(),
-    memo: z.string(),
-});
+    startTime: z.date().optional(),
+    endTime: z.date().optional(),
+    breakDuration: z.number().optional(),
+    memo: z.string().optional(),
+}) satisfies z.ZodType<AttendanceEntry>;
 
-type EditFormValues = z.infer<typeof editFormSchema>;
 const dateRangeModes = ["all", "weekday", "custom"] as const;
 type dateRangeMode = typeof dateRangeModes[number];
 
@@ -156,8 +146,8 @@ const shouldUpdateDate = (
     date: Date,
     dateRangeMode: dateRangeMode,
     selectedDays?: number[],
-    startDate?: Date | null,
-    endDate?: Date | null
+    startDate?: Date,
+    endDate?: Date
 ): boolean => {
     const dayOfWeek = date.getDay();
 
@@ -179,11 +169,11 @@ const shouldUpdateDate = (
 const bulkEditFormSchema = z.object({
     dateRangeMode: z.enum(dateRangeModes),
     selectedDays: z.array(z.number()).optional(),
-    startDate: z.date().nullable(),
-    endDate: z.date().nullable(),
-    startTime: z.date().nullable(),
-    endTime: z.date().nullable(),
-    breakDuration: z.number().nullable(),
+    startDate: z.date().optional(),
+    endDate: z.date().optional(),
+    startTime: z.date().optional(),
+    endTime: z.date().optional(),
+    breakDuration: z.number().optional(),
     memo: z.string()
 });
 
@@ -191,9 +181,9 @@ type BulkEditFormValues = z.infer<typeof bulkEditFormSchema>;
 
 // 一括編集フォームのデフォルト値を定義
 const getBulkEditFormDefaults = (
-    basicStartTime: Date | null,
-    basicEndTime: Date | null,
-    basicBreakDuration: number | null
+    basicStartTime: Date | undefined,
+    basicEndTime: Date | undefined,
+    basicBreakDuration: number | undefined
 ) => ({
     dateRangeMode: "weekday" as const,
     selectedDays: [1, 2, 3, 4, 5],
@@ -201,8 +191,8 @@ const getBulkEditFormDefaults = (
     endTime: basicEndTime,
     breakDuration: basicBreakDuration,
     memo: "",
-    startDate: null,
-    endDate: null,
+    startDate: undefined,
+    endDate: undefined,
 });
 
 export default function ClientWorkReportPage({
@@ -212,6 +202,7 @@ export default function ClientWorkReportPage({
     attendances,
     contractName,
     clientName,
+    contactName,
     closingDay,
     userName,
     clientEmail,
@@ -237,19 +228,12 @@ export default function ClientWorkReportPage({
     // Compute default attendance values for each day in the range…
     const defaults = generateAttendanceDefaults(workReport.year, workReport.month, closingDay);
 
-    console.log("defaults", defaults);
-    // … then overwrite with attendance records fetched from the server.
     const initialAttendance = mergeAttendances(defaults, attendances);
 
-    console.log("initialAttendance", initialAttendance);
-
-    // Use these merged defaults in your useForm hook.
-    const attendanceForm = useForm<AttendanceFormValues>({
-        defaultValues: initialAttendance
-    });
+    const [attendanceData, setAttendanceData] = useState<AttendanceFormValues>(initialAttendance);
 
     // 編集用フォーム
-    const editForm = useForm<EditFormValues>({
+    const editForm = useForm<AttendanceEntry>({
         resolver: zodResolver(editFormSchema),
         defaultValues: {
             startTime: basicStartTime,
@@ -271,29 +255,14 @@ export default function ClientWorkReportPage({
         setIsBulkEditModalOpen(false);
     };
 
-    const handleAttendanceSubmit = (data: AttendanceFormValues) => {
-        startTransition(async () => {
-            try {
-                await updateWorkReportAction(contractId, workReportId, data);
-                setSuccess({ message: "勤怠の更新が完了しました", date: new Date() });
-                setError({ message: "", date: new Date() });
-            } catch (err) {
-                console.error(err);
-                setError({ message: "勤怠の更新に失敗しました", date: new Date() });
-                setSuccess({ message: "", date: new Date() });
-            }
-        });
-    };
-
     // 曜日名の配列
     const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
 
     // 一括編集を適用する
     const applyBulkEdit = (data: BulkEditFormValues) => {
-        const formValues = attendanceForm.getValues();
-        const updatedValues = { ...formValues };
+        const updatedValues = { ...attendanceData };
 
-        Object.keys(formValues).forEach(dateStr => {
+        Object.keys(updatedValues).forEach(dateStr => {
             const date = new Date(dateStr);
             const shouldUpdate = shouldUpdateDate(
                 date,
@@ -315,30 +284,27 @@ export default function ClientWorkReportPage({
         });
 
         startTransition(async () => {
-            attendanceForm.reset(updatedValues);
             await updateWorkReportAction(contractId, workReportId, updatedValues);
+            setAttendanceData(updatedValues);
             resetBulkEditForm();
             setSuccess({ message: "一括編集を適用しました", date: new Date() });
         });
     };
 
     // 編集フォームの送信処理
-    const onEditSubmit = async (data: EditFormValues) => {
+    const onEditSubmit = async (data: AttendanceEntry) => {
         try {
-            if (!editingDate) return;
-
             startTransition(async () => {
-                const formValues = attendanceForm.getValues();
-                const updatedValues = { ...formValues };
-                updatedValues[editingDate] = {
+                const updatedValues = { ...attendanceData };
+                updatedValues[editingDate!] = {
                     startTime: data.startTime,
                     endTime: data.endTime,
                     breakDuration: data.breakDuration,
                     memo: data.memo
                 };
                 // フォームの値を更新
-                await updateWorkReportAction(contractId, workReportId, updatedValues);
-                attendanceForm.reset(updatedValues);
+                await updateWorkReportAttendanceAction(contractId, workReportId, new Date(editingDate!), data);
+                setAttendanceData(updatedValues);
                 setEditingDate(null);
             })
             setSuccess({ message: "編集を適用しました", date: new Date() });
@@ -356,8 +322,7 @@ export default function ClientWorkReportPage({
     // editingDateの変更を監視してフォームをリセット
     useEffect(() => {
         if (editingDate) {
-            const formValues = attendanceForm.getValues();
-            const entry = formValues[editingDate];
+            const entry = attendanceData[editingDate];
 
             editForm.reset({
                 startTime: entry.startTime,
@@ -366,18 +331,21 @@ export default function ClientWorkReportPage({
                 memo: entry.memo
             });
         }
-    }, [editingDate, attendanceForm, editForm]);
+    }, [editingDate]);
 
     // 編集をキャンセル
     const cancelEdit = () => {
         setEditingDate(null);
     };
 
+    // ミリ秒からシリアル値に変換
+    const msToSerial = (ms: number) => ms / (24 * 60 * 60 * 1000);
+
     // テンプレートからの作業報告書作成
     const createReportFromTemplate = async (templateWorkbook: ExcelJS.Workbook) => {
         try {
             // フォームデータを取得
-            const formData = attendanceForm.getValues();
+            const formData = attendanceData;
 
             // 新しいワークブックを作成
             const workbook = new ExcelJS.Workbook();
@@ -473,17 +441,17 @@ export default function ClientWorkReportPage({
                                         value = formatMonthDay(dateKey);
                                     } else if (fieldName === "開始時刻") {
                                         if (entry.startTime) {
-                                            value = entry.startTime.getTime();
+                                            value = msToSerial(entry.startTime.getTime());
                                             sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
                                         }
                                     } else if (fieldName === "終了時刻") {
                                         if (entry.endTime) {
-                                            value = entry.endTime.getTime();
+                                            value = msToSerial(entry.endTime.getTime());
                                             sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
                                         }
                                     } else if (fieldName === "休憩時間") {
                                         if (entry.breakDuration) {
-                                            value = entry.breakDuration * 60000;
+                                            value = msToSerial(entry.breakDuration * 60000) ;
                                             sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
                                         }
                                     } else if (fieldName === "稼働時間") {
@@ -492,9 +460,9 @@ export default function ClientWorkReportPage({
                                             const endMs = entry.endTime.getTime();
                                             if (entry.breakDuration) {
                                                 const breakMs = entry.breakDuration * 60000;
-                                                value = endMs - startMs - breakMs;
+                                                value = msToSerial(endMs - startMs - breakMs);
                                             } else {
-                                                value = endMs - startMs;
+                                                value = msToSerial(endMs - startMs);
                                             }
                                             sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
                                         }
@@ -540,7 +508,7 @@ export default function ClientWorkReportPage({
             const recipient = clientEmail; // 送信先
             const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${userName}`);
             const body = encodeURIComponent(`
-${contractName ?? clientName} 様
+${contactName ?? clientName} 様
    
 お世話になっております。${userName}です。
         
@@ -603,119 +571,93 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
             {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
             {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
 
-            <Form {...attendanceForm}>
-                <form onSubmit={attendanceForm.handleSubmit(handleAttendanceSubmit)}>
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold">出勤情報を入力</h2>
-                        <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold">出勤情報を入力</h2>
+                    <div className="flex gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsBulkEditModalOpen(true)}
+                        >
+                            一括入力
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setIsCreateReportDialogOpen(true)}>
+                            作業報告書を作成
+                        </Button>
+                        <Button type="button" variant="outline" onClick={createReportAndSendEmail}>
+                            メール送信
+                        </Button>
+                    </div>
+                </div>
+
+                {/* 列ヘッダー */}
+                <div className="flex items-center space-x-4 mb-2">
+                    <span className="w-32"></span>
+                    <span className="w-16"></span>
+                    <span className="flex-1 text-center font-medium">出勤時間</span>
+                    <span className="flex-1 text-center font-medium">退勤時間</span>
+                    <span className="flex-1 text-center font-medium">休憩時間</span>
+                    <span className="w-[400px] text-center font-medium">作業内容</span>
+                </div>
+
+                {Object.keys(attendanceData).map((day) => (
+                    <div key={day} className="flex items-center space-x-4 mb-2">
+                        <div className="w-32 flex items-center justify-between">
+                            <span>
+                                {(() => {
+                                    const date = new Date(day);
+                                    const dayOfWeek = date.getDay();
+                                    return `${day}(${dayNames[dayOfWeek]})`;
+                                })()}
+                            </span>
+                        </div>
+                        <div className="w-16 flex items-center justify-between">
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => setIsBulkEditModalOpen(true)}
+                                size="sm"
+                                onClick={() => openEditDialog(day)}
                             >
-                                一括入力
-                            </Button>
-                            <Button type="button" variant="outline" onClick={() => setIsCreateReportDialogOpen(true)}>
-                                作業報告書を作成
-                            </Button>
-                            <Button type="button" variant="outline" onClick={createReportAndSendEmail}>
-                                メール送信
+                                編集
                             </Button>
                         </div>
-                    </div>
-
-                    {/* 列ヘッダー */}
-                    <div className="flex items-center space-x-4 mb-2">
-                        <span className="w-32"></span>
-                        <span className="w-16"></span>
-                        <span className="flex-1 text-center font-medium">出勤時間</span>
-                        <span className="flex-1 text-center font-medium">退勤時間</span>
-                        <span className="flex-1 text-center font-medium">休憩時間</span>
-                        <span className="w-[400px] text-center font-medium">作業内容</span>
-                    </div>
-
-                    {Object.keys(attendanceForm.getValues()).map((day) => (
-                        <div key={day} className="flex items-center space-x-4 mb-2">
-
-                            <div className="w-32 flex items-center justify-between">
-                                <span>
-                                    {(() => {
-                                        const date = new Date(day);
-                                        const dayOfWeek = date.getDay();
-                                        return `${day}(${dayNames[dayOfWeek]})`;
-                                    })()}
-                                </span>
-                            </div>
-                            <div className="w-16 flex items-center justify-between">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openEditDialog(day)}
-                                >
-                                    編集
-                                </Button>
-                            </div>
-                            <div className="flex-1">
-                                <FormField
-                                    control={attendanceForm.control}
-                                    name={`${day}.startTime`}
-                                    render={({ field, fieldState }) => (
-                                        <FormItem className="flex flex-col justify-center">
-                                            <FormControl>
-                                                <Input {...field} type="time" id={`start-${day}`} readOnly value={field.value ? field.value.toISOString().split('T')[1].substring(0, 5) : ''}/>
-                                            </FormControl>
-                                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <div className="flex-1">
-                                <FormField
-                                    control={attendanceForm.control}
-                                    name={`${day}.endTime`}
-                                    render={({ field, fieldState }) => (
-                                        <FormItem className="flex flex-col justify-center">
-                                            <FormControl>
-                                                <Input {...field} type="time" id={`end-${day}`} readOnly value={field.value ? field.value.toISOString().split('T')[1].substring(0, 5) : ''}/>
-                                            </FormControl>
-                                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <div className="flex-1">
-                                <FormField
-                                    control={attendanceForm.control}
-                                    name={`${day}.breakDuration`}
-                                    render={({ field, fieldState }) => (
-                                        <FormItem className="flex flex-col justify-center">
-                                            <FormControl>
-                                                <Input {...field} type="time" id={`break-${day}`} readOnly value={field.value ? `${Math.floor(field.value / 60).toString().padStart(2, '0')}:${(field.value % 60).toString().padStart(2, '0')}` : ''}/>
-                                            </FormControl>
-                                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <div className="flex-1">
-                                <FormField
-                                    control={attendanceForm.control}
-                                    name={`${day}.memo`}
-                                    render={({ field, fieldState }) => (
-                                        <FormItem className="flex flex-col justify-center">
-                                            <FormControl>
-                                                <Input {...field} type="text" id={`memo-${day}`} className="w-[400px]" readOnly/>
-                                            </FormControl>
-                                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                        <div className="flex-1">
+                            <Input 
+                                type="time" 
+                                id={`start-${day}`} 
+                                readOnly 
+                                value={attendanceData[day].startTime ? attendanceData[day].startTime.toISOString().split('T')[1].substring(0, 5) : ''}
+                            />
                         </div>
-                    ))}
-                </form>
-            </Form>
+                        <div className="flex-1">
+                            <Input 
+                                type="time" 
+                                id={`end-${day}`} 
+                                readOnly 
+                                value={attendanceData[day].endTime ? attendanceData[day].endTime.toISOString().split('T')[1].substring(0, 5) : ''}
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <Input 
+                                type="time" 
+                                id={`break-${day}`} 
+                                readOnly 
+                                value={attendanceData[day].breakDuration ? `${Math.floor(attendanceData[day].breakDuration / 60).toString().padStart(2, '0')}:${(attendanceData[day].breakDuration % 60).toString().padStart(2, '0')}` : ''}
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <Input 
+                                type="text" 
+                                id={`memo-${day}`} 
+                                className="w-[400px]" 
+                                readOnly 
+                                value={attendanceData[day].memo || ''}
+                            />
+                        </div>
+                    </div>
+                ))}
+            </div>
 
             {/* 一括編集用モーダルダイアログ */}
             <Dialog

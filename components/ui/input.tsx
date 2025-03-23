@@ -1,7 +1,7 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
-import { FC } from "react"
+import { FC, useState, memo, useCallback } from "react"
 import { Control, FieldValues, Path } from "react-hook-form"
 import { FormControl, FormLabel, FormField, FormMessage, FormItem } from "./form"
 
@@ -21,37 +21,83 @@ const Input: FC<React.ComponentPropsWithRef<"input">> =
 
 Input.displayName = "Input"
 
-interface InputFieldProps<T extends FieldValues, V extends number | null> {
+interface NumberInputFieldProps<T extends FieldValues> {
   control: Control<T>;
   name: Path<T> & {
-    [P in Path<T>]: T[P] extends (V | null) ? P : never;
+    [P in Path<T>]: T[P] extends (number | undefined) ? P : never;
   }[Path<T>];
   label: string;
   placeholder?: string;
 }
 
-export const NumberInputField = <T extends FieldValues, V extends number | null>(props: InputFieldProps<T, V>) => {
+const NumberInput = memo(({
+  value,
+  onChange,
+  onKeyDown,
+  placeholder,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+}) => (
+  <Input 
+    type="number" 
+    placeholder={placeholder} 
+    value={value}
+    min="0"
+    step="1"
+    onChange={onChange}
+    onKeyDown={onKeyDown}
+  />
+));
+
+NumberInput.displayName = "NumberInput";
+
+export const NumberInputField = <T extends FieldValues>(props: NumberInputFieldProps<T>) => {
+  const { control, name, label, placeholder } = props;
+
   return (
     <FormField
-      control={props.control}
-      name={props.name}
-      render={({ field }) => (
-        <FormItem className="flex-1">
-          <FormLabel>{props.label}</FormLabel>
-          <FormControl>
-            <Input value={field.value ?? ""} type="number" placeholder={props.placeholder} onChange={(e) => {
-              const value = e.target.value;
-              if (/^[0-9]+$/.test(value)) {
-                field.onChange(Number(value));
-              }
-              else{
-                field.onChange(null);
-              }
-            }} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
+      control={control}
+      name={name}
+      render={({ field }) => {
+        const [localValue, setLocalValue] = useState<string>(field.value?.toString() ?? "");
+
+        const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+          const value = e.target.value;
+          setLocalValue(value);
+          if (value === "") {
+            field.onChange(undefined);
+          } else {
+            const numValue = Number(value);
+            if (numValue >= 0) {
+              field.onChange(numValue);
+            }
+          }
+        }, [field]);
+
+        const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+          if (e.key === '-' || e.key === '.' || e.key === ',') {
+            e.preventDefault();
+          }
+        }, []);
+
+        return (
+          <FormItem className="flex-1">
+            <FormLabel>{label}</FormLabel>
+            <FormControl>
+              <NumberInput
+                value={localValue}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
   )
 }

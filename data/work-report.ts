@@ -1,15 +1,6 @@
 import { db } from "@/lib/db";
 import { WorkReportStatus } from "@prisma/client";
-
-interface AttendanceEntry {
-  startTime: Date | null;
-  endTime: Date | null;
-  breakDuration: number | null;
-}
-
-interface AttendanceFormValues {
-  [day: string]: AttendanceEntry;
-}
+import { AttendanceEntry, AttendanceFormValues } from "@/types/attendance";
 
 export async function getAttendancesByWorkReportId(workReportId: string) {
   const attendances = await db.attendance.findMany({
@@ -67,21 +58,23 @@ export async function updateWorkReportAttendances(
   attendance: AttendanceFormValues
 ) {
   const attendanceUpserts = Object.entries(attendance).map(
-    ([date, { startTime, endTime, breakDuration }]) => {
+    ([date, { startTime, endTime, breakDuration, memo }]) => {
       const parsedDate = new Date(date);
 
       return {
         where: { date_workReportId: { date: parsedDate, workReportId } },
         update: {
-          startTime: startTime,
-          endTime: endTime,
-          breakDuration: breakDuration,
+          startTime: startTime ?? null,
+          endTime: endTime ?? null,
+          breakDuration: breakDuration ?? null,
+          memo: memo ?? null,
         },
-        create: {
+        create: { 
           date: parsedDate,
-          startTime: startTime,
-          endTime: endTime,
-          breakDuration: breakDuration,
+          startTime: startTime ?? null,
+          endTime: endTime ?? null,
+          breakDuration: breakDuration ?? null,
+          memo: memo ?? null,
         },
       };
     }
@@ -99,6 +92,32 @@ export async function updateWorkReportAttendances(
   return workReport;
 }
 
+export async function updateWorkReportAttendance(
+  workReportId: string,
+  date: Date,
+  attendance: AttendanceEntry
+) {
+  const updatedAttendance = await db.attendance.upsert({
+    where: { date_workReportId: { date, workReportId } },
+    update: {
+      startTime: attendance.startTime ?? null,
+      endTime: attendance.endTime ?? null,
+      breakDuration: attendance.breakDuration ?? null,
+      memo: attendance.memo ?? null,
+    },
+    create: {
+      date,
+      workReportId,
+      startTime: attendance.startTime ?? null,
+      endTime: attendance.endTime ?? null,
+      breakDuration: attendance.breakDuration ?? null,
+      memo: attendance.memo ?? null,
+    },
+  });
+
+  return updatedAttendance;
+}
+
 export async function getWorkReportsByContractId(contractId: string) {
   const workReports = await db.workReport.findMany({
     where: { contractId },
@@ -108,14 +127,17 @@ export async function getWorkReportsByContractId(contractId: string) {
 
 export async function getWorkReportsByContractIdAndYearMonthDateRange(
   contractId: string,
-  fromDate: Date,
-  toDate: Date
+  fromDate?: Date,
+  toDate?: Date
 ) {
   const workReports = await db.workReport.findMany({
     where: {
       contractId,
       targetDate: { gte: fromDate, lte: toDate },
     },
+    orderBy: {
+      targetDate: 'asc'
+    }
   });
   return workReports;
 }

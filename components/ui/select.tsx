@@ -10,10 +10,10 @@ import {
 import * as SelectPrimitive from "@radix-ui/react-select"
 
 import { cn } from "@/lib/utils"
-import { ComponentPropsWithRef, FC } from "react"
+import { ComponentPropsWithRef, FC, useState, memo, useCallback } from "react"
 import { SelectProps } from "@radix-ui/react-select"
 import { Control, ControllerRenderProps, FieldValues, Path, UseFormReturn } from "react-hook-form"
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./form"
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Button } from "./button"
 
 const Select = SelectPrimitive.Root
@@ -143,64 +143,100 @@ SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 export interface ComboBoxFieldProps<T extends FieldValues, V> {
   control: Control<T>;
   name: Path<T> & {
-    [P in Path<T>]: T[P] extends (V | null) ? P : never;
+    [P in Path<T>]: T[P] extends (V | undefined) ? P : never;
   }[Path<T>];
   options: { label: string, value: V }[];
   placeholder?: string;
   triggerClassName?: string;
-  label: string;
-  defaultValue?: V;
+  label?: string;
   showClearButton?: boolean;
 }
 
-export const ComboBoxField = <T extends FieldValues, V extends string | number | bigint | null>(props: ComboBoxFieldProps<T, V>) => {
-  const { control, name, options, placeholder, triggerClassName, label, defaultValue, showClearButton = true } = props;
+const ComboBoxSelect = memo(({
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  triggerClassName,
+}: {
+  options: { label: string, value: any }[];
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  triggerClassName?: string;
+}) => (
+  <Select
+    onValueChange={onValueChange}
+    value={value}
+  >
+    <FormControl>
+      <SelectTrigger className={triggerClassName}>
+        <SelectValue placeholder={<span className="text-muted-foreground">{placeholder}</span>} className="truncate" />
+      </SelectTrigger>
+    </FormControl>
+    <SelectContent>
+      {options.map((option) => (
+        <SelectItem key={option.value} value={option.value?.toString() ?? ""}>
+          {option.label}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+));
+
+ComboBoxSelect.displayName = "ComboBoxSelect";
+
+export const ComboBoxField = <T extends FieldValues, V extends string | number | bigint>(props: ComboBoxFieldProps<T, V>) => {
+  const { control, name, options, placeholder, triggerClassName, label, showClearButton = true } = props;
+  
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field }) =>
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <Select
-            onValueChange={(value) => {
-              const option = options.find(opt => opt.value?.toString() === value);
-              if (option) {
-                field.onChange(option.value);
-              }
-            }}
-            value={field.value?.toString() ?? ""}
-          >
-            <FormControl>
-              <SelectTrigger className={triggerClassName}>
-                <SelectValue placeholder={<span className="text-muted-foreground">{placeholder}</span>} className="truncate" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent defaultValue={defaultValue?.toString()}>
-              {options.map((option) => (
-                <SelectItem key={option.value} value={option.value?.toString() ?? ""}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {showClearButton && (
-                                <Button
-                                    type="button"
-                                    onClick={() => field.onChange(null)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-sm text-muted-foreground hover:text-foreground w-fit"
-                                >
-                                    クリア
-                                </Button>
-                            )}
-          <FormMessage />
-        </FormItem>
-      }
+      render={({ field }) => {
+        const [localValue, setLocalValue] = useState<string>(field.value?.toString() ?? "");
+
+        const handleValueChange = useCallback((value: string) => {
+          setLocalValue(value);
+          const option = options.find(opt => opt.value?.toString() === value);
+          if (option) {
+            field.onChange(option.value);
+          }
+        }, [options, field]);
+
+        const handleClear = useCallback(() => {
+          setLocalValue("");
+          field.onChange(undefined);
+        }, [field]);
+
+        return (
+          <FormItem>
+            <FormLabel>{label}</FormLabel>
+            <ComboBoxSelect
+              options={options}
+              value={localValue}
+              onValueChange={handleValueChange}
+              placeholder={placeholder}
+              triggerClassName={triggerClassName}
+            />
+            {showClearButton && (
+              <Button
+                type="button"
+                onClick={handleClear}
+                variant="outline"
+                size="sm"
+                className="text-sm text-muted-foreground hover:text-foreground w-fit"
+              >
+                クリア
+              </Button>
+            )}
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
-  )
-}
+  );
+};
 
 export {
   Select,

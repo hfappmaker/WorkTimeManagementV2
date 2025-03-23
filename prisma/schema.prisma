@@ -98,6 +98,8 @@ model WorkReport {
   memo        String?
   attendances Attendance[]
   status      WorkReportStatus @default(DRAFT)
+
+  @@unique([targetDate, contractId])
 }
 
 model Attendance {

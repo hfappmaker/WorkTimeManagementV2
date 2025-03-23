@@ -2,6 +2,29 @@ import { db } from "@/lib/db";
 import { ContractSchema } from "@/schemas";
 import { z } from "zod";
 
+function processContractValues(values: z.infer<typeof ContractSchema>) {
+  const {
+    clientId,
+    userId,
+    ...rest
+  } = values;
+
+  console.log(rest);
+  
+  const processedRest = Object.entries(ContractSchema.shape).reduce((acc, [key, schema]) => {
+    if (key !== 'clientId' && key !== 'userId') {
+      acc[key as keyof typeof rest] = rest[key as keyof typeof rest] ?? null;
+    }
+    return acc;
+  }, {} as Record<keyof typeof rest, any>);
+
+  return {
+    processedRest,
+    clientId,
+    userId
+  };
+}
+
 export async function getContractsByUserId(userId: string) {
   const contracts = await db.contract.findMany({
     where: { client: { createUserId: userId } },
@@ -27,15 +50,11 @@ export async function getContractById(contractId: string) {
 }
 
 export async function createContract(values: z.infer<typeof ContractSchema>) {
-  const {
-    clientId,
-    userId,
-    ...rest
-  } = values;
+  const { processedRest, clientId, userId } = processContractValues(values);
 
   await db.contract.create({
     data: {
-      ...rest,
+      ...processedRest,
       client: {
         connect: {
           id: clientId,
@@ -66,16 +85,12 @@ export async function updateContract(
   id: string,
   values: z.infer<typeof ContractSchema>
 ) {
-  const {
-    clientId,
-    userId,
-    ...rest
-  } = values;
+  const { processedRest, clientId, userId } = processContractValues(values);
 
   await db.contract.update({
     where: { id },
     data: {
-      ...rest,
+      ...processedRest,
       client: {
         connect: {
           id: clientId,

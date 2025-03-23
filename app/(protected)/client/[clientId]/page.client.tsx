@@ -115,14 +115,8 @@ const ContractForm = ({ form, onSubmit, onCancel, submitButtonText }: ContractFo
                 <RadioGroup
                   onValueChange={(value: "upperLower" | "middle") => {
                     setRateType(value);
-                    if (value === "upperLower") {
-                      form.setValue("middleRate", null);
-                    } else {
-                      form.setValue("upperRate", null);
-                      form.setValue("lowerRate", null);
-                    }
                   }}
-                  defaultValue="upperLower"
+                  defaultValue={form.getValues("rateType")}
                   className="flex flex-row space-x-4"
                 >
                   <div className="flex items-center space-x-2">
@@ -251,19 +245,19 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
     clientId: client.id,
     name: "",
     startDate: new Date(),
-    endDate: null,
-    unitPrice: null,
-    settlementMin: null,
-    settlementMax: null,
-    upperRate: null,
-    lowerRate: null,
-    middleRate: null,
-    dailyWorkMinutes: null,
-    monthlyWorkMinutes: null,
-    basicStartTime: null,
-    basicEndTime: null,
-    basicBreakDuration: null,
-    closingDay: null,
+    endDate: undefined,
+    unitPrice: undefined,
+    settlementMin: undefined,
+    settlementMax: undefined,
+    upperRate: undefined,
+    lowerRate: undefined,
+    middleRate: undefined,
+    dailyWorkMinutes: undefined,
+    monthlyWorkMinutes: undefined,
+    basicStartTime: undefined,
+    basicEndTime: undefined,
+    basicBreakDuration: undefined,
+    closingDay: undefined,
     rateType: "upperLower" as const,
   };
 
@@ -377,26 +371,26 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
         clientId: client.id,
         name: activeContract.name,
         startDate: new Date(activeContract.startDate),
-        endDate: activeContract.endDate ? new Date(activeContract.endDate) : null,
-        unitPrice: activeContract.unitPrice ? Number(activeContract.unitPrice) : null,
-        settlementMin: activeContract.settlementMin ? Number(activeContract.settlementMin) : null,
-        settlementMax: activeContract.settlementMax ? Number(activeContract.settlementMax) : null,
-        upperRate: activeContract.upperRate ? Number(activeContract.upperRate) : null,
-        lowerRate: activeContract.lowerRate ? Number(activeContract.lowerRate) : null,
-        middleRate: activeContract.middleRate ? Number(activeContract.middleRate) : null,
-        dailyWorkMinutes: activeContract.dailyWorkMinutes ? Number(activeContract.dailyWorkMinutes) : null,
-        monthlyWorkMinutes: activeContract.monthlyWorkMinutes ? Number(activeContract.monthlyWorkMinutes) : null,
-        basicStartTime: activeContract.basicStartTime ? new Date(activeContract.basicStartTime) : null,
-        basicEndTime: activeContract.basicEndTime ? new Date(activeContract.basicEndTime) : null,
-        basicBreakDuration: activeContract.basicBreakDuration ? Number(activeContract.basicBreakDuration) : null,
-        closingDay: activeContract.closingDay ? Number(activeContract.closingDay) : null,
+        endDate: activeContract.endDate ? new Date(activeContract.endDate) : undefined,
+        unitPrice: activeContract.unitPrice ? Number(activeContract.unitPrice) : undefined,
+        settlementMin: activeContract.settlementMin ? Number(activeContract.settlementMin) : undefined,
+        settlementMax: activeContract.settlementMax ? Number(activeContract.settlementMax) : undefined,
+        upperRate: activeContract.upperRate ? Number(activeContract.upperRate) : undefined,
+        lowerRate: activeContract.lowerRate ? Number(activeContract.lowerRate) : undefined,
+        middleRate: activeContract.middleRate ? Number(activeContract.middleRate) : undefined,
+        dailyWorkMinutes: activeContract.dailyWorkMinutes ? Number(activeContract.dailyWorkMinutes) : undefined,
+        monthlyWorkMinutes: activeContract.monthlyWorkMinutes ? Number(activeContract.monthlyWorkMinutes) : undefined,
+        basicStartTime: activeContract.basicStartTime ? new Date(activeContract.basicStartTime) : undefined,
+        basicEndTime: activeContract.basicEndTime ? new Date(activeContract.basicEndTime) : undefined,
+        basicBreakDuration: activeContract.basicBreakDuration ? Number(activeContract.basicBreakDuration) : undefined,
+        closingDay: activeContract.closingDay ? Number(activeContract.closingDay) : undefined,
         rateType: activeContract.rateType,
       });
     }
   }, [activeDialog, activeContract, editForm]);
 
   return (
-    <div className="p-6 space-y-6 relative">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{client.name}</h1>
         <Button variant="outline" onClick={() => handleNavigation("/client")}>
@@ -426,8 +420,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                   <div className="cursor-pointer hover:text-blue-500" onClick={() => handleNavigation(`/contract/${contract.id}`)}>
                     <div className="font-medium">{contract.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      期間: {new Date(contract.startDate).toLocaleDateString()} ~
-                      {contract.endDate
+                      期間: {new Date(contract.startDate).toLocaleDateString()} ~ {contract.endDate
                         ? new Date(contract.endDate).toLocaleDateString()
                         : ""}
                     </div>

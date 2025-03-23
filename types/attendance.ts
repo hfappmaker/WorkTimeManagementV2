@@ -1,7 +1,8 @@
 export interface AttendanceEntry {
-  startTime: Date | null;
-  endTime: Date | null;
-  breakDuration: number | null;
+  startTime?: Date;
+  endTime?: Date;
+  breakDuration?: number;
+  memo?: string;
 }
 
 export interface AttendanceFormValues {

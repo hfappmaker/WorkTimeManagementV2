@@ -19,16 +19,19 @@ interface ReportFormValues {
 
 // 検索フォームの型定義を追加
 interface SearchFormValues {
-  from: Date;
-  to: Date;
+  from?: Date;
+  to?: Date;
 }
+
+type DialogType = "create" | "search" | null;
 
 export default function ContractClientPage({ contractId }: { contractId: string }) {
   const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [workReports, setWorkReports] = useState<WorkReport[]>([]);
   const [contract, setContract] = useState<Contract | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [activeDialog, setActiveDialog] = useState<DialogType>(null);
+
   const { startTransition } = useTransitionContext();
   const router = useRouter();
 
@@ -43,6 +46,11 @@ export default function ContractClientPage({ contractId }: { contractId: string 
     1
   ));
 
+  const [searchFormValues, setSearchFormValues] = useState<SearchFormValues>({
+    from: currentYearMonthMinusOne,
+    to: currentYearMonth,
+  });
+
   const reportForm = useForm<ReportFormValues>({
     defaultValues: {
       yearMonth: currentYearMonth,
@@ -51,10 +59,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
 
   // 検索フォームの初期値を設定
   const searchForm = useForm<SearchFormValues>({
-    defaultValues: {
-      from: currentYearMonthMinusOne,
-      to: currentYearMonth,
-    }
+    defaultValues: searchFormValues
   });
 
   // コントラクト情報を取得
@@ -74,11 +79,15 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   }, [contractId]);
 
   // Fetch work time reports for the project
-  const fetchReports = async () => {
+  const fetchReports = async (fromDate?: Date, toDate?: Date) => {
     try {
-      const data = await getWorkReportsByContractIdAction(contractId);
+      const data = await getWorkReportsByContractIdAndYearMonthDateRangeAction(contractId, fromDate, toDate);
       if (data) {
         setWorkReports(data);
+        setSearchFormValues({
+          from: fromDate,
+          to: toDate,
+        });
       } else {
         setError({ message: '作業報告書の取得に失敗しました', date: new Date() });
       }
@@ -90,7 +99,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   // Load the reports on initial render
   useEffect(() => {
     startTransition(async () => {
-      await fetchReports();
+      await fetchReports(searchFormValues.from, searchFormValues.to);
     });
   }, [contractId]);
 
@@ -101,7 +110,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         const fromDate = data.from;
         const toDate = data.to;
         // 検索条件を追加してfetchReportsを呼び出す
-        await getWorkReportsByContractIdAndYearMonthDateRangeAction(contractId, fromDate, toDate);
+        await fetchReports(fromDate, toDate);
       } catch (error: any) {
         setError({ message: error.message || '検索に失敗しました', date: new Date() });
       }
@@ -122,9 +131,9 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         await createWorkReportAction(contractId, targetDate);
         setSuccess({ message: '作業報告書を作成しました', date: new Date() });
         // Refresh report list after creation
-        await fetchReports();
+        await fetchReports(searchFormValues.from, searchFormValues.to);
         // Close dialog and reset the creation form
-        setShowCreateDialog(false);
+        setActiveDialog(null);
         reportForm.reset({
           yearMonth: currentYearMonth,
         });
@@ -148,28 +157,21 @@ export default function ContractClientPage({ contractId }: { contractId: string 
       {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
       {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
       <div className="flex items-center mb-4">
-        <Form {...searchForm}>
-          <form
-            onSubmit={searchForm.handleSubmit(onSearchSubmit)}
-            className="flex-grow flex items-center gap-4"
-          >
-            <YearMonthPickerField
-              control={searchForm.control}
-              name="from"
-              yearTriggerClassName="w-24"
-              monthTriggerClassName="w-20"
-            />
-            <span>から</span>
-            <YearMonthPickerField
-              control={searchForm.control}
-              name="to"
-              yearTriggerClassName="w-24"
-              monthTriggerClassName="w-20"
-            />
-            <Button type="submit">検索</Button>
-          </form>
-        </Form>
-        <Button onClick={() => setShowCreateDialog(true)} className="ml-4">
+        <div className="flex items-center gap-2 mr-4">
+          <span className="text-muted-foreground">
+            {searchFormValues.from ? searchFormValues.from.getFullYear() + "年" + (searchFormValues.from?.getMonth() + 1) + "月" : ""}
+          </span>
+          <span className="text-muted-foreground">
+            ~
+          </span>
+          <span className="text-muted-foreground">
+            {searchFormValues.to ? searchFormValues.to.getFullYear() + "年" + (searchFormValues.to?.getMonth() + 1) + "月" : ""}
+          </span>
+        </div>
+        <Button onClick={() => setActiveDialog("search")} className="mr-4">
+          検索
+        </Button>
+        <Button onClick={() => setActiveDialog("create")}>
           作業報告書を作成
         </Button>
       </div>
@@ -191,7 +193,58 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         </ul>
       )}
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      <Dialog open={activeDialog === "search"} onOpenChange={(open) => {
+        if (!open) setActiveDialog(null);
+      }}>
+        <DialogPortal>
+          <DialogOverlay />
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>作業報告書を検索</DialogTitle>
+            </DialogHeader>
+            <Form {...searchForm}>
+              <form
+                onSubmit={searchForm.handleSubmit((data) => {
+                  onSearchSubmit(data);
+                  setActiveDialog(null);
+                })}
+                className="space-y-4"
+              >
+                <div className="flex items-center gap-4">
+                  <YearMonthPickerField
+                    control={searchForm.control}
+                    name="from"
+                    yearTriggerClassName="w-24"
+                    monthTriggerClassName="w-20"
+                  />
+                  <span>から</span>
+                  <YearMonthPickerField
+                    control={searchForm.control}
+                    name="to"
+                    yearTriggerClassName="w-24"
+                    monthTriggerClassName="w-20"
+                  />
+                  <span>まで</span>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button type="button" onClick={() => {
+                    setActiveDialog(null);
+                    searchForm.reset(searchFormValues);
+                  }}>
+                    キャンセル
+                  </Button>
+                  <Button type="submit">検索</Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>
+
+      <Dialog open={activeDialog === "create"} onOpenChange={(open) => {
+        if (!open) setActiveDialog(null);
+      }}>
         <DialogPortal>
           <DialogOverlay />
           <DialogContent>
@@ -206,13 +259,17 @@ export default function ContractClientPage({ contractId }: { contractId: string 
                     name="yearMonth"
                     yearTriggerClassName="w-24"
                     monthTriggerClassName="w-20"
-                    defaultValue={currentYearMonth}
                     showClearButton={false}
                   />
                 </div>
 
                 <div className="flex justify-end gap-2">
-                  <Button type="button" onClick={() => setShowCreateDialog(false)}>
+                  <Button type="button" onClick={() => {
+                    setActiveDialog(null);
+                    reportForm.reset({
+                      yearMonth: currentYearMonth,
+                    });
+                  }}>
                     キャンセル
                   </Button>
                   <Button type="submit">作成</Button>

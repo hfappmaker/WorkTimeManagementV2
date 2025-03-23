@@ -32,10 +32,10 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
   const attendances = rawAttendances.map(att => ({
     date: att.date.toISOString().split('T')[0].replace(/-/g, '/'),
     attendanceEntry: {
-      startTime: att.startTime ? att.startTime : null,
-      endTime: att.endTime ? att.endTime : null,
-      breakDuration: att.breakDuration ? att.breakDuration : null,
-      memo: att.memo ? att.memo : ""
+      startTime: att.startTime ? att.startTime : undefined,
+      endTime: att.endTime ? att.endTime : undefined,
+      breakDuration: att.breakDuration ? att.breakDuration : undefined,
+      memo: att.memo ? att.memo : undefined
     }
   }));
 
@@ -51,13 +51,14 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
       attendances={attendances}
       contractName={contract.name}
       clientName={contract.client.name}
+      contactName={contract.client.contactName}
       clientEmail={contract.client.email}
       dailyWorkMinutes={contract.dailyWorkMinutes ?? 1}
       monthlyWorkMinutes={contract.monthlyWorkMinutes ?? 1}
-      basicStartTime={contract.basicStartTime}
-      basicEndTime={contract.basicEndTime}
-      basicBreakDuration={contract.basicBreakDuration}
-      closingDay={contract.closingDay}
+      basicStartTime={contract.basicStartTime ?? undefined}
+      basicEndTime={contract.basicEndTime ?? undefined}
+      basicBreakDuration={contract.basicBreakDuration ?? undefined}
+      closingDay={contract.closingDay ?? undefined}
     />
   );
 }
