@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { updateWorkReportAction, updateWorkReportAttendanceAction } from "@/actions/work-report";
+import { updateWorkReportAttendancesAction, updateWorkReportAttendanceAction } from "@/actions/work-report";
 import { FormControl, FormField, FormItem, FormMessage, Form, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -284,7 +284,7 @@ export default function ClientWorkReportPage({
         });
 
         startTransition(async () => {
-            await updateWorkReportAction(contractId, workReportId, updatedValues);
+            await updateWorkReportAttendancesAction(contractId, workReportId, updatedValues);
             setAttendanceData(updatedValues);
             resetBulkEditForm();
             setSuccess({ message: "一括編集を適用しました", date: new Date() });
@@ -303,7 +303,8 @@ export default function ClientWorkReportPage({
                     memo: data.memo
                 };
                 // フォームの値を更新
-                await updateWorkReportAttendanceAction(contractId, workReportId, new Date(editingDate!), data);
+                const [year, month, day] = editingDate!.split('/').map(Number);
+                await updateWorkReportAttendanceAction(contractId, workReportId, new Date(Date.UTC(year, month - 1, day)), data);
                 setAttendanceData(updatedValues);
                 setEditingDate(null);
             })
@@ -508,7 +509,7 @@ export default function ClientWorkReportPage({
             const recipient = clientEmail; // 送信先
             const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${userName}`);
             const body = encodeURIComponent(`
-${contactName ?? clientName} 様
+${contactName ? contactName : clientName}様
    
 お世話になっております。${userName}です。
         

@@ -24,7 +24,7 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
   if (!contract || contract.client.createUserId !== user?.id) {
     return notFound();
   }
-  
+
   // Fetch raw attendances from the DB.
   const rawAttendances = await getAttendancesByWorkReportId(workReportId);
 

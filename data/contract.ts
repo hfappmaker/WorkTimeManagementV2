@@ -9,8 +9,6 @@ function processContractValues(values: z.infer<typeof ContractSchema>) {
     ...rest
   } = values;
 
-  console.log(rest);
-  
   const processedRest = Object.entries(ContractSchema.shape).reduce((acc, [key, schema]) => {
     if (key !== 'clientId' && key !== 'userId') {
       acc[key as keyof typeof rest] = rest[key as keyof typeof rest] ?? null;

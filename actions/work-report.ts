@@ -18,7 +18,7 @@ export const createWorkReportAction = async (
   revalidatePath(`/workReport/${contractId}`);
 };
 
-export const updateWorkReportAction = async (
+export const updateWorkReportAttendancesAction = async (
   contractId: string,
   workReportId: string,
   attendance: AttendanceFormValues

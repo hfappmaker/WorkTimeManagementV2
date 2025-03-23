@@ -59,7 +59,8 @@ export async function updateWorkReportAttendances(
 ) {
   const attendanceUpserts = Object.entries(attendance).map(
     ([date, { startTime, endTime, breakDuration, memo }]) => {
-      const parsedDate = new Date(date);
+      const [year, month, day] = date.split('/').map(Number);
+      const parsedDate = new Date(Date.UTC(year, month - 1, day));
 
       return {
         where: { date_workReportId: { date: parsedDate, workReportId } },
