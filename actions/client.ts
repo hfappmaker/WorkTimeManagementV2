@@ -9,20 +9,46 @@ import {
   deleteClient,
 } from "@/data/client";
 import { Client } from "@/types/client";
+import { Client as PrismaClient } from "@prisma/client";
 
+function convertPrismaClientToClient(values: PrismaClient): Client {
+  const { defaultEmailTemplateId, ...rest } = values;
 
-export const getClientByIdAction = async (clientId: string): Promise<Client | null> => {
+  return {
+    defaultEmailTemplateId: defaultEmailTemplateId ?? undefined,
+    ...rest,
+  };
+}
+
+function convertClientToPrismaClient(
+  values: Omit<Client, "id">
+): Omit<PrismaClient, "id" | "createdAt" | "updatedAt"> {
+  const { defaultEmailTemplateId, ...rest } = values;
+
+  return {
+    defaultEmailTemplateId: defaultEmailTemplateId ?? null,
+    ...rest,
+  };
+}
+
+export const getClientByIdAction = async (
+  clientId: string
+): Promise<Client | null> => {
   try {
-    return await getClientById(clientId);
+    const client = await getClientById(clientId);
+    return client ? convertPrismaClientToClient(client) : null;
   } catch (error) {
     console.error("Error fetching client:", error);
     throw new Error("Failed to fetch client details");
   }
 };
 
-export const getClientsByUserIdAction = async (userId: string): Promise<Client[]> => {
+export const getClientsByUserIdAction = async (
+  userId: string
+): Promise<Client[]> => {
   try {
-    return await getClientsByUserId(userId);
+    const clients = await getClientsByUserId(userId);
+    return clients.map(convertPrismaClientToClient);
   } catch (error) {
     console.error("Error fetching clients:", error);
     throw new Error("Failed to fetch clients");
@@ -30,21 +56,23 @@ export const getClientsByUserIdAction = async (userId: string): Promise<Client[]
 };
 
 export const createClientAction = async (
-  values: Omit<Client, 'id'>
-) => {
-  await createClient(values);
+  values: Omit<Client, "id">
+): Promise<Client> => {
+  const client = await createClient(convertClientToPrismaClient(values));
   revalidatePath("/client");
+  return convertPrismaClientToClient(client);
 };
 
 export const updateClientAction = async (
   id: string,
-  values: Omit<Client, 'id'>
-) => {
-  await updateClient(id, values);
+  values: Omit<Client, "id">
+): Promise<Client> => {
+  const client = await updateClient(id, convertClientToPrismaClient(values));
   revalidatePath("/client");
+  return convertPrismaClientToClient(client);
 };
 
-export const deleteClientAction = async (id: string) => {
+export const deleteClientAction = async (id: string): Promise<void> => {
   await deleteClient(id);
   revalidatePath("/client");
-}; 
+};

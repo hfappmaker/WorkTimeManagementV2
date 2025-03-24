@@ -47,13 +47,11 @@ export async function updateWorkReportAttendances(
   workReportId: string,
   attendances: Attendance[]
 ) {
-  const attendanceUpserts = Object.entries(attendances).map(
-    ([date, { startTime, endTime, breakDuration, memo }]) => {
-      const [year, month, day] = date.split('/').map(Number);
-      const parsedDate = new Date(Date.UTC(year, month - 1, day));
+  const attendanceUpserts = attendances.map(
+    ({ date, startTime, endTime, breakDuration, memo }) => {
 
       return {
-        where: { date_workReportId: { date: parsedDate, workReportId } },
+        where: { date_workReportId: { date, workReportId } },
         update: {
           startTime: startTime ?? null,
           endTime: endTime ?? null,
@@ -61,7 +59,7 @@ export async function updateWorkReportAttendances(
           memo: memo ?? null,
         },
         create: { 
-          date: parsedDate,
+          date,
           startTime: startTime ?? null,
           endTime: endTime ?? null,
           breakDuration: breakDuration ?? null,
@@ -81,32 +79,6 @@ export async function updateWorkReportAttendances(
   });
 
   return workReport;
-}
-
-export async function updateWorkReportAttendance(
-  workReportId: string,
-  date: Date,
-  attendance: Attendance
-) {
-  const updatedAttendance = await db.attendance.upsert({
-    where: { date_workReportId: { date, workReportId } },
-    update: {
-      startTime: attendance.startTime ?? null,
-      endTime: attendance.endTime ?? null,
-      breakDuration: attendance.breakDuration ?? null,
-      memo: attendance.memo ?? null,
-    },
-    create: {
-      date,
-      workReportId,
-      startTime: attendance.startTime ?? null,
-      endTime: attendance.endTime ?? null,
-      breakDuration: attendance.breakDuration ?? null,
-      memo: attendance.memo ?? null,
-    },
-  });
-
-  return updatedAttendance;
 }
 
 export async function getWorkReportsByContractId(contractId: string) {

@@ -13,10 +13,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTransitionContext } from "@/contexts/TransitionContext";
-import { EmailTemplate } from "@prisma/client";
-// Define dialog types
+import { EmailTemplate } from "@/types/email-template";
+
 type DialogType = "create" | "edit" | "delete" | "details" | null;
-type EmailTemplateData = Omit<EmailTemplate, 'createdAt' | 'updatedAt'>;
 
 const emailTemplateFormSchema = z.object({
     name: z.string().min(1, "メールテンプレート名は必須です"),
@@ -98,7 +97,7 @@ interface EmailTemplateDialogProps {
   type: DialogType;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  template?: EmailTemplateData | null;
+  template?: EmailTemplate | null;
   onSubmit?: (values: EmailTemplateFormValues) => void;
   onDelete?: () => void;
   onCancel: () => void;
@@ -201,15 +200,13 @@ const EmailTemplateDialog = ({ type, isOpen, onOpenChange, template, onSubmit, o
 };
 
 export default function EmailTemplateClientPage({ userId }: { userId: string }) {
-    // Local state for templates, dialogs, active template etc.
-    const [templates, setTemplates] = useState<EmailTemplateData[]>([]);
+    const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [activeDialog, setActiveDialog] = useState<DialogType>(null);
-    const [activeEmailTemplate, setActiveEmailTemplate] = useState<EmailTemplateData | null>(null);
+    const [activeEmailTemplate, setActiveEmailTemplate] = useState<EmailTemplate | null>(null);
     const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
     const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
     const { startTransition } = useTransitionContext();
 
-    // Refresh email templates from the server
     const refreshTemplates = async () => {
         try {
             const jsonData = await getEmailTemplatesByCreateUserIdAction(userId);

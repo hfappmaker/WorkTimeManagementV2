@@ -4,23 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useTransitionContext } from "@/contexts/TransitionContext";
-import { WorkReport as PrismaWorkReport, Contract as PrismaContract, Client as PrismaClient, $Enums } from "@prisma/client";
+import { $Enums } from "@prisma/client";
+import { WorkReport } from "@/types/work-report";
+import { Contract } from "@/types/contract";
+import { Client } from "@/types/client";
 import { RenameProperty , TransformType } from "@/lib/utils";
 
-type WorkReportStatus = TransformType<Pick<PrismaWorkReport, 'status'>, $Enums.WorkReportStatus, string>;
+type WorkReportDashboard = Pick<TransformType<WorkReport, $Enums.WorkReportStatus, string>, 'id' | 'targetDate' | 'status'>;
 
-type WorkReport = Pick<PrismaWorkReport, 'id' | 'targetDate'> & WorkReportStatus;
-
-type Contract = RenameProperty<Pick<PrismaContract, 'name'>, 'name', 'contractName'> & {
-    workReports: WorkReport[];
+type ContractDashboard = RenameProperty<Pick<Contract, 'name'>, 'name', 'contractName'> & {
+    workReports: WorkReportDashboard[];
 };
 
-type Client = RenameProperty<Pick<PrismaClient, 'name'>, 'name', 'clientName'> & {
-    contracts: Record<string, Contract>;
+type ClientDashboard = RenameProperty<Pick<Client, 'name'>, 'name', 'clientName'> & {
+    contracts: Record<string, ContractDashboard>;
 };
 
 interface DashboardClientPageProps {
-    groupedWorkReports: Record<string, Client>;
+    groupedWorkReports: Record<string, ClientDashboard>;
 }
 
 export default function DashboardClientPage({ groupedWorkReports }: DashboardClientPageProps) {

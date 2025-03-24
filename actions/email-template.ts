@@ -24,17 +24,8 @@ export const getEmailTemplatesByCreateUserIdAction = async (
 export const createEmailTemplateAction = async (
   values: Omit<EmailTemplate, 'id'>
 ) => {
-  const name = values.name;
-  const subject = values.subject;
-  const body = values.body;
-  const createUserId = values.createUserId;
   try {
-    const template = await createEmailTemplate({
-      name,
-      subject,
-      body,
-      createUserId,
-    });
+    const template = await createEmailTemplate(values);
     revalidatePath("/emailTemplate");
     return template;
   } catch (error) {
@@ -47,11 +38,8 @@ export const updateEmailTemplateAction = async (
   id: string,
   values: Omit<EmailTemplate, 'id'>
 ) => {
-  const name = values.name;
-  const subject = values.subject;
-  const body = values.body;
   try {
-    const template = await updateEmailTemplate(id, { name, subject, body });
+    const template = await updateEmailTemplate(id, values);
     revalidatePath("/emailTemplate");
     return template;
   } catch (error) {

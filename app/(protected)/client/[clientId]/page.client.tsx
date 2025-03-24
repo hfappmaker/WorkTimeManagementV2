@@ -19,11 +19,9 @@ import { ComboBoxField } from "@/components/ui/select";
 import { TimePickerFieldForDate, TimePickerFieldForNumber } from "@/components/ui/time-picker";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { NumberInputField } from "@/components/ui/input";
-import { Client } from "@prisma/client";
-import { Contract as PrismaContract } from "@prisma/client";
-import { DecimalToNumber } from "@/lib/utils";
+import { Client } from "@/types/client";
+import { Contract } from "@/types/contract";
 
-type Contract = DecimalToNumber<PrismaContract>;
 type ContractFormValues = z.infer<typeof contractFormSchema>;
 
 interface ContractFormProps {
@@ -341,7 +339,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   const onCreateContract = async (data: ContractFormValues) => {
     startTransition(async () => {
       try {
-        const contractData = convertContractData(data, userId, client.id);
+        const contractData = convertContractFormValuesToContract(data, userId, client.id);
         await createContractAction(contractData);
         setSuccess({ message: `契約 '${data.name}' を作成しました`, date: new Date() });
         closeDialog();
@@ -358,7 +356,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
     if (!activeContract) return;
     startTransition(async () => {
       try {
-        const contractData = convertContractData(data, userId, client.id);
+        const contractData = convertContractFormValuesToContract(data, userId, client.id);
         await updateContractAction(activeContract.id, contractData);
         setSuccess({ message: `契約 '${data.name}' を編集しました`, date: new Date() });
         closeDialog();
@@ -393,24 +391,22 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   };
 
   // 契約データを変換する関数
-  const convertContractData = (data: ContractFormValues, userId: string, clientId: string): Omit<Contract, 'id'> => {
+  const convertContractFormValuesToContract = (data: ContractFormValues, userId: string, clientId: string): Omit<Contract, 'id'> => {
     return {
-      name: data.name,
-      startDate: data.startDate,
-      endDate: data.endDate ? data.endDate : null,
-      unitPrice: data.unitPrice ? data.unitPrice : null,
-      settlementMin: data.settlementMin ? data.settlementMin : null,
-      settlementMax: data.settlementMax ? data.settlementMax : null,
-      rateType: data.rateType,
-      upperRate: data.upperRate ? data.upperRate : null,
-      lowerRate: data.lowerRate ? data.lowerRate : null,
-      middleRate: data.middleRate ? data.middleRate : null,
-      dailyWorkMinutes: data.dailyWorkMinutes ? data.dailyWorkMinutes : null,
-      monthlyWorkMinutes: data.monthlyWorkMinutes ? data.monthlyWorkMinutes : null,
-      basicStartTime: data.basicStartTime ? data.basicStartTime : null,
-      basicEndTime: data.basicEndTime ? data.basicEndTime : null,
-      basicBreakDuration: data.basicBreakDuration ? data.basicBreakDuration : null,
-      closingDay: data.closingDay ? data.closingDay : null,
+      ...data,
+      endDate: data.endDate || undefined,
+      unitPrice: data.unitPrice || undefined,
+      settlementMin: data.settlementMin || undefined,
+      settlementMax: data.settlementMax || undefined,
+      upperRate: data.upperRate || undefined,
+      lowerRate: data.lowerRate || undefined,
+      middleRate: data.middleRate || undefined,
+      dailyWorkMinutes: data.dailyWorkMinutes || undefined,
+      monthlyWorkMinutes: data.monthlyWorkMinutes || undefined,
+      basicStartTime: data.basicStartTime || undefined,
+      basicEndTime: data.basicEndTime || undefined,
+      basicBreakDuration: data.basicBreakDuration || undefined,
+      closingDay: data.closingDay || undefined,
       userId,
       clientId,
     };

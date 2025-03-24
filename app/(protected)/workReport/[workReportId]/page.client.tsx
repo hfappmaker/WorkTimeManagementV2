@@ -2,7 +2,8 @@
 
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { updateWorkReportAttendancesAction, updateWorkReportAttendanceAction } from "@/actions/work-report";
+import { updateWorkReportAttendancesAction } from "@/actions/work-report";
+import { updateWorkReportAttendanceAction } from "@/actions/attendance";
 import { FormControl, FormField, FormItem, FormMessage, Form, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,24 +20,15 @@ import { TimePickerFieldForDate, TimePickerFieldForNumber } from "@/components/u
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DatePickerField } from "@/components/ui/date-picker";
 import { Attendance } from "@/types/attendance";
-import {
-    WorkReport as PrismaWorkReport,
-    User,
-    Contract as PrismaContract,
-    Client as PrismaClient
-} from "@prisma/client";
-import { DecimalToNumber, RenameProperties, RenameProperty, NullableToUndefined } from "@/lib/utils";
+import { Client } from "@/types/client";
+import { WorkReport } from "@/types/work-report";
+import { User } from "@/types/user";
+import { RenameProperties, RenameProperty } from "@/lib/utils";
+import { Contract } from "@/types/contract";
 
-type Contract = DecimalToNumber<PrismaContract>;
-type Client = PrismaClient;
 type AttendanceData = Omit<Attendance, 'workReportId'>;
 
-interface WorkReportData {
-    year: number;
-    month: number;
-}
-
-type WorkReportClientProps = NullableToUndefined<RenameProperties<Pick<Contract,
+type WorkReportClientProps = RenameProperties<Pick<Contract,
     'id' |
     'name' |
     'dailyWorkMinutes' |
@@ -45,26 +37,27 @@ type WorkReportClientProps = NullableToUndefined<RenameProperties<Pick<Contract,
     'basicEndTime' |
     'basicBreakDuration' |
     'closingDay'>, { id: 'contractId', name: 'contractName' }> & {
-        workReport: WorkReportData;
         attendances: AttendanceData[];
-    } & RenameProperty<Pick<PrismaWorkReport, 'id'>, 'id', 'workReportId'> &
+    } & RenameProperty<Pick<WorkReport, 'id' | 'targetDate'>, 'id', 'workReportId'> &
     RenameProperties<Pick<Client, 'name' | 'contactName' | 'email'>, { name: 'clientName', email: 'clientEmail' }>
-    & RenameProperty<Pick<User, 'name'>, 'name', 'userName'>>
+    & RenameProperty<Pick<User, 'name'>, 'name', 'userName'>
 
 // Helper to generate a key for each day between startDate and endDate (inclusive)
-function generateDefaultAttendances(year: number, month: number, closingDay: number | undefined): AttendanceData[] {
+function generateDefaultAttendances(year: number, monthIndex: number, closingDay: number | undefined): AttendanceData[] {
     const defaults: AttendanceData[] = [];
-    const current = closingDay ? new Date(year, month - 1, closingDay + 1) : new Date(year, month - 1, 1);
-    const end = closingDay ? new Date(year, month, closingDay + 1) : new Date(year, month, 1);
+
+    const adjustedYearClosingDay = monthIndex === 0 ? year - 1 : year;
+    const adjustedMonthIndexClosingDay = monthIndex === 0 ? 11 : monthIndex - 1;
+
+    const adjustedYear = monthIndex === 11 ? year + 1 : year;
+    const adjustedMonthIndex = monthIndex === 11 ? 0 : monthIndex + 1;
+
+    let current = closingDay ? new Date(Date.UTC(adjustedYearClosingDay, adjustedMonthIndexClosingDay, closingDay + 1)) : new Date(Date.UTC(year, monthIndex, 1));
+    const end = closingDay ? new Date(Date.UTC(year, monthIndex, closingDay + 1)) : new Date(Date.UTC(adjustedYear, adjustedMonthIndex, 1));
+    
     while (current < end) {
-        const dateKey = current.toLocaleDateString('ja-JP', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            timeZone: 'Asia/Tokyo'
-        }).replace(/\//g, '/');
         defaults.push({ date: current, startTime: undefined, endTime: undefined, breakDuration: undefined, memo: undefined });
-        current.setDate(current.getDate() + 1);
+        current = new Date(current.getTime() + 24 * 60 * 60 * 1000);
     }
     return defaults;
 }
@@ -74,15 +67,20 @@ function mergeAttendances(
     defaults: AttendanceData[],
     attendances: AttendanceData[]
 ): AttendanceData[] {
+
+    console.log(attendances);
+    console.log(defaults);
     // Create a map of dates to attendance data for easier lookup
-    const attendanceMap = new Map<Date, AttendanceData>();
+    const attendanceMap = new Map<string, AttendanceData>();
     attendances.forEach(attendance => {
-        attendanceMap.set(attendance.date, attendance);
+        attendanceMap.set(attendance.date.toISOString(), attendance);
     });
+
+    console.log(attendanceMap);
 
     // Merge attendances into defaults
     return defaults.map(defaultAttendance => {
-        const existingAttendance = attendanceMap.get(defaultAttendance.date);
+        const existingAttendance = attendanceMap.get(defaultAttendance.date.toISOString());
         if (existingAttendance) {
             return {
                 ...defaultAttendance,
@@ -212,7 +210,6 @@ const getBulkEditFormDefaults = (
 export default function ClientWorkReportPage({
     contractId,
     workReportId,
-    workReport,
     attendances,
     contractName,
     clientName,
@@ -220,6 +217,7 @@ export default function ClientWorkReportPage({
     closingDay,
     userName,
     clientEmail,
+    targetDate,
     dailyWorkMinutes,
     monthlyWorkMinutes,
     basicStartTime,
@@ -240,7 +238,7 @@ export default function ClientWorkReportPage({
     const [extensionOption, setExtensionOption] = useState("excel");    // 'excel' or 'pdf'
 
     // Compute default attendance values for each day in the range…
-    const defaults = generateDefaultAttendances(workReport.year, workReport.month, closingDay);
+    const defaults = generateDefaultAttendances(targetDate.getFullYear(), targetDate.getMonth(), closingDay);
 
     const initialAttendances = mergeAttendances(defaults, attendances);
 
@@ -437,7 +435,7 @@ export default function ClientWorkReportPage({
                 const targetWorkReportMonthSheet = workbook.getWorksheet(workReportMonthSheetName);
                 if (targetWorkReportMonthSheet && workReportMonthRangeAddress) {
                     const workReportMonthCell = targetWorkReportMonthSheet.getCell(workReportMonthRangeAddress);
-                    workReportMonthCell.value = `${workReport.year}年${workReport.month}月度作業報告書`;
+                    workReportMonthCell.value = `${targetDate.getFullYear()}年${targetDate.getMonth() + 1}月度作業報告書`;
                 }
             }
 
@@ -509,7 +507,7 @@ export default function ClientWorkReportPage({
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `${workReport.year}年${workReport.month}月度作業報告書.xlsx`;
+            link.download = `${targetDate.getFullYear()}年${targetDate.getMonth() + 1}月度作業報告書.xlsx`;
             link.click();
             window.URL.revokeObjectURL(url);
             setSuccess({ message: "テンプレートからの作業報告書作成が完了しました", date: new Date() });
@@ -527,13 +525,13 @@ export default function ClientWorkReportPage({
             }
             // メーラーを起動
             const recipient = clientEmail; // 送信先
-            const subject = encodeURIComponent(`【作業報告書】${workReport.year}年${workReport.month}月_${userName}`);
+            const subject = encodeURIComponent(`【作業報告書】${targetDate.getFullYear()}年${targetDate.getMonth() + 1}月_${userName}`);
             const body = encodeURIComponent(`
 ${contactName ? contactName : clientName}様
    
 お世話になっております。${userName}です。
         
-${workReport.year}年${workReport.month}月分の作業報告書を送付いたします。
+${targetDate.getFullYear()}年${targetDate.getMonth() + 1}月分の作業報告書を送付いたします。
 ご確認のほど、よろしくお願いいたします。    
 `);
             window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');
@@ -587,7 +585,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
     return (
         <div className="p-4">
             <h1 className="text-xl font-bold mb-4 dark:text-white">
-                {contractName}の{workReport.year}年{workReport.month}月度作業報告書
+                {contractName}の{targetDate.getFullYear()}年{targetDate.getMonth() + 1}月度作業報告書
             </h1>
             {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
             {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
@@ -614,7 +612,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
 
                 {/* 列ヘッダー */}
                 <div className="flex items-center space-x-4 mb-2">
-                    <span className="w-32"></span>
+                    <span className="w-40"></span>
                     <span className="w-16"></span>
                     <span className="flex-1 text-center font-medium">出勤時間</span>
                     <span className="flex-1 text-center font-medium">退勤時間</span>
@@ -623,8 +621,8 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                 </div>
 
                 {currentAttendances.map((day) => (
-                    <div key={day.date.getTime()} className="flex items-center space-x-4 mb-2">
-                        <div className="w-32 flex items-center justify-between">
+                    <div key={day.date.toISOString()} className="flex items-center space-x-4 mb-2">
+                        <div className="w-40 flex items-center justify-between">
                             <span>
                                 {(() => {
                                     const date = day.date;
@@ -646,7 +644,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                         <div className="flex-1">
                             <Input
                                 type="time"
-                                id={`start-${day}`}
+                                id={`start-${day.date.toISOString()}`}
                                 readOnly
                                 value={day.startTime ? day.startTime.toISOString().split('T')[1].substring(0, 5) : ''}
                             />
@@ -654,7 +652,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                         <div className="flex-1">
                             <Input
                                 type="time"
-                                id={`end-${day}`}
+                                id={`end-${day.date.toISOString()}`}
                                 readOnly
                                 value={day.endTime ? day.endTime.toISOString().split('T')[1].substring(0, 5) : ''}
                             />
@@ -662,7 +660,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                         <div className="flex-1">
                             <Input
                                 type="time"
-                                id={`break-${day}`}
+                                id={`break-${day.date.toISOString()}`}
                                 readOnly
                                 value={day.breakDuration ? `${Math.floor(day.breakDuration / 60).toString().padStart(2, '0')}:${(day.breakDuration % 60).toString().padStart(2, '0')}` : ''}
                             />
@@ -670,7 +668,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                         <div className="flex-1">
                             <Input
                                 type="text"
-                                id={`memo-${day}`}
+                                id={`memo-${day.date.toISOString()}`}
                                 className="w-[400px]"
                                 readOnly
                                 value={day.memo || ''}
@@ -956,7 +954,7 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                         {(() => {
                                             const date = new Date(editingDate);
                                             const dayOfWeek = date.getDay();
-                                            return `${editingDate}(${dayNames[dayOfWeek]})の勤怠情報を編集`;
+                                            return `${editingDate.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })} (${dayNames[dayOfWeek]})の勤怠情報を編集`;
                                         })()}
                                     </h3>
                                 </div>

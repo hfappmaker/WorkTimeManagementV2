@@ -5,7 +5,6 @@ import { Attendance } from "@/types/attendance";
 import {
   createWorkReport,
   updateWorkReportAttendances,
-  updateWorkReportAttendance,
   getWorkReportsByContractId,
   getWorkReportsByContractIdAndYearMonthDateRange,
 } from "@/data/work-report";
@@ -26,17 +25,6 @@ export const updateWorkReportAttendancesAction = async (
   attendances: Attendance[]
 ): Promise<WorkReport> => {
   const workReport = await updateWorkReportAttendances(workReportId, attendances);
-  revalidatePath(`/workReport/${contractId}/${workReportId}`);
-  return workReport;
-};
-
-export const updateWorkReportAttendanceAction = async (
-  contractId: string,
-  workReportId: string,
-  date: Date,
-  attendance: Attendance 
-): Promise<WorkReport> => {
-  const workReport = await updateWorkReportAttendance(workReportId, date, attendance);
   revalidatePath(`/workReport/${contractId}/${workReportId}`);
   return workReport;
 };

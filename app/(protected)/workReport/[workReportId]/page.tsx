@@ -27,15 +27,12 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
   }
 
   const attendances = await getAttendancesByWorkReportIdAction(workReportId);
-
+  console.log(attendances);
   return (
     <ClientWorkReportPage 
       contractId={contract.id}
       workReportId={workReportId}
-      workReport={{
-        year: workReport.targetDate.getFullYear(),
-        month: workReport.targetDate.getMonth() + 1,
-      }}
+      targetDate={workReport.targetDate}
       userName={user.name}
       attendances={attendances}
       contractName={contract.name}

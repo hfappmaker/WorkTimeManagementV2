@@ -7,17 +7,14 @@ import { Form } from '@/components/ui/form';
 import { createWorkReportAction, getWorkReportsByContractIdAndYearMonthDateRangeAction } from '@/actions/work-report';
 import { getContractByIdAction } from '@/actions/contract';
 import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal, DialogHeader } from '@/components/ui/dialog';
-import { WorkReport } from '@prisma/client';
+import { WorkReport } from "@/types/work-report";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { useRouter } from 'next/navigation';
 import { useTransitionContext } from '@/contexts/TransitionContext';
 import { YearMonthPickerField } from '@/components/ui/date-picker';
 import { z } from 'zod';
-import { Contract as PrismaContract } from "@prisma/client";
-import { DecimalToNumber } from "@/lib/utils";
-
-type Contract = DecimalToNumber<PrismaContract>;
+import { Contract } from "@/types/contract";
 
 const createWorkReportFormSchema = z.object({
   yearMonth: z.date(),

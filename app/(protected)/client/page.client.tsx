@@ -31,7 +31,7 @@ import { truncate } from "@/lib/utils";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
-import { Client } from "@prisma/client";
+import { Client } from "@/types/client";
 
 type ClientFormValues = z.infer<typeof clientFormSchema>;
 
@@ -174,12 +174,12 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   };
 
   // クライアントデータを変換する関数
-  const convertClientData = (data: ClientFormValues, userId: string) : Omit<Client, 'id'> => {
+  const convertClientFormValuesToClient = (data: ClientFormValues, userId: string) : Omit<Client, 'id'> => {
     return {
       name: data.name,
       contactName: data.contactName || "",
       email: data.email || "",
-      defaultEmailTemplateId: null,
+      defaultEmailTemplateId: undefined,
       createUserId: userId,
     };
   };
@@ -188,7 +188,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   const onCreateClient = async (values: ClientFormValues) => {
     startTransition(async () => {
       try {
-        const clientData = convertClientData(values, userId);
+        const clientData = convertClientFormValuesToClient(values, userId);
         await createClientAction(clientData);
         setSuccess({ message: `クライアント '${values.name}' を作成しました`, date: new Date() });
         closeDialog();
@@ -205,7 +205,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     if (!selectedClient) return;
     startTransition(async () => {
       try {
-        const clientData = convertClientData(values, userId);
+        const clientData = convertClientFormValuesToClient(values, userId);
         await updateClientAction(selectedClient.id, clientData);
         setSuccess({ message: `クライアント '${values.name}' を編集しました`, date: new Date() });
         closeDialog();
