@@ -4,13 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useTransitionContext } from "@/contexts/TransitionContext";
-import { $Enums } from "@prisma/client";
-import { WorkReport } from "@/types/work-report";
+import { WorkReport, WorkReportStatus } from "@/types/work-report";
 import { Contract } from "@/types/contract";
 import { Client } from "@/types/client";
-import { RenameProperty , TransformType } from "@/lib/utils";
+import { RenameProperty } from "@/lib/utils";
 
-type WorkReportDashboard = Pick<TransformType<WorkReport, $Enums.WorkReportStatus, string>, 'id' | 'targetDate' | 'status'>;
+type WorkReportDashboard = Pick<WorkReport, 'id' | 'targetDate' | 'status'>;
 
 type ContractDashboard = RenameProperty<Pick<Contract, 'name'>, 'name', 'contractName'> & {
     workReports: WorkReportDashboard[];
@@ -27,7 +26,7 @@ interface DashboardClientPageProps {
 export default function DashboardClientPage({ groupedWorkReports }: DashboardClientPageProps) {
     const router = useRouter();
     const { startTransition } = useTransitionContext();
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: WorkReportStatus) => {
         switch (status) {
             case "DRAFT":
                 return "bg-yellow-200 text-yellow-800";
