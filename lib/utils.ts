@@ -28,23 +28,49 @@ export type RenameProperties<
     : K]: T[K];
 };
 
-// 型変換
+/**
+ * オブジェクトの型を再帰的に変換する型ユーティリティ
+ * @example
+ * type Result = TransformType<{
+ *   price: Decimal | null;
+ *   nested: { amount: Decimal }
+ * }, Decimal, number>;
+ * // Result = {
+ * //   price: number | null;
+ * //   nested: { amount: number }
+ * // }
+ */
 export type TransformType<T, From, To> = {
   [K in keyof T]: T[K] extends infer U
     ? U extends From
       ? To
-      : U
+      : U extends object
+        ? TransformType<U, From, To>
+        : U
     : never;
 };
 
-// 複数の型変換
+/**
+ * 複数の型変換を適用する型ユーティリティ
+ * @example
+ * type Result = TransformTypeMulti<{
+ *   price: Decimal | null;
+ *   nested: { amount: Decimal }
+ * }, [[Decimal, number], [null, undefined]]>;
+ * // Result = {
+ * //   price: number | undefined;
+ * //   nested: { amount: number }
+ * // }
+ */
 export type TransformTypeMulti<T, Transformations extends [any, any][]> = {
   [K in keyof T]: T[K] extends infer U
     ? Transformations extends [infer First, ...infer Rest]
       ? First extends [infer From, infer To]
         ? U extends From
           ? TransformTypeMulti<{ [P in K]: To }, Rest extends [any, any][] ? Rest : []>[K]
-          : TransformTypeMulti<{ [P in K]: U }, Rest extends [any, any][] ? Rest : []>[K]
+          : U extends object
+            ? TransformTypeMulti<U, Transformations>
+            : TransformTypeMulti<{ [P in K]: U }, Rest extends [any, any][] ? Rest : []>[K]
         : TransformTypeMulti<{ [P in K]: U }, Rest extends [any, any][] ? Rest : []>[K]
       : U
     : never;
@@ -58,3 +84,4 @@ export type ClientSideDataTransform<T> = TransformTypeMulti<
   T,
   [[Decimal, number], [null, undefined]]
 >;
+
