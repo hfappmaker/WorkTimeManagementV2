@@ -1,11 +1,19 @@
 {
-    "configurations": [
-        {
-            "type": "node-terminal",
-            "name": "スクリプトの実行: dev",
-            "request": "launch",
-            "command": "yarn run dev",
-            "cwd": "${workspaceFolder}"
-        }
-    ]
+  "configurations": [
+    {
+      "type": "node-terminal",
+      "name": "スクリプトの実行: dev",
+      "request": "launch",
+      "command": "yarn run dev",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Process",
+      "port": 9229,
+      "restart": true,
+      "cwd": "${workspaceFolder}"
+    }
+  ]
 }

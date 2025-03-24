@@ -18,7 +18,7 @@ export async function getOpenedWorkReport(contractId: string) {
       contractId: contractId,
       status: {
         notIn: [
-          WorkReportStatus.COMPLETED,
+          WorkReportStatus.SUBMITTED,
           WorkReportStatus.APPROVED,
           WorkReportStatus.REJECTED,
         ],
@@ -167,7 +167,7 @@ export async function getCurrentWorkReports() {
             workReports: Array<{
               id: string;
               targetDate: Date;
-              status: string;
+              status: WorkReportStatus;
             }>;
           }
         >;

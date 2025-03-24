@@ -311,14 +311,8 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   // 契約情報を更新する
   const refreshContracts = async () => {
     try {
-      const jsonData = await getContractsByClientIdAction(client.id);
-      if (jsonData) {
-        // 念のための保険：クライアント側でも変換処理を行う
-        const data = JSON.parse(JSON.stringify(jsonData));
-        setContracts(data.map((contract: Contract) => ({
-          ...contract,
-        })));
-      }
+      const contracts = await getContractsByClientIdAction(client.id);
+      setContracts(contracts);
     } catch (error) {
       console.error(error);
     }

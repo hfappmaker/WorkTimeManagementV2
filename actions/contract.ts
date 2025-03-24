@@ -50,6 +50,49 @@ const transformContractData = (values: ContractInput): ContractOutput => {
   };
 };
 
+const convertPrismaContractToContract = (
+  contract: PrismaContract
+): Contract => {
+  return {
+    ...contract,
+    endDate: contract.endDate ? new Date(contract.endDate) : undefined,
+    unitPrice: contract.unitPrice
+      ? Number(contract.unitPrice.toString())
+      : undefined,
+    settlementMin: contract.settlementMin
+      ? Number(contract.settlementMin.toString())
+      : undefined,
+    settlementMax: contract.settlementMax
+      ? Number(contract.settlementMax.toString())
+      : undefined,
+    upperRate: contract.upperRate
+      ? Number(contract.upperRate.toString())
+      : undefined,
+    lowerRate: contract.lowerRate
+      ? Number(contract.lowerRate.toString())
+      : undefined,
+    middleRate: contract.middleRate
+      ? Number(contract.middleRate.toString())
+      : undefined,
+    dailyWorkMinutes: contract.dailyWorkMinutes
+      ? Number(contract.dailyWorkMinutes)
+      : undefined,
+    monthlyWorkMinutes: contract.monthlyWorkMinutes
+      ? Number(contract.monthlyWorkMinutes)
+      : undefined,
+    basicStartTime: contract.basicStartTime
+      ? new Date(contract.basicStartTime)
+      : undefined,
+    basicEndTime: contract.basicEndTime
+      ? new Date(contract.basicEndTime)
+      : undefined,
+    basicBreakDuration: contract.basicBreakDuration
+      ? Number(contract.basicBreakDuration)
+      : undefined,
+    closingDay: contract.closingDay ? Number(contract.closingDay) : undefined,
+  };
+};
+
 export const createContractAction = async (
   values: ContractInput
 ): Promise<void> => {
@@ -79,7 +122,7 @@ export const searchContractsAction = async (
   try {
     const contracts = await searchContracts(userId, searchQuery);
     return contracts
-      ? JSON.parse(JSON.stringify(contracts))
+      ? contracts.map(convertPrismaContractToContract)
       : ([] as Contract[]);
   } catch (error) {
     console.error("Error searching contracts:", error);
@@ -93,7 +136,7 @@ export const getContractsByUserIdAction = async (
   try {
     const contracts = await getContractsByUserId(userId);
     return contracts
-      ? JSON.parse(JSON.stringify(contracts))
+      ? contracts.map(convertPrismaContractToContract)
       : ([] as Contract[]);
   } catch (error) {
     console.error("Error fetching contracts:", error);
@@ -107,7 +150,7 @@ export const getContractsByClientIdAction = async (
   try {
     const contracts = await getContractsByClientId(clientId);
     return contracts
-      ? JSON.parse(JSON.stringify(contracts))
+      ? contracts.map(convertPrismaContractToContract)
       : ([] as Contract[]);
   } catch (error) {
     console.error("Error fetching contracts:", error);
@@ -120,7 +163,16 @@ export const getContractByIdAction = async (
 ): Promise<(Contract & { client: Client }) | null> => {
   try {
     const contract = await getContractById(contractId);
-    return contract ? JSON.parse(JSON.stringify(contract)) : null;
+    return contract
+      ? {
+          ...convertPrismaContractToContract(contract),
+          client: {
+            ...contract.client,
+            defaultEmailTemplateId:
+              contract.client.defaultEmailTemplateId ?? undefined,
+          },
+        }
+      : null;
   } catch (error) {
     console.error("Error fetching contract:", error);
     throw new Error("Failed to fetch contract details");
