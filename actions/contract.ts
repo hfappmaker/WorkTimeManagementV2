@@ -55,7 +55,6 @@ export const createContractAction = async (
 ): Promise<void> => {
   const contractData = transformContractData(values);
   await createContract(contractData);
-  console.log("Contract created successfully");
   revalidatePath(`/client/${values.clientId}`);
 };
 

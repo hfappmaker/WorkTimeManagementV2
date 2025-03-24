@@ -68,16 +68,11 @@ function mergeAttendances(
     defaults: AttendanceData[],
     attendances: AttendanceData[]
 ): AttendanceData[] {
-
-    console.log(attendances);
-    console.log(defaults);
     // Create a map of dates to attendance data for easier lookup
     const attendanceMap = new Map<string, AttendanceData>();
     attendances.forEach(attendance => {
         attendanceMap.set(attendance.date.toISOString(), attendance);
     });
-
-    console.log(attendanceMap);
 
     // Merge attendances into defaults
     return defaults.map(defaultAttendance => {
@@ -417,13 +412,10 @@ export default function ClientWorkReportPage({
             if (templateWorkbook.definedNames) {
                 for (const definedName of templateWorkbook.definedNames.model) {
                     // Get the named ranges for "name"
-                    console.log("definedName", definedName);
                     const ranges = templateWorkbook.definedNames.getRanges(definedName.name);
-                    console.log("ranges", ranges);
                     if (ranges && ranges.ranges.length > 0) {
                         for (const range of ranges.ranges) {
                             workbook.definedNames.add(range, definedName.name);
-                            console.log(`Added named range: ${definedName.name} -> ${range}`);
                         }
                     }
                 }

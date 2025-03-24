@@ -27,7 +27,7 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
   }
 
   const attendances = await getAttendancesByWorkReportIdAction(workReportId);
-  console.log(attendances);
+  
   return (
     <ClientWorkReportPage 
       contractId={contract.id}
