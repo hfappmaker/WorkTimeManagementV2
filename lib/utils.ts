@@ -11,26 +11,14 @@ export const truncate = (str: string, maxLength: number): string => {
   return str.length > maxLength ? str.slice(0, maxLength) + "…" : str;
 };
 
-// 型変換
-export type TransformTypes<T, Transformations extends [any, any][]> = {
-  [K in keyof T]: Transformations extends [infer First, ...infer Rest]
-    ? First extends [infer From, infer To]
-      ? From extends T[K]
-        ? T[K] extends ((infer U extends Exclude<T[K], From>) | From)
-          ? U | To
-          : never
-        : TransformTypes<
-            { [P in K]: T[K] },
-            Rest extends [any, any][] ? Rest : []
-          >[K]
-      : TransformTypes<
-          { [P in K]: T[K] },
-          Rest extends [any, any][] ? Rest : []
-        >[K]
-    : T[K];
-};
-
 // プロパティ名の変更
+export type RenameProperty<
+  T,
+  OldKey extends keyof T & string,
+  NewKey extends string
+> = Omit<T, OldKey> & { [K in NewKey]: T[OldKey] };
+
+// 複数のプロパティ名の変更
 export type RenameProperties<
   T,
   RenameMap extends { [K in keyof T]?: string }
@@ -40,14 +28,33 @@ export type RenameProperties<
     : K]: T[K];
 };
 
-export type DecimalToNumber<T> = TransformTypes<T, [[Decimal, number]]>;
+// 型変換
+export type TransformType<T, From, To> = {
+  [K in keyof T]: T[K] extends infer U
+    ? U extends From
+      ? To
+      : U
+    : never;
+};
 
-export type NullableToUndefined<T> = TransformTypes<T, [[null, undefined]]>;
+// 複数の型変換
+export type TransformTypeMulti<T, Transformations extends [any, any][]> = {
+  [K in keyof T]: T[K] extends infer U
+    ? Transformations extends [infer First, ...infer Rest]
+      ? First extends [infer From, infer To]
+        ? U extends From
+          ? TransformTypeMulti<{ [P in K]: To }, Rest extends [any, any][] ? Rest : []>[K]
+          : TransformTypeMulti<{ [P in K]: U }, Rest extends [any, any][] ? Rest : []>[K]
+        : TransformTypeMulti<{ [P in K]: U }, Rest extends [any, any][] ? Rest : []>[K]
+      : U
+    : never;
+};
 
-export type TransformType<T, From, To> = TransformTypes<T, [[From, To]]>;
+// nullをundefinedに変換
+export type NullableToUndefined<T> = TransformType<T, null, undefined>;
 
-export type RenameProperty<
+// クライアントサイドで再利用可能な型変換
+export type ClientSideDataTransform<T> = TransformTypeMulti<
   T,
-  OldKey extends keyof T & string,
-  NewKey extends string
-> = Omit<T, OldKey> & { [K in NewKey]: T[OldKey] };
+  [[Decimal, number], [null, undefined]]
+>;
