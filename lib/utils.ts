@@ -29,7 +29,7 @@ export type RenameProperties<
 };
 
 /**
- * オブジェクトの型を再帰的に変換する型ユーティリティ
+ * オブジェクトの型を変換する型ユーティリティ
  * @example
  * type Result = TransformType<{
  *   price: Decimal | null;
@@ -37,17 +37,11 @@ export type RenameProperties<
  * }, Decimal, number>;
  * // Result = {
  * //   price: number | null;
- * //   nested: { amount: number }
+ * //   nested: { amount: Decimal }
  * // }
  */
 export type TransformType<T, From, To> = {
-  [K in keyof T]: T[K] extends infer U
-    ? U extends From
-      ? To
-      : U extends object
-        ? TransformType<U, From, To>
-        : U
-    : never;
+  [K in keyof T]: T[K] extends infer U ? (U extends From ? To : U) : never;
 };
 
 /**
@@ -59,7 +53,7 @@ export type TransformType<T, From, To> = {
  * }, [[Decimal, number], [null, undefined]]>;
  * // Result = {
  * //   price: number | undefined;
- * //   nested: { amount: number }
+ * //   nested: { amount: Decimal }
  * // }
  */
 export type TransformTypeMulti<T, Transformations extends [any, any][]> = {
@@ -67,11 +61,18 @@ export type TransformTypeMulti<T, Transformations extends [any, any][]> = {
     ? Transformations extends [infer First, ...infer Rest]
       ? First extends [infer From, infer To]
         ? U extends From
-          ? TransformTypeMulti<{ [P in K]: To }, Rest extends [any, any][] ? Rest : []>[K]
-          : U extends object
-            ? TransformTypeMulti<U, Transformations>
-            : TransformTypeMulti<{ [P in K]: U }, Rest extends [any, any][] ? Rest : []>[K]
-        : TransformTypeMulti<{ [P in K]: U }, Rest extends [any, any][] ? Rest : []>[K]
+          ? TransformTypeMulti<
+              { [P in K]: To },
+              Rest extends [any, any][] ? Rest : []
+            >[K]
+          : TransformTypeMulti<
+              { [P in K]: U },
+              Rest extends [any, any][] ? Rest : []
+            >[K]
+        : TransformTypeMulti<
+            { [P in K]: U },
+            Rest extends [any, any][] ? Rest : []
+          >[K]
       : U
     : never;
 };
@@ -84,4 +85,3 @@ export type ClientSideDataTransform<T> = TransformTypeMulti<
   T,
   [[Decimal, number], [null, undefined]]
 >;
-
