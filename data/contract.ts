@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { Contract } from "@prisma/client";
+import { StrictOmit } from "ts-essentials";
 
-function processContractValues(values: Omit<Contract, 'id' | 'createdAt' | 'updatedAt'>) {
+function processContractValues(values: StrictOmit<Contract, 'id'>) {
   const {
     clientId,
     userId,
@@ -46,7 +47,7 @@ export async function getContractById(contractId: string) {
   return contract;
 }
 
-export async function createContract(values: Omit<Contract, 'id' | 'createdAt' | 'updatedAt'>) {
+export async function createContract(values: StrictOmit<Contract, 'id'>) {
   const { processedRest, clientId, userId } = processContractValues(values);
 
   await db.contract.create({
@@ -80,7 +81,7 @@ export async function searchContracts(userId: string, searchQuery: string) {
 
 export async function updateContract(
   id: string,
-  values: Omit<Contract, 'id' | 'createdAt' | 'updatedAt'>
+  values: StrictOmit<Contract, 'id'>
 ) {
   const { processedRest, clientId, userId } = processContractValues(values);
 

@@ -25,8 +25,9 @@ import { WorkReport } from "@/types/work-report";
 import { User } from "@/types/user";
 import { RenameProperties, RenameProperty } from "@/lib/utils";
 import { Contract } from "@/types/contract";
+import { StrictOmit } from "ts-essentials";
 
-type AttendanceData = Omit<Attendance, 'workReportId'>;
+type AttendanceData = StrictOmit<Attendance, 'workReportId'>;
 
 type WorkReportClientProps = RenameProperties<Pick<Contract,
     'id' |

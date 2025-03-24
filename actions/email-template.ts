@@ -8,6 +8,7 @@ import {
   getEmailTemplatesByCreateUserId,
 } from "@/data/email-template";
 import { EmailTemplate } from "@/types/email-template";
+import { StrictOmit } from "ts-essentials";
 
 export const getEmailTemplatesByCreateUserIdAction = async (
   createUserId: string
@@ -22,7 +23,7 @@ export const getEmailTemplatesByCreateUserIdAction = async (
 };
 
 export const createEmailTemplateAction = async (
-  values: Omit<EmailTemplate, 'id'>
+  values: StrictOmit<EmailTemplate, 'id'>
 ) => {
   try {
     const template = await createEmailTemplate(values);
@@ -36,7 +37,7 @@ export const createEmailTemplateAction = async (
 
 export const updateEmailTemplateAction = async (
   id: string,
-  values: Omit<EmailTemplate, 'id'>
+  values: StrictOmit<EmailTemplate, 'id'>
 ) => {
   try {
     const template = await updateEmailTemplate(id, values);

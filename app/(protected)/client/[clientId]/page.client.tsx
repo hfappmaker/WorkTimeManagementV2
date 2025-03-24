@@ -21,6 +21,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { NumberInputField } from "@/components/ui/input";
 import { Client } from "@/types/client";
 import { Contract } from "@/types/contract";
+import { StrictOmit } from "ts-essentials";
 
 type ContractFormValues = z.infer<typeof contractFormSchema>;
 
@@ -391,7 +392,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   };
 
   // 契約データを変換する関数
-  const convertContractFormValuesToContract = (data: ContractFormValues, userId: string, clientId: string): Omit<Contract, 'id'> => {
+  const convertContractFormValuesToContract = (data: ContractFormValues, userId: string, clientId: string): StrictOmit<Contract, 'id'> => {
     return {
       ...data,
       endDate: data.endDate || undefined,

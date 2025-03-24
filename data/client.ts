@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { Client } from "@prisma/client";
+import { StrictOmit } from "ts-essentials";
 
 export async function getClientsByUserId(userId: string) : Promise<Client[]> {
   const clients = await db.client.findMany({
@@ -15,7 +16,7 @@ export async function getClientById(clientId: string) : Promise<Client | null> {
   return client;
 }
 
-export async function createClient(values: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) : Promise<Client> {
+export async function createClient(values: StrictOmit<Client, 'id'>) : Promise<Client> {
   const client = await db.client.create({
     data: {
       name: values.name,
@@ -38,7 +39,7 @@ export async function createClient(values: Omit<Client, 'id' | 'createdAt' | 'up
   return client;
 }
 
-export async function updateClient(id: string, values: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) : Promise<Client> {
+export async function updateClient(id: string, values: StrictOmit<Client, 'id'>) : Promise<Client> {
   const client = await db.client.update({
     where: { id },
     data: { name: values.name, contactName: values.contactName || "", email: values.email || "", defaultEmailTemplateId: values.defaultEmailTemplateId || null },

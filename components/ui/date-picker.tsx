@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FaCalendarAlt } from "react-icons/fa";
-import { FC, useCallback, useRef, useState } from "react";
+import { FC, useRef, useState } from "react";
 import { FieldValues, Control, Path } from "react-hook-form";
 import { FormControl, FormField, FormMessage, FormItem, FormLabel } from "./form";
 import { SelectItem } from "./select";
@@ -12,7 +12,8 @@ import { SelectValue } from "./select";
 import { SelectTrigger } from "./select";
 import { Select } from "./select";
 import { Button } from "./button";
-interface DatePickerProps extends Omit<React.ComponentPropsWithRef<"input">, 'onChange' | 'value'> {
+import { StrictOmit } from "ts-essentials";
+interface DatePickerProps extends StrictOmit<React.ComponentPropsWithRef<"input">, 'onChange' | 'value'> {
   value?: string;
   onChange?: (date: string) => void;
 }

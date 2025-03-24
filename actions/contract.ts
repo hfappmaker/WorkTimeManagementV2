@@ -14,9 +14,10 @@ import { Decimal } from "@prisma/client/runtime/library";
 import { Contract as PrismaContract } from "@prisma/client";
 import { Contract } from "@/types/contract";
 import { Client } from "@/types/client";
+import { StrictOmit } from "ts-essentials";
 
-type ContractInput = Omit<Contract, "id">;
-type ContractOutput = Omit<PrismaContract, "id">;
+type ContractInput = StrictOmit<Contract, "id">;
+type ContractOutput = StrictOmit<PrismaContract, "id">;
 
 const transformContractData = (values: ContractInput): ContractOutput => {
   return {

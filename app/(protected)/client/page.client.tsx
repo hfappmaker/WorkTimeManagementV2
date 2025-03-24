@@ -32,6 +32,7 @@ import { useTransitionContext } from "@/contexts/TransitionContext";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { Client } from "@/types/client";
+import { StrictOmit } from "ts-essentials";
 
 type ClientFormValues = z.infer<typeof clientFormSchema>;
 
@@ -174,7 +175,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   };
 
   // クライアントデータを変換する関数
-  const convertClientFormValuesToClient = (data: ClientFormValues, userId: string) : Omit<Client, 'id'> => {
+  const convertClientFormValuesToClient = (data: ClientFormValues, userId: string) : StrictOmit<Client, 'id'> => {
     return {
       name: data.name,
       contactName: data.contactName || "",

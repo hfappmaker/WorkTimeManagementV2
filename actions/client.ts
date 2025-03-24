@@ -10,6 +10,7 @@ import {
 } from "@/data/client";
 import { Client } from "@/types/client";
 import { Client as PrismaClient } from "@prisma/client";
+import { StrictOmit } from "ts-essentials";
 
 function convertPrismaClientToClient(values: PrismaClient): Client {
   const { defaultEmailTemplateId, ...rest } = values;
@@ -21,8 +22,8 @@ function convertPrismaClientToClient(values: PrismaClient): Client {
 }
 
 function convertClientToPrismaClient(
-  values: Omit<Client, "id">
-): Omit<PrismaClient, "id" | "createdAt" | "updatedAt"> {
+  values: StrictOmit<Client, "id">
+): StrictOmit<PrismaClient, "id"> {
   const { defaultEmailTemplateId, ...rest } = values;
 
   return {
@@ -56,7 +57,7 @@ export const getClientsByUserIdAction = async (
 };
 
 export const createClientAction = async (
-  values: Omit<Client, "id">
+  values: StrictOmit<Client, "id">
 ): Promise<Client> => {
   const client = await createClient(convertClientToPrismaClient(values));
   revalidatePath("/client");
@@ -65,7 +66,7 @@ export const createClientAction = async (
 
 export const updateClientAction = async (
   id: string,
-  values: Omit<Client, "id">
+  values: StrictOmit<Client, "id">
 ): Promise<Client> => {
   const client = await updateClient(id, convertClientToPrismaClient(values));
   revalidatePath("/client");
