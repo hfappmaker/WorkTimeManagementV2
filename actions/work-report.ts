@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { AttendanceEntry, AttendanceFormValues } from "@/types/attendance";
+import { Attendance } from "@/types/attendance";
 import {
   createWorkReport,
   updateWorkReportAttendances,
@@ -9,35 +9,39 @@ import {
   getWorkReportsByContractId,
   getWorkReportsByContractIdAndYearMonthDateRange,
 } from "@/data/work-report";
+import { WorkReport } from "@/types/work-report";
 
 export const createWorkReportAction = async (
   contractId: string,
   targetDate: Date
-) => {
-  await createWorkReport(contractId, targetDate);
+): Promise<WorkReport> => {
+  const workReport = await createWorkReport(contractId, targetDate);
   revalidatePath(`/workReport/${contractId}`);
+  return workReport;
 };
 
 export const updateWorkReportAttendancesAction = async (
   contractId: string,
   workReportId: string,
-  attendance: AttendanceFormValues
-) => {
-  await updateWorkReportAttendances(workReportId, attendance);
+  attendances: Attendance[]
+): Promise<WorkReport> => {
+  const workReport = await updateWorkReportAttendances(workReportId, attendances);
   revalidatePath(`/workReport/${contractId}/${workReportId}`);
+  return workReport;
 };
 
 export const updateWorkReportAttendanceAction = async (
   contractId: string,
   workReportId: string,
   date: Date,
-  attendance: AttendanceEntry 
-) => {
-  await updateWorkReportAttendance(workReportId, date, attendance);
+  attendance: Attendance 
+): Promise<WorkReport> => {
+  const workReport = await updateWorkReportAttendance(workReportId, date, attendance);
   revalidatePath(`/workReport/${contractId}/${workReportId}`);
+  return workReport;
 };
 
-export const getWorkReportsByContractIdAction = async (contractId: string) => {
+export const getWorkReportsByContractIdAction = async (contractId: string): Promise<WorkReport[]> => {
   try {
     return await getWorkReportsByContractId(contractId);
   } catch (error) {
@@ -50,7 +54,7 @@ export const getWorkReportsByContractIdAndYearMonthDateRangeAction = async (
   contractId: string,
   fromDate?: Date,
   toDate?: Date
-) => {
+): Promise<WorkReport[]> => {
   try {
     return await getWorkReportsByContractIdAndYearMonthDateRange(
       contractId,

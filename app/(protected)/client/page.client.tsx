@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, UseFormReturn } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { getClientsByUserIdAction, createClientAction, updateClientAction, deleteClientAction } from "@/actions/client";
 import { useRouter } from "next/navigation";
@@ -31,10 +31,9 @@ import { truncate } from "@/lib/utils";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
-import { Client as PrismaClient } from "@prisma/client";
+import { Client } from "@prisma/client";
 
 type ClientFormValues = z.infer<typeof clientFormSchema>;
-type Client = Omit<PrismaClient, 'createdAt' | 'updatedAt'>;
 
 type DialogType = "details" | "create" | "edit" | "delete" | null;
 
@@ -175,7 +174,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   };
 
   // クライアントデータを変換する関数
-  const convertClientData = (data: ClientFormValues, userId: string) => {
+  const convertClientData = (data: ClientFormValues, userId: string) : Omit<Client, 'id'> => {
     return {
       name: data.name,
       contactName: data.contactName || "",

@@ -26,11 +26,13 @@ export async function createClient(values: Omit<Client, 'id' | 'createdAt' | 'up
           id: values.createUserId,
         },
       },
-      defaultEmailTemplate: {
-        connect: {
-          id: values.defaultEmailTemplateId || undefined,
+      ...(values.defaultEmailTemplateId ? {
+        defaultEmailTemplate: {
+          connect: {
+            id: values.defaultEmailTemplateId,
+          },
         },
-      },
+      } : {}),
     },
   });
 }

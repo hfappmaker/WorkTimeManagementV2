@@ -1,6 +1,7 @@
 import { getContractById } from "@/data/contract";
 import ClientWorkReportPage from "./page.client";
-import { getWorkReportById, getAttendancesByWorkReportId } from "@/data/work-report"
+import { getWorkReportById } from "@/data/work-report"
+import { getAttendancesByWorkReportIdAction } from "@/actions/attendance";
 import { currentUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
@@ -25,19 +26,7 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
     return notFound();
   }
 
-  // Fetch raw attendances from the DB.
-  const rawAttendances = await getAttendancesByWorkReportId(workReportId);
-
-  // Map each attendance to the expected AttendanceRecord type.
-  const attendances = rawAttendances.map(att => ({
-    date: att.date.toISOString().split('T')[0].replace(/-/g, '/'),
-    attendanceEntry: {
-      startTime: att.startTime ? att.startTime : undefined,
-      endTime: att.endTime ? att.endTime : undefined,
-      breakDuration: att.breakDuration ? att.breakDuration : undefined,
-      memo: att.memo ? att.memo : undefined
-    }
-  }));
+  const attendances = await getAttendancesByWorkReportIdAction(workReportId);
 
   return (
     <ClientWorkReportPage 

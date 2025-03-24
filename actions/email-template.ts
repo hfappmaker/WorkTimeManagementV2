@@ -7,14 +7,13 @@ import {
   updateEmailTemplate,
   getEmailTemplatesByCreateUserId,
 } from "@/data/email-template";
-import { EmailTemplate } from "@prisma/client";
+import { EmailTemplate } from "@/types/email-template";
+
 export const getEmailTemplatesByCreateUserIdAction = async (
   createUserId: string
-) => {
+): Promise<EmailTemplate[]> => {
   try {
-    console.log("createUserId", createUserId);
     const templates = await getEmailTemplatesByCreateUserId(createUserId);
-    console.log("templates", templates);
     return templates ? JSON.parse(JSON.stringify(templates)) : [];
   } catch (error) {
     console.error("Error fetching email templates:", error);
@@ -23,7 +22,7 @@ export const getEmailTemplatesByCreateUserIdAction = async (
 };
 
 export const createEmailTemplateAction = async (
-  values: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>
+  values: Omit<EmailTemplate, 'id'>
 ) => {
   const name = values.name;
   const subject = values.subject;
@@ -46,7 +45,7 @@ export const createEmailTemplateAction = async (
 
 export const updateEmailTemplateAction = async (
   id: string,
-  values: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>
+  values: Omit<EmailTemplate, 'id'>
 ) => {
   const name = values.name;
   const subject = values.subject;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, UseFormReturn } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,18 +19,12 @@ import { ComboBoxField } from "@/components/ui/select";
 import { TimePickerFieldForDate, TimePickerFieldForNumber } from "@/components/ui/time-picker";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { NumberInputField } from "@/components/ui/input";
-import { Decimal } from "@prisma/client/runtime/library";
-import { Client as PrismaClient } from "@prisma/client";
+import { Client } from "@prisma/client";
 import { Contract as PrismaContract } from "@prisma/client";
-type ContractFormValues = z.infer<typeof contractFormSchema>;
-type Contract = Omit<PrismaContract, 'createdAt' | 'updatedAt'>;
-type Client = Omit<PrismaClient, 'createdAt' | 'updatedAt' | 'contactName' | 'email' | 'defaultEmailTemplateId'>;
+import { DecimalToNumber } from "@/lib/utils";
 
-// 数値をDecimalに変換する関数
-const toDecimal = (value: number | null): Decimal | null => {
-  if (value === null) return null;
-  return new Decimal(value);
-};
+type Contract = DecimalToNumber<PrismaContract>;
+type ContractFormValues = z.infer<typeof contractFormSchema>;
 
 interface ContractFormProps {
   defaultValues?: ContractFormValues;
@@ -322,7 +316,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       if (jsonData) {
         // 念のための保険：クライアント側でも変換処理を行う
         const data = JSON.parse(JSON.stringify(jsonData));
-        setContracts(data.map((contract: ContractFormValues) => ({
+        setContracts(data.map((contract: Contract) => ({
           ...contract,
         })));
       }
@@ -399,24 +393,24 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   };
 
   // 契約データを変換する関数
-  const convertContractData = (data: ContractFormValues, userId: string, clientId: string) => {
+  const convertContractData = (data: ContractFormValues, userId: string, clientId: string): Omit<Contract, 'id'> => {
     return {
       name: data.name,
       startDate: data.startDate,
-      endDate: data.endDate || null,
-      unitPrice: toDecimal(data.unitPrice || null),
-      settlementMin: toDecimal(data.settlementMin || null),
-      settlementMax: toDecimal(data.settlementMax || null),
+      endDate: data.endDate ? data.endDate : null,
+      unitPrice: data.unitPrice ? data.unitPrice : null,
+      settlementMin: data.settlementMin ? data.settlementMin : null,
+      settlementMax: data.settlementMax ? data.settlementMax : null,
       rateType: data.rateType,
-      upperRate: toDecimal(data.upperRate || null),
-      lowerRate: toDecimal(data.lowerRate || null),
-      middleRate: toDecimal(data.middleRate || null),
-      dailyWorkMinutes: data.dailyWorkMinutes || null,
-      monthlyWorkMinutes: data.monthlyWorkMinutes || null,
-      basicStartTime: data.basicStartTime || null,
-      basicEndTime: data.basicEndTime || null,
-      basicBreakDuration: data.basicBreakDuration || null,
-      closingDay: data.closingDay || null,
+      upperRate: data.upperRate ? data.upperRate : null,
+      lowerRate: data.lowerRate ? data.lowerRate : null,
+      middleRate: data.middleRate ? data.middleRate : null,
+      dailyWorkMinutes: data.dailyWorkMinutes ? data.dailyWorkMinutes : null,
+      monthlyWorkMinutes: data.monthlyWorkMinutes ? data.monthlyWorkMinutes : null,
+      basicStartTime: data.basicStartTime ? data.basicStartTime : null,
+      basicEndTime: data.basicEndTime ? data.basicEndTime : null,
+      basicBreakDuration: data.basicBreakDuration ? data.basicBreakDuration : null,
+      closingDay: data.closingDay ? data.closingDay : null,
       userId,
       clientId,
     };

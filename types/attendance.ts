@@ -1,10 +1,4 @@
-export interface AttendanceEntry {
-  startTime?: Date;
-  endTime?: Date;
-  breakDuration?: number;
-  memo?: string;
-}
+import { Attendance as PrismaAttendance } from "@prisma/client";
+import { NullableToUndefined } from "@/lib/utils";
 
-export interface AttendanceFormValues {
-  [day: string]: AttendanceEntry;
-}
+export type Attendance = NullableToUndefined<Omit<PrismaAttendance, 'id'>>;

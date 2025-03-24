@@ -4,16 +4,20 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { createWorkReportAction, getWorkReportsByContractIdAction, getWorkReportsByContractIdAndYearMonthDateRangeAction } from '@/actions/work-report';
+import { createWorkReportAction, getWorkReportsByContractIdAndYearMonthDateRangeAction } from '@/actions/work-report';
 import { getContractByIdAction } from '@/actions/contract';
 import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal, DialogHeader } from '@/components/ui/dialog';
-import { Contract, WorkReport } from '@prisma/client';
+import { WorkReport } from '@prisma/client';
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { useRouter } from 'next/navigation';
 import { useTransitionContext } from '@/contexts/TransitionContext';
 import { YearMonthPickerField } from '@/components/ui/date-picker';
 import { z } from 'zod';
+import { Contract as PrismaContract } from "@prisma/client";
+import { DecimalToNumber } from "@/lib/utils";
+
+type Contract = DecimalToNumber<PrismaContract>;
 
 const createWorkReportFormSchema = z.object({
   yearMonth: z.date(),
@@ -98,12 +102,8 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   useEffect(() => {
     startTransition(async () => {
       try {
-        let contractData = await getContractByIdAction(contractId);
-        if (contractData) {
-          // 念のための保険：クライアント側でも変換処理を行う
-          contractData = JSON.parse(JSON.stringify(contractData));
-          setContract(contractData);
-        }
+        const contractData = await getContractByIdAction(contractId);
+        setContract(contractData);
       } catch (error: any) {
         setError(error.message || '契約情報の取得に失敗しました');
       }

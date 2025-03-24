@@ -8,8 +8,10 @@ import {
   updateClient,
   deleteClient,
 } from "@/data/client";
-import { Client } from "@prisma/client";
-export const getClientByIdAction = async (clientId: string) => {
+import { Client } from "@/types/client";
+
+
+export const getClientByIdAction = async (clientId: string): Promise<Client | null> => {
   try {
     return await getClientById(clientId);
   } catch (error) {
@@ -18,7 +20,7 @@ export const getClientByIdAction = async (clientId: string) => {
   }
 };
 
-export const getClientsByUserIdAction = async (userId: string) => {
+export const getClientsByUserIdAction = async (userId: string): Promise<Client[]> => {
   try {
     return await getClientsByUserId(userId);
   } catch (error) {
@@ -28,7 +30,7 @@ export const getClientsByUserIdAction = async (userId: string) => {
 };
 
 export const createClientAction = async (
-  values: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>
+  values: Omit<Client, 'id'>
 ) => {
   await createClient(values);
   revalidatePath("/client");
@@ -36,7 +38,7 @@ export const createClientAction = async (
 
 export const updateClientAction = async (
   id: string,
-  values: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>
+  values: Omit<Client, 'id'>
 ) => {
   await updateClient(id, values);
   revalidatePath("/client");

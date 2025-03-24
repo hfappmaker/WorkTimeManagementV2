@@ -1,16 +1,6 @@
 import { db } from "@/lib/db";
 import { WorkReportStatus } from "@prisma/client";
-import { AttendanceEntry, AttendanceFormValues } from "@/types/attendance";
-
-export async function getAttendancesByWorkReportId(workReportId: string) {
-  const attendances = await db.attendance.findMany({
-    where: {
-      workReportId: workReportId,
-    },
-  });
-
-  return attendances;
-}
+import { Attendance } from "@/types/attendance";
 
 export async function getWorkReportById(workReportId: string) {
   const workReport = await db.workReport.findUnique({
@@ -55,9 +45,9 @@ export async function createWorkReport(
 
 export async function updateWorkReportAttendances(
   workReportId: string,
-  attendance: AttendanceFormValues
+  attendances: Attendance[]
 ) {
-  const attendanceUpserts = Object.entries(attendance).map(
+  const attendanceUpserts = Object.entries(attendances).map(
     ([date, { startTime, endTime, breakDuration, memo }]) => {
       const [year, month, day] = date.split('/').map(Number);
       const parsedDate = new Date(Date.UTC(year, month - 1, day));
@@ -96,7 +86,7 @@ export async function updateWorkReportAttendances(
 export async function updateWorkReportAttendance(
   workReportId: string,
   date: Date,
-  attendance: AttendanceEntry
+  attendance: Attendance
 ) {
   const updatedAttendance = await db.attendance.upsert({
     where: { date_workReportId: { date, workReportId } },
@@ -190,7 +180,6 @@ export async function getCurrentWorkReports() {
         id: report.id,
         targetDate: report.targetDate,
         status: report.status,
-        userName: report.contract.user.name || "",
       });
 
       return acc;
@@ -207,7 +196,6 @@ export async function getCurrentWorkReports() {
               id: string;
               targetDate: Date;
               status: string;
-              userName: string;
             }>;
           }
         >;

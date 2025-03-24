@@ -18,41 +18,42 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { TimePickerFieldForDate, TimePickerFieldForNumber } from "@/components/ui/time-picker"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DatePickerField } from "@/components/ui/date-picker";
-import { AttendanceEntry, AttendanceFormValues } from "@/types/attendance";
+import { Attendance } from "@/types/attendance";
+import {
+    WorkReport as PrismaWorkReport,
+    User,
+    Contract as PrismaContract,
+    Client as PrismaClient
+} from "@prisma/client";
+import { DecimalToNumber, RenameProperties, RenameProperty, NullableToUndefined } from "@/lib/utils";
 
-// Adjust the types as needed; here we assume workReport contains startDate and endDate as strings
-// and attendances is an array of records with a "date" field.
+type Contract = DecimalToNumber<PrismaContract>;
+type Client = PrismaClient;
+type AttendanceData = Omit<Attendance, 'workReportId'>;
+
 interface WorkReportData {
     year: number;
     month: number;
 }
 
-interface AttendanceRecord {
-    date: string;
-    attendanceEntry: AttendanceEntry;
-}
-
-interface WorkReportClientProps {
-    contractId: string;
-    workReportId: string;
-    workReport: WorkReportData;
-    attendances: AttendanceRecord[];
-    contractName: string;
-    clientName: string;
-    contactName: string;
-    closingDay: number | undefined;
-    userName: string;
-    clientEmail: string;
-    dailyWorkMinutes: number;
-    monthlyWorkMinutes: number;
-    basicStartTime: Date | undefined;
-    basicEndTime: Date | undefined;
-    basicBreakDuration: number | undefined;
-}
+type WorkReportClientProps = NullableToUndefined<RenameProperties<Pick<Contract,
+    'id' |
+    'name' |
+    'dailyWorkMinutes' |
+    'monthlyWorkMinutes' |
+    'basicStartTime' |
+    'basicEndTime' |
+    'basicBreakDuration' |
+    'closingDay'>, { id: 'contractId', name: 'contractName' }> & {
+        workReport: WorkReportData;
+        attendances: AttendanceData[];
+    } & RenameProperty<Pick<PrismaWorkReport, 'id'>, 'id', 'workReportId'> &
+    RenameProperties<Pick<Client, 'name' | 'contactName' | 'email'>, { name: 'clientName', email: 'clientEmail' }>
+    & RenameProperty<Pick<User, 'name'>, 'name', 'userName'>>
 
 // Helper to generate a key for each day between startDate and endDate (inclusive)
-function generateAttendanceDefaults(year: number, month: number, closingDay: number | undefined): AttendanceFormValues {
-    const defaults: AttendanceFormValues = {};
+function generateDefaultAttendances(year: number, month: number, closingDay: number | undefined): AttendanceData[] {
+    const defaults: AttendanceData[] = [];
     const current = closingDay ? new Date(year, month - 1, closingDay + 1) : new Date(year, month - 1, 1);
     const end = closingDay ? new Date(year, month, closingDay + 1) : new Date(year, month, 1);
     while (current < end) {
@@ -62,7 +63,7 @@ function generateAttendanceDefaults(year: number, month: number, closingDay: num
             day: '2-digit',
             timeZone: 'Asia/Tokyo'
         }).replace(/\//g, '/');
-        defaults[dateKey] = { startTime: undefined, endTime: undefined, breakDuration: undefined, memo: "" };
+        defaults.push({ date: current, startTime: undefined, endTime: undefined, breakDuration: undefined, memo: undefined });
         current.setDate(current.getDate() + 1);
     }
     return defaults;
@@ -70,18 +71,29 @@ function generateAttendanceDefaults(year: number, month: number, closingDay: num
 
 // Merge server attendances into the defaults: if an attendance exists for a day, overwrite it.
 function mergeAttendances(
-    defaults: AttendanceFormValues,
-    attendances: AttendanceRecord[]
-): AttendanceFormValues {
-    attendances.forEach((entry) => {
-        if (defaults[entry.date]) {
-            console.log("entry", entry);
-            defaults[entry.date] = {
-                ...entry.attendanceEntry
+    defaults: AttendanceData[],
+    attendances: AttendanceData[]
+): AttendanceData[] {
+    // Create a map of dates to attendance data for easier lookup
+    const attendanceMap = new Map<Date, AttendanceData>();
+    attendances.forEach(attendance => {
+        attendanceMap.set(attendance.date, attendance);
+    });
+
+    // Merge attendances into defaults
+    return defaults.map(defaultAttendance => {
+        const existingAttendance = attendanceMap.get(defaultAttendance.date);
+        if (existingAttendance) {
+            return {
+                ...defaultAttendance,
+                startTime: existingAttendance.startTime,
+                endTime: existingAttendance.endTime,
+                breakDuration: existingAttendance.breakDuration,
+                memo: existingAttendance.memo
             };
         }
+        return defaultAttendance;
     });
-    return defaults;
 }
 
 const parseRangeReference = (ref: string | undefined): [string | null, string | null] => {
@@ -136,7 +148,9 @@ const editFormSchema = z.object({
     endTime: z.date().optional(),
     breakDuration: z.number().optional(),
     memo: z.string().optional(),
-}) satisfies z.ZodType<AttendanceEntry>;
+})
+
+type EditFormValues = z.infer<typeof editFormSchema>;
 
 const dateRangeModes = ["all", "weekday", "custom"] as const;
 type dateRangeMode = typeof dateRangeModes[number];
@@ -217,7 +231,7 @@ export default function ClientWorkReportPage({
     const { startTransition } = useTransitionContext();
     // モーダルの状態管理
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
-    const [editingDate, setEditingDate] = useState<string | null>(null);
+    const [editingDate, setEditingDate] = useState<Date | null>(null);
     // New state for holding the uploaded template file
     const [uploadedTemplateFile, setUploadedTemplateFile] = useState<File | null>(null);
     // New states for Create Report Dialog
@@ -226,18 +240,18 @@ export default function ClientWorkReportPage({
     const [extensionOption, setExtensionOption] = useState("excel");    // 'excel' or 'pdf'
 
     // Compute default attendance values for each day in the range…
-    const defaults = generateAttendanceDefaults(workReport.year, workReport.month, closingDay);
+    const defaults = generateDefaultAttendances(workReport.year, workReport.month, closingDay);
 
-    const initialAttendance = mergeAttendances(defaults, attendances);
+    const initialAttendances = mergeAttendances(defaults, attendances);
 
-    const [attendanceData, setAttendanceData] = useState<AttendanceFormValues>(initialAttendance);
+    const [currentAttendances, setCurrentAttendances] = useState<AttendanceData[]>(initialAttendances);
 
     // 編集用フォーム
-    const editForm = useForm<AttendanceEntry>({
+    const editForm = useForm<EditFormValues>({
         resolver: zodResolver(editFormSchema),
         defaultValues: {
-            startTime: basicStartTime,
-            endTime: basicEndTime,
+            startTime: basicStartTime ? new Date(basicStartTime) : undefined,
+            endTime: basicEndTime ? new Date(basicEndTime) : undefined,
             breakDuration: basicBreakDuration,
             memo: ""
         }
@@ -260,52 +274,60 @@ export default function ClientWorkReportPage({
 
     // 一括編集を適用する
     const applyBulkEdit = (data: BulkEditFormValues) => {
-        const updatedValues = { ...attendanceData };
-
-        Object.keys(updatedValues).forEach(dateStr => {
-            const date = new Date(dateStr);
+        const updatedValues = currentAttendances.map(attendance => {
             const shouldUpdate = shouldUpdateDate(
-                date,
+                attendance.date,
                 data.dateRangeMode,
                 data.selectedDays,
                 data.startDate,
                 data.endDate
             );
-
             if (shouldUpdate) {
-                updatedValues[dateStr] = {
-                    ...updatedValues[dateStr],
+                return {
+                    ...attendance,
                     startTime: data.startTime,
                     endTime: data.endTime,
                     breakDuration: data.breakDuration,
                     memo: data.memo
-                };
+                }
             }
-        });
+            return attendance;
+        }
+        );
 
         startTransition(async () => {
-            await updateWorkReportAttendancesAction(contractId, workReportId, updatedValues);
-            setAttendanceData(updatedValues);
+            await updateWorkReportAttendancesAction(contractId, workReportId, updatedValues.map(attendance => ({
+                ...attendance,
+                workReportId: workReportId
+            })));
+            setCurrentAttendances(updatedValues);
             resetBulkEditForm();
             setSuccess({ message: "一括編集を適用しました", date: new Date() });
         });
     };
 
     // 編集フォームの送信処理
-    const onEditSubmit = async (data: AttendanceEntry) => {
+    const onEditSubmit = async (data: EditFormValues) => {
         try {
             startTransition(async () => {
-                const updatedValues = { ...attendanceData };
-                updatedValues[editingDate!] = {
-                    startTime: data.startTime,
-                    endTime: data.endTime,
-                    breakDuration: data.breakDuration,
-                    memo: data.memo
-                };
+                const updatedValues = currentAttendances.map(attendance => {
+                    if (attendance.date === editingDate) {
+                        return {
+                            ...attendance,
+                            startTime: data.startTime,
+                            endTime: data.endTime,
+                            breakDuration: data.breakDuration,
+                            memo: data.memo
+                        };
+                    }
+                    return attendance;
+                });
                 // フォームの値を更新
-                const [year, month, day] = editingDate!.split('/').map(Number);
-                await updateWorkReportAttendanceAction(contractId, workReportId, new Date(Date.UTC(year, month - 1, day)), data);
-                setAttendanceData(updatedValues);
+                await updateWorkReportAttendanceAction(contractId, workReportId, editingDate!, {
+                    ...updatedValues.find(attendance => attendance.date === editingDate)!,
+                    workReportId: workReportId
+                });
+                setCurrentAttendances(updatedValues);
                 setEditingDate(null);
             })
             setSuccess({ message: "編集を適用しました", date: new Date() });
@@ -316,15 +338,14 @@ export default function ClientWorkReportPage({
     };
 
     // openEditDialog関数を簡略化
-    const openEditDialog = (date: string) => {
+    const openEditDialog = (date: Date) => {
         setEditingDate(date);
     };
 
     // editingDateの変更を監視してフォームをリセット
     useEffect(() => {
         if (editingDate) {
-            const entry = attendanceData[editingDate];
-
+            const entry = currentAttendances.find(attendance => attendance.date === editingDate)!;
             editForm.reset({
                 startTime: entry.startTime,
                 endTime: entry.endTime,
@@ -346,7 +367,7 @@ export default function ClientWorkReportPage({
     const createReportFromTemplate = async (templateWorkbook: ExcelJS.Workbook) => {
         try {
             // フォームデータを取得
-            const formData = attendanceData;
+            const formData = currentAttendances;
 
             // 新しいワークブックを作成
             const workbook = new ExcelJS.Workbook();
@@ -422,7 +443,7 @@ export default function ClientWorkReportPage({
 
             // ----- New code: Fill form data into the named ranges -----
             // Assume the named ranges '日付', '開始時刻', '終了時刻', '休憩時間' are each 31 cells vertically arranged
-            const sortedDates = Object.keys(formData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+            const sortedFormData = [...formData].sort((a, b) => a.date.getTime() - b.date.getTime());
             const fieldNames = ["日付", "開始時刻", "終了時刻", "休憩時間", "稼働時間", "作業内容"];
             fieldNames.forEach(fieldName => {
                 const fieldRanges = workbook.definedNames.getRanges(fieldName);
@@ -435,11 +456,10 @@ export default function ClientWorkReportPage({
                             for (let i = 0; i < 31; i++) {
                                 const currentRow = startRow + i;
                                 let value: string | number = "";
-                                if (i < sortedDates.length) {
-                                    const dateKey = sortedDates[i];
-                                    const entry = formData[dateKey];
+                                if (i < sortedFormData.length) {
+                                    const entry = sortedFormData[i];
                                     if (fieldName === "日付") {
-                                        value = formatMonthDay(dateKey);
+                                        value = formatMonthDay(entry.date.toISOString());
                                     } else if (fieldName === "開始時刻") {
                                         if (entry.startTime) {
                                             value = msToSerial(entry.startTime.getTime());
@@ -452,7 +472,7 @@ export default function ClientWorkReportPage({
                                         }
                                     } else if (fieldName === "休憩時間") {
                                         if (entry.breakDuration) {
-                                            value = msToSerial(entry.breakDuration * 60000) ;
+                                            value = msToSerial(entry.breakDuration * 60000);
                                             sheet.getCell(currentRow, startCol).numFmt = "[h]:mm";
                                         }
                                     } else if (fieldName === "稼働時間") {
@@ -602,14 +622,14 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                     <span className="w-[400px] text-center font-medium">作業内容</span>
                 </div>
 
-                {Object.keys(attendanceData).map((day) => (
-                    <div key={day} className="flex items-center space-x-4 mb-2">
+                {currentAttendances.map((day) => (
+                    <div key={day.date.getTime()} className="flex items-center space-x-4 mb-2">
                         <div className="w-32 flex items-center justify-between">
                             <span>
                                 {(() => {
-                                    const date = new Date(day);
+                                    const date = day.date;
                                     const dayOfWeek = date.getDay();
-                                    return `${day}(${dayNames[dayOfWeek]})`;
+                                    return `${date.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })} (${dayNames[dayOfWeek]})`;
                                 })()}
                             </span>
                         </div>
@@ -618,42 +638,42 @@ ${workReport.year}年${workReport.month}月分の作業報告書を送付いた�
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => openEditDialog(day)}
+                                onClick={() => openEditDialog(day.date)}
                             >
                                 編集
                             </Button>
                         </div>
                         <div className="flex-1">
-                            <Input 
-                                type="time" 
-                                id={`start-${day}`} 
-                                readOnly 
-                                value={attendanceData[day].startTime ? attendanceData[day].startTime.toISOString().split('T')[1].substring(0, 5) : ''}
+                            <Input
+                                type="time"
+                                id={`start-${day}`}
+                                readOnly
+                                value={day.startTime ? day.startTime.toISOString().split('T')[1].substring(0, 5) : ''}
                             />
                         </div>
                         <div className="flex-1">
-                            <Input 
-                                type="time" 
-                                id={`end-${day}`} 
-                                readOnly 
-                                value={attendanceData[day].endTime ? attendanceData[day].endTime.toISOString().split('T')[1].substring(0, 5) : ''}
+                            <Input
+                                type="time"
+                                id={`end-${day}`}
+                                readOnly
+                                value={day.endTime ? day.endTime.toISOString().split('T')[1].substring(0, 5) : ''}
                             />
                         </div>
                         <div className="flex-1">
-                            <Input 
-                                type="time" 
-                                id={`break-${day}`} 
-                                readOnly 
-                                value={attendanceData[day].breakDuration ? `${Math.floor(attendanceData[day].breakDuration / 60).toString().padStart(2, '0')}:${(attendanceData[day].breakDuration % 60).toString().padStart(2, '0')}` : ''}
+                            <Input
+                                type="time"
+                                id={`break-${day}`}
+                                readOnly
+                                value={day.breakDuration ? `${Math.floor(day.breakDuration / 60).toString().padStart(2, '0')}:${(day.breakDuration % 60).toString().padStart(2, '0')}` : ''}
                             />
                         </div>
                         <div className="flex-1">
-                            <Input 
-                                type="text" 
-                                id={`memo-${day}`} 
-                                className="w-[400px]" 
-                                readOnly 
-                                value={attendanceData[day].memo || ''}
+                            <Input
+                                type="text"
+                                id={`memo-${day}`}
+                                className="w-[400px]"
+                                readOnly
+                                value={day.memo || ''}
                             />
                         </div>
                     </div>
