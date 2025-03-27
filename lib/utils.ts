@@ -14,7 +14,7 @@ export const truncate = (str: string, maxLength: number): string => {
 // プロパティ名の変更
 export type RenameProperty<
   T,
-  OldKey extends keyof T & string,
+  OldKey extends keyof T,
   NewKey extends string
 > = Omit<T, OldKey> & { [K in NewKey]: T[OldKey] };
 

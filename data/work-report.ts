@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { WorkReportStatus } from "@prisma/client";
-import { Attendance } from "@/types/attendance";
+import { AttendanceDto } from "@/types/attendance";
 
 export async function getWorkReportById(workReportId: string) {
   const workReport = await db.workReport.findUnique({
@@ -45,7 +45,7 @@ export async function createWorkReport(
 
 export async function updateWorkReportAttendances(
   workReportId: string,
-  attendances: Attendance[]
+  attendances: AttendanceDto[]
 ) {
   const attendanceUpserts = attendances.map(
     ({ date, startTime, endTime, breakDuration, memo }) => {

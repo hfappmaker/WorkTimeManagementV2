@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Attendance } from "@/types/attendance";
+import { AttendanceDto } from "@/types/attendance";
 import { Attendance as PrismaAttendance } from "@prisma/client";
 
 export async function getAttendancesByWorkReportId(
@@ -17,7 +17,7 @@ export async function getAttendancesByWorkReportId(
 export async function updateWorkReportAttendance(
   workReportId: string,
   date: Date,
-  attendance: Attendance
+  attendance: AttendanceDto
 ): Promise<PrismaAttendance> {
   const updatedAttendance = await db.attendance.upsert({
     where: { date_workReportId: { date, workReportId } },

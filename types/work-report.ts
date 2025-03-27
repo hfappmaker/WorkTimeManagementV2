@@ -1,6 +1,6 @@
 import { WorkReport as PrismaWorkReport } from "@prisma/client";
 import { NullableToUndefined } from "@/lib/utils";
 
-export type WorkReport = NullableToUndefined<PrismaWorkReport>;
+export type WorkReportDto = NullableToUndefined<PrismaWorkReport>;
 
-export type WorkReportStatus = WorkReport["status"];
+export type WorkReportStatus = WorkReportDto["status"];
