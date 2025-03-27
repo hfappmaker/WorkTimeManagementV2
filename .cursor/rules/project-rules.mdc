@@ -8,7 +8,7 @@ alwaysApply: true
 ## 1. 開発環境
 - Node.js 18以上を使用
 - Yarnをパッケージマネージャーとして使用
-- VS Codeを推奨エディタとして使用
+- Cursorを推奨エディタとして使用
 - DevContainerを使用した開発環境の統一
 
 ## 2. コード規約
