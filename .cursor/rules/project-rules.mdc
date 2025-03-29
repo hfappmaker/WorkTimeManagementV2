@@ -61,6 +61,7 @@ alwaysApply: true
 - 汎用性のあるものはtailwind.configに定義すること
 - 改行に<br />は使用しないこと
 - 環境変数は `.env` ファイルで管理
+- Prismaのランタイムライブラリはimportしない (例: import { Decimal } from "@prisma/client/runtime/library")
 
 ## 3. Git運用ルール
 ### 3.1 ブランチ戦略
