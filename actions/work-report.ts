@@ -8,13 +8,13 @@ import {
   getWorkReportsByContractId,
   getWorkReportsByContractIdAndYearMonthDateRange,
 } from "@/data/work-report";
-import { WorkReportDto } from "@/types/work-report";
+import { WorkReport } from "@/types/work-report";
 import { WorkReport as PrismaWorkReport } from "@prisma/client";
 
 export const createWorkReportAction = async (
   contractId: string,
   targetDate: Date
-): Promise<WorkReportDto> => {
+): Promise<WorkReport> => {
   const workReport = await createWorkReport(contractId, targetDate);
   revalidatePath(`/workReport/${contractId}`);
   return convertPrismaWorkReportToWorkReportDto(workReport);
@@ -24,13 +24,13 @@ export const updateWorkReportAttendancesAction = async (
   contractId: string,
   workReportId: string,
   attendances: AttendanceDto[]
-): Promise<WorkReportDto> => {
+): Promise<WorkReport> => {
   const workReport = await updateWorkReportAttendances(workReportId, attendances);
   revalidatePath(`/workReport/${contractId}/${workReportId}`);
   return convertPrismaWorkReportToWorkReportDto(workReport);
 };
 
-export const getWorkReportsByContractIdAction = async (contractId: string): Promise<WorkReportDto[]> => {
+export const getWorkReportsByContractIdAction = async (contractId: string): Promise<WorkReport[]> => {
   try {
     return (await getWorkReportsByContractId(contractId)).map(convertPrismaWorkReportToWorkReportDto);
   } catch (error) {
@@ -43,7 +43,7 @@ export const getWorkReportsByContractIdAndYearMonthDateRangeAction = async (
   contractId: string,
   fromDate?: Date,
   toDate?: Date
-): Promise<WorkReportDto[]> => {
+): Promise<WorkReport[]> => {
   try {
     return (await getWorkReportsByContractIdAndYearMonthDateRange(
       contractId,
@@ -56,7 +56,7 @@ export const getWorkReportsByContractIdAndYearMonthDateRangeAction = async (
   }
 }; 
 
-function convertPrismaWorkReportToWorkReportDto(workReport: PrismaWorkReport): WorkReportDto {
+function convertPrismaWorkReportToWorkReportDto(workReport: PrismaWorkReport): WorkReport {
   return {
     ...workReport,
     memo: workReport.memo ?? undefined,
