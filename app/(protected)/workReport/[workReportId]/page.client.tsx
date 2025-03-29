@@ -21,7 +21,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DatePickerField } from "@/components/ui/date-picker";
 import { AttendanceDto } from "@/types/attendance";
 import { Client } from "@/types/client";
-import { WorkReportDto } from "@/types/work-report";
+import { WorkReport } from "@/types/work-report";
 import { User } from "@/types/user";
 import { RenameProperties, RenameProperty } from "@/lib/utils";
 import { Contract } from "@/types/contract";
@@ -39,7 +39,7 @@ type WorkReportClientProps = RenameProperties<Pick<Contract,
     'basicBreakDuration' |
     'closingDay'>, { id: 'contractId', name: 'contractName' }> & {
         attendances: AttendanceData[];
-    } & RenameProperty<Pick<WorkReportDto, 'id' | 'targetDate'>, 'id', 'workReportId'> &
+    } & RenameProperty<Pick<WorkReport, 'id' | 'targetDate'>, 'id', 'workReportId'> &
     RenameProperties<Pick<Client, 'name' | 'contactName' | 'email'>, { name: 'clientName', email: 'clientEmail' }>
     & RenameProperty<Pick<User, 'name'>, 'name', 'userName'>
 
