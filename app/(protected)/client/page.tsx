@@ -1,6 +1,9 @@
-import ClientClientListPage from "./page.client";
-import { currentUser } from "@/lib/auth";
 import { Metadata } from "next";
+
+import { currentUser } from "@/lib/auth";
+
+import ClientClientListPage from "./page.client";
+
 export const metadata: Metadata = {
   title: "クライアント一覧",
   description: "クライアント一覧",

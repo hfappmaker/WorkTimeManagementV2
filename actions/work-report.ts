@@ -1,15 +1,16 @@
 "use server";
 
+import { WorkReport as PrismaWorkReport } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { AttendanceDto } from "@/types/attendance";
+
 import {
   createWorkReport,
   updateWorkReportAttendances,
   getWorkReportsByContractId,
   getWorkReportsByContractIdAndYearMonthDateRange,
 } from "@/data/work-report";
+import { AttendanceDto } from "@/types/attendance";
 import { WorkReport } from "@/types/work-report";
-import { WorkReport as PrismaWorkReport } from "@prisma/client";
 
 export const createWorkReportAction = async (
   contractId: string,

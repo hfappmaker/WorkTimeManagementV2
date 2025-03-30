@@ -1,8 +1,8 @@
-import { User } from "@/types/next-auth";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { User } from "@/types/next-auth";
 
-interface UserInfoProps {
+type UserInfoProps = {
   user?: User;
   label: string;
 }
@@ -19,7 +19,7 @@ const UserInfo = ({ user, label }: UserInfoProps) => {
   return (
     <Card className="w-auto shadow-sm">
       <CardHeader>
-        <p className="text-2xl font-semibold text-center">{label}</p>
+        <p className="text-center text-2xl font-semibold">{label}</p>
       </CardHeader>
       <CardContent className="space-y-4">
         {Object.entries(userDetails).map(([key, value]) => (
@@ -36,7 +36,7 @@ const UserInfo = ({ user, label }: UserInfoProps) => {
                 {value ? "Enabled" : "Disabled"}
               </Badge>
             ) : (
-              <p className="truncate text-xs max-w-[180px] p-1 bg-secondary rounded-md">
+              <p className="max-w-[180px] truncate rounded-md bg-secondary p-1 text-xs">
                 {value}
               </p>
             )}

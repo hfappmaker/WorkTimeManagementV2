@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Roboto_Mono as Mono } from "next/font/google";
+
 import "./globals.css";
+import { ThemeProvider } from "next-themes";
+
 import { Toaster } from "@/components/ui/sonner";
 import { TransitionProvider } from "@/contexts/TransitionContext";
-import { ThemeProvider } from "next-themes";
+
 import ClientLayout from "./client-layout";
 
 const mono = Mono({ subsets: ["latin"] });

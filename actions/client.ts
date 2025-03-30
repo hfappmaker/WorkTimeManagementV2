@@ -1,6 +1,9 @@
 "use server";
 
+import { Client as PrismaClient } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { StrictOmit } from "ts-essentials";
+
 import {
   getClientById,
   getClientsByUserId,
@@ -9,8 +12,6 @@ import {
   deleteClient,
 } from "@/data/client";
 import { Client } from "@/types/client";
-import { Client as PrismaClient } from "@prisma/client";
-import { StrictOmit } from "ts-essentials";
 
 function convertPrismaClientToClient(values: PrismaClient): Client {
   const { defaultEmailTemplateId, ...rest } = values;

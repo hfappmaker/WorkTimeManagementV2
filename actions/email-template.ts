@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { StrictOmit } from "ts-essentials";
+
 import {
   createEmailTemplate,
   deleteEmailTemplate,
@@ -8,7 +10,6 @@ import {
   getEmailTemplatesByCreateUserId,
 } from "@/data/email-template";
 import { EmailTemplate } from "@/types/email-template";
-import { StrictOmit } from "ts-essentials";
 
 export const getEmailTemplatesByCreateUserIdAction = async (
   createUserId: string

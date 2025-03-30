@@ -1,17 +1,18 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
 import { createEmailTemplateAction, updateEmailTemplateAction, deleteEmailTemplateAction, getEmailTemplatesByCreateUserIdAction } from "@/actions/email-template";
-import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { TextArea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { Input } from "@/components/ui/input";
+import { TextArea } from "@/components/ui/textarea";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import { EmailTemplate } from "@/types/email-template";
 
@@ -25,7 +26,7 @@ const emailTemplateFormSchema = z.object({
   
   type EmailTemplateFormValues = z.infer<typeof emailTemplateFormSchema>;
 
-interface EmailTemplateFormDialogProps {
+type EmailTemplateFormDialogProps = {
   defaultValues?: EmailTemplateFormValues;
   onSubmit: (values: EmailTemplateFormValues) => void;
   submitButtonText: string;
@@ -84,7 +85,7 @@ const EmailTemplateFormDialog = ({ defaultValues, onSubmit, submitButtonText, on
             </FormItem>
           )}
         />
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>キャンセル</Button>
           <Button type="submit">{submitButtonText}</Button>
         </div>
@@ -93,7 +94,7 @@ const EmailTemplateFormDialog = ({ defaultValues, onSubmit, submitButtonText, on
   );
 };
 
-interface EmailTemplateDialogProps {
+type EmailTemplateDialogProps = {
   type: DialogType;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -147,9 +148,9 @@ const EmailTemplateDialog = ({ type, isOpen, onOpenChange, template, onSubmit, o
           <>
             <div>
               <p>本当にメールテンプレート "{template?.name}" を削除しますか？</p>
-              <p className="text-sm text-gray-500 mt-2">この操作は元に戻すことができません。</p>
+              <p className="mt-2 text-sm text-gray-500">この操作は元に戻すことができません。</p>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="mt-4 flex justify-end gap-2">
               <Button variant="outline" onClick={onCancel}>キャンセル</Button>
               <Button variant="destructive" onClick={onDelete}>削除</Button>
             </div>
@@ -160,7 +161,7 @@ const EmailTemplateDialog = ({ type, isOpen, onOpenChange, template, onSubmit, o
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-medium">基本情報</h3>
-              <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <div className="font-semibold">Name</div>
                 <div>{template?.name}</div>
                 <div className="font-semibold">Subject</div>
@@ -169,8 +170,8 @@ const EmailTemplateDialog = ({ type, isOpen, onOpenChange, template, onSubmit, o
                 <div>{template?.body}</div>
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>閉じる</Button>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { onOpenChange(false); }}>閉じる</Button>
             </div>
           </div>
         );
@@ -291,16 +292,16 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
 
     return (
         <div className="p-4">
-                <h1 className="text-2xl font-bold mb-4">メールテンプレート一覧</h1>
+                <h1 className="mb-4 text-2xl font-bold">メールテンプレート一覧</h1>
                 {error && <div className="mb-4"><FormError message={error.message} resetSignal={error.date.getTime()} /></div>}
                 {success && <div className="mb-4"><FormSuccess message={success.message} resetSignal={success.date.getTime()} /></div>}
                 <div className="mb-4">
-                    <Button onClick={() => setActiveDialog("create")}>新規作成</Button>
+                    <Button onClick={() => { setActiveDialog("create"); }}>新規作成</Button>
                 </div>
                 {templates && templates.length > 0 ? (
                     <ul>
                         {templates.map((template) => (
-                            <li key={template.id} className="border p-3 mb-2 flex justify-between items-center">
+                            <li key={template.id} className="mb-2 flex items-center justify-between border p-3">
                                 <div className="cursor-pointer" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("details"); }}>
                                     <div className="font-medium">{template.name}</div>
                                     <div className="text-sm text-muted-foreground">Subject: {template.subject}</div>
@@ -316,7 +317,7 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
                 )}
 
                 <EmailTemplateDialog
-                    type={activeDialog!}
+                    type={activeDialog}
                     isOpen={activeDialog !== null}
                     onOpenChange={(open) => {
                         if (!open) closeDialog();

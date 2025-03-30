@@ -1,3 +1,12 @@
 import { Contract as PrismaContract } from "@prisma/client";
-import { ClientSideDataTransform } from "@/lib/utils";
-export type Contract = ClientSideDataTransform<PrismaContract>;
+import { StrictOmit } from "ts-essentials";
+
+import { SerializedType } from "@/lib/utils";
+
+export type Contract = SerializedType<PrismaContract>;
+
+export type ContractInput = StrictOmit<
+  SerializedType<PrismaContract, false>,
+  "id"
+>;
+export type ContractOutput = StrictOmit<PrismaContract, "id">;

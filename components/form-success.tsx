@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { CheckCircledIcon, Cross2Icon } from "@radix-ui/react-icons";
+import { useState, useEffect } from "react";
 
 type FormSuccessProps = {
   message?: string;
@@ -17,14 +17,14 @@ const FormSuccess = ({ message, resetSignal }: FormSuccessProps) => {
   if (!message || !visible) return null;
 
   return (
-    <div className="relative bg-emerald-500/15 p-3 rounded-md flex items-center gap-x-2 text-sm text-emerald-500">
-      <CheckCircledIcon className="h-4 w-4 flex-none" />
+    <div className="relative flex items-center gap-x-2 rounded-md bg-emerald-500/15 p-3 text-sm text-emerald-500">
+      <CheckCircledIcon className="size-4 flex-none" />
       <p className="pr-6">{message}</p>
       <button
-        onClick={() => setVisible(false)}
-        className="absolute top-1 right-1 p-1 focus:outline-none"
+        onClick={() => { setVisible(false); }}
+        className="absolute right-1 top-1 p-1 focus:outline-none"
       >
-        <Cross2Icon className="h-4 w-4" />
+        <Cross2Icon className="size-4" />
       </button>
     </div>
   );

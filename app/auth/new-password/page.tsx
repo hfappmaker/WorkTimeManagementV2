@@ -1,5 +1,6 @@
-import NewPasswordForm from "@/components/auth/new-password-form";
 import { Suspense } from 'react'
+
+import NewPasswordForm from "@/components/auth/new-password-form";
 
 export const metadata = {
   title: "New Password",

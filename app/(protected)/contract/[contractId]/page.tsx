@@ -1,8 +1,10 @@
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { getContractByIdAction } from "@/actions/contract";
 import { currentUser } from "@/lib/auth";
+
 import ClientContractPage from "./page.client";
-import { notFound } from "next/navigation";
-import { Metadata } from "next";
 
 export const metadata: Metadata = {
     title: "契約詳細",

@@ -1,6 +1,7 @@
-import { db } from "@/lib/db";
 import { Contract } from "@prisma/client";
 import { StrictOmit } from "ts-essentials";
+
+import { db } from "@/lib/db";
 
 function processContractValues(values: StrictOmit<Contract, 'id'>) {
   const {

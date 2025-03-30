@@ -1,8 +1,10 @@
-import { getClientByIdAction } from "@/actions/client";
-import ClientClientDetailsPage from "./page.client";
-import { currentUser } from "@/lib/auth";
-import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { getClientByIdAction } from "@/actions/client";
+import { currentUser } from "@/lib/auth";
+
+import ClientClientDetailsPage from "./page.client";
 
 export const metadata: Metadata = {
     title: "クライアント詳細",

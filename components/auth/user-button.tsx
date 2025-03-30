@@ -1,17 +1,17 @@
 "use client";
 
-import { FaUser } from "react-icons/fa";
 import { ExitIcon } from "@radix-ui/react-icons";
+import { FaUser } from "react-icons/fa";
 
+import LogoutButton from "@/components/auth/logout-button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import LogoutButton from "@/components/auth/logout-button";
 
 const UserButton = () => {
   const user = useCurrentUser();
@@ -22,7 +22,7 @@ const UserButton = () => {
         <Avatar>
           <AvatarImage src={user?.image || ""} />
           <AvatarFallback className="bg-sky-400 text-primary-foreground">
-            <FaUser className="h-6 w-6" />
+            <FaUser className="size-6" />
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
@@ -31,8 +31,8 @@ const UserButton = () => {
         align="end"
       >
         <LogoutButton>
-          <DropdownMenuItem className="hover:bg-sky-400 focus:bg-sky-400 hover:text-primary-foreground focus:text-primary-foreground text-center justify-center">
-            <ExitIcon className="h-4 w-4 mr-2" />
+          <DropdownMenuItem className="justify-center text-center hover:bg-sky-400 hover:text-primary-foreground focus:bg-sky-400 focus:text-primary-foreground">
+            <ExitIcon className="mr-2 size-4" />
             Logout
           </DropdownMenuItem>
         </LogoutButton>

@@ -1,5 +1,6 @@
-import { db } from "@/lib/db";
 import { WorkReportStatus } from "@prisma/client";
+
+import { db } from "@/lib/db";
 import { AttendanceDto } from "@/types/attendance";
 
 export async function getWorkReportById(workReportId: string) {
@@ -129,7 +130,23 @@ export async function getCurrentWorkReports() {
   });
 
   // Group work reports by client and contract
-  const groupedReports = workReports.reduce(
+  const groupedReports = workReports.reduce<Record<
+      string,
+      {
+        clientName: string;
+        contracts: Record<
+          string,
+          {
+            contractName: string;
+            workReports: {
+              id: string;
+              targetDate: Date;
+              status: WorkReportStatus;
+            }[];
+          }
+        >;
+      }
+    >>(
     (acc, report) => {
       const clientId = report.contract.clientId;
       const contractId = report.contractId;
@@ -156,23 +173,7 @@ export async function getCurrentWorkReports() {
 
       return acc;
     },
-    {} as Record<
-      string,
-      {
-        clientName: string;
-        contracts: Record<
-          string,
-          {
-            contractName: string;
-            workReports: Array<{
-              id: string;
-              targetDate: Date;
-              status: WorkReportStatus;
-            }>;
-          }
-        >;
-      }
-    >
+    {}
   );
 
   return groupedReports;

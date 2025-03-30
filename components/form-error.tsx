@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { ExclamationTriangleIcon, Cross2Icon } from "@radix-ui/react-icons";
+import { useState, useEffect } from "react";
 
 type FormErrorProps = {
   message?: string;
@@ -17,14 +17,14 @@ const FormError = ({ message, resetSignal }: FormErrorProps) => {
   if (!message || !visible) return null;
 
   return (
-    <div className="relative bg-destructive/15 p-3 rounded-md flex items-center gap-x-2 text-sm text-destructive">
-      <ExclamationTriangleIcon className="h-4 w-4 flex-none" />
+    <div className="relative flex items-center gap-x-2 rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+      <ExclamationTriangleIcon className="size-4 flex-none" />
       <p>{message}</p>
       <button
-        onClick={() => setVisible(false)}
-        className="absolute top-1 right-1 p-1 focus:outline-none"
+        onClick={() => { setVisible(false); }}
+        className="absolute right-1 top-1 p-1 focus:outline-none"
       >
-        <Cross2Icon className="h-4 w-4" />
+        <Cross2Icon className="size-4" />
       </button>
     </div>
   );

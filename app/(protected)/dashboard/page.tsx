@@ -1,6 +1,8 @@
-import { getCurrentWorkReports } from "@/data/work-report";
-import DashboardClientPage from "./page.client";
 import { Metadata } from "next";
+
+import { getCurrentWorkReports } from "@/data/work-report";
+
+import DashboardClientPage from "./page.client";
 
 export const metadata: Metadata = {
     title: "ダッシュボード",

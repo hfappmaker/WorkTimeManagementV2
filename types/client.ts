@@ -1,4 +1,5 @@
 import { Client as PrismaClient } from "@prisma/client";
-import { NullableToUndefined } from "@/lib/utils";
 
-export type Client = NullableToUndefined<PrismaClient>;
+import { SerializedType } from "@/lib/utils";
+
+export type Client = SerializedType<PrismaClient>;

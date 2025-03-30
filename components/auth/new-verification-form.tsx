@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 import { newVerification } from "@/actions/new-verification";
 import CardWrapper from "@/components/auth/card-wrapper";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
+
 import Spinner from "../spinner";
 
 const NewVerificationForm = () => {
@@ -45,7 +46,7 @@ const NewVerificationForm = () => {
       backButtonLabel="Back to login"
       backButtonHref="/auth/login"
     >
-      <div className="flex items-center w-full justify-center">
+      <div className="flex w-full items-center justify-center">
         {!success && !error && <Spinner />}
         {!success && <FormError message={error.message} resetSignal={error.date.getTime()} />}
         {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}

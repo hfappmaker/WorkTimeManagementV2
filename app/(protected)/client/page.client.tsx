@@ -1,6 +1,15 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { StrictOmit } from "ts-essentials";
+import * as z from "zod";
+
+import { getClientsByUserIdAction, createClientAction, updateClientAction, deleteClientAction } from "@/actions/client";
+import FormError from "@/components/form-error";
+import FormSuccess from "@/components/form-success";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -12,8 +21,6 @@ import {
   DialogPortal,
   DialogOverlay,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -22,23 +29,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { getClientsByUserIdAction, createClientAction, updateClientAction, deleteClientAction } from "@/actions/client";
-import { useRouter } from "next/navigation";
-import { truncate } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useTransitionContext } from "@/contexts/TransitionContext";
-import FormError from "@/components/form-error";
-import FormSuccess from "@/components/form-success";
+import { truncate } from "@/lib/utils";
 import { Client } from "@/types/client";
-import { StrictOmit } from "ts-essentials";
+
 
 type ClientFormValues = z.infer<typeof clientFormSchema>;
 
 type DialogType = "details" | "create" | "edit" | "delete" | null;
 
-interface ClientDialogProps {
+type ClientDialogProps = {
   type: DialogType;
   isOpen: boolean;
   onClose: () => void;
@@ -70,7 +72,7 @@ const clientFormSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
 });
 
-interface ClientFormProps {
+type ClientFormProps = {
   defaultValues?: ClientFormValues;
   onSubmit: (values: ClientFormValues) => Promise<void>;
   submitButtonText: string;
@@ -253,14 +255,14 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <Card>
         <CardHeader>
           <CardTitle>クライアント一覧</CardTitle>
         </CardHeader>
         <CardContent>
           {clients.length === 0 ? (
-            <div className="text-center p-4">
+            <div className="p-4 text-center">
               <p className="text-muted-foreground">クライアントがありません</p>
             </div>
           ) : (
@@ -271,18 +273,18 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
                 {clients.map((client) => (
                   <div
                     key={client.id}
-                    className="flex items-center justify-between p-3 border rounded-md"
+                    className="flex items-center justify-between rounded-md border p-3"
                   >
                     <div 
-                      className="font-medium hover:underline cursor-pointer" 
-                      onClick={() => handleNavigation(client.id)}
+                      className="cursor-pointer font-medium hover:underline" 
+                      onClick={() => { handleNavigation(client.id); }}
                     >
-                      <Label className="truncate max-w-[300px] cursor-pointer">
+                      <Label className="max-w-[300px] cursor-pointer truncate">
                         {truncate(client.name, 30)}
                       </Label>
                     </div>
                     <div className="ml-4">
-                      <Button variant="outline" size="sm" onClick={() => openDetailsModal(client)}>
+                      <Button variant="outline" size="sm" onClick={() => { openDetailsModal(client); }}>
                         詳細
                       </Button>
                     </div>
@@ -295,7 +297,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={() => setActiveDialog("create")}>
+        <Button onClick={() => { setActiveDialog("create"); }}>
           新規クライアント作成
         </Button>
       </div>
@@ -322,9 +324,9 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
             </div>
           </div>
         )}
-        <DialogFooter className="flex space-x-2 justify-between">
+        <DialogFooter className="flex justify-between space-x-2">
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => setActiveDialog("edit")}>
+            <Button variant="outline" onClick={() => { setActiveDialog("edit"); }}>
               編集
             </Button>
             <Button variant="destructive" onClick={openDeleteConfirm}>
@@ -378,7 +380,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
           <p className="text-center">
             {selectedClient?.name} を削除してもよろしいですか？
           </p>
-          <p className="text-center text-sm text-muted-foreground mt-2">
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             この操作は元に戻せません。
           </p>
         </div>

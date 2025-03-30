@@ -1,6 +1,7 @@
-import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
+import * as React from "react"
+import { FC , ComponentPropsWithRef } from "react"
 import {
   Controller,
   ControllerProps,
@@ -10,10 +11,8 @@ import {
   useFormContext,
 } from "react-hook-form"
 
-import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
-import { FC } from "react"
-import { ComponentPropsWithRef } from "react"
+import { cn } from "@/lib/utils"
 
 const Form = FormProvider
 
@@ -114,7 +113,7 @@ const FormControl: FC<ComponentPropsWithRef<typeof Slot>> =
         id={formItemId}
         aria-describedby={
           !error
-            ? `${formDescriptionId}`
+            ? formDescriptionId
             : `${formDescriptionId} ${formMessageId}`
         }
 
@@ -148,7 +147,7 @@ FormDescription.displayName = "FormDescription"
 const FormMessage: FC<ComponentPropsWithRef<"p">> =
   ({ className, children, ...props }) => {
     const { error, formMessageId } = useFormField()
-    const body = error ? String(error?.message) : children
+    const body = error ? String(error.message) : children
 
     if (!body) {
       return null

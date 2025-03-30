@@ -2,10 +2,11 @@
 
 import React, { createContext, useContext, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
+
 import Spinner from "@/components/spinner";
 import { useIsClient } from "@/hooks/use-is-client";
 
-interface TransitionContextType {
+type TransitionContextType = {
     startTransition: (callback: () => void) => void;
     isPending: boolean;
 }
@@ -15,7 +16,7 @@ const TransitionContext = createContext<TransitionContextType | null>(null);
 // LoadingSpinner コンポーネントを分離
 function LoadingSpinner() {
     return (
-        <div className="flex items-center justify-center w-full h-full min-h-[200px]">
+        <div className="flex size-full min-h-[200px] items-center justify-center">
             <Spinner />
         </div>
     );
@@ -58,7 +59,7 @@ function LoadingOverlay() {
     if (!isPending) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
             // bg-black/50が効かないので、styleで指定
             style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
         >

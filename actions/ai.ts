@@ -1,7 +1,7 @@
 "use server";
 
-import { FormActionResult } from "@/models/form-action-result";
 import { generateWithOllama } from "@/lib/ai";
+import { FormActionResult } from "@/models/form-action-result";
 
 export const generateOllamaAction = async (
   prompt: string,

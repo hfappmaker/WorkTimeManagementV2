@@ -1,8 +1,9 @@
 import * as React from "react"
-
-import { cn } from "@/lib/utils"
 import { FC, useState, memo, useCallback } from "react"
 import { Control, FieldValues, Path } from "react-hook-form"
+
+import { cn } from "@/lib/utils"
+
 import { FormControl, FormLabel, FormField, FormMessage, FormItem } from "./form"
 
 const Input: FC<React.ComponentPropsWithRef<"input">> =
@@ -21,7 +22,7 @@ const Input: FC<React.ComponentPropsWithRef<"input">> =
 
 Input.displayName = "Input"
 
-interface NumberInputFieldProps<T extends FieldValues> {
+type NumberInputFieldProps<T extends FieldValues> = {
   control: Control<T>;
   name: Path<T> & {
     [P in Path<T>]: T[P] extends (number | undefined) ? P : never;

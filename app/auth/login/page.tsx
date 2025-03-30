@@ -1,4 +1,5 @@
 import LoginPageClient from "./page.client";
+
 export const metadata = {
   title: "ログイン",
 };

@@ -1,7 +1,7 @@
 /**
  * Represents the result of an action.
  */
-interface FormActionResult {
+type FormActionResult = {
     success?: string;
     error?: string;
 }

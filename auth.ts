@@ -1,11 +1,12 @@
-import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import NextAuth from "next-auth";
 
 import { baseDb } from "@/lib/base-db";
+
 import authConfig from "./auth.config";
-import { getUserById } from "./data/user";
-import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation";
 import { getAccountByUserId } from "./data/account";
+import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation";
+import { getUserById } from "./data/user";
 
 export const {
   handlers: { GET, POST },

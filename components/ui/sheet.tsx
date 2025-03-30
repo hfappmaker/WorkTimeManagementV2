@@ -1,13 +1,12 @@
 "use client"
 
-import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { Cross2Icon } from "@radix-ui/react-icons"
 import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react"
+import { FC , ComponentPropsWithRef } from "react"
 
 import { cn } from "@/lib/utils"
-import { FC } from "react"
-import { ComponentPropsWithRef } from "react"
 
 const Sheet = SheetPrimitive.Root
 
@@ -31,7 +30,7 @@ SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
     variants: {
       side: {
@@ -49,9 +48,7 @@ const sheetVariants = cva(
   }
 )
 
-interface SheetContentProps
-  extends React.ComponentPropsWithRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+type SheetContentProps = {} & React.ComponentPropsWithRef<typeof SheetPrimitive.Content> & VariantProps<typeof sheetVariants>
 
 const SheetContent : FC<SheetContentProps> = ({ side = "right", className, children, ...props }) => (
   <SheetPortal>
@@ -62,7 +59,7 @@ const SheetContent : FC<SheetContentProps> = ({ side = "right", className, child
     >
       {children}
       <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <Cross2Icon className="h-4 w-4" />
+        <Cross2Icon className="size-4" />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>
     </SheetPrimitive.Content>

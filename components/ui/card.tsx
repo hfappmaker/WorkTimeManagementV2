@@ -1,7 +1,7 @@
 import * as React from "react"
+import { ComponentPropsWithRef, FC } from "react"
 
 import { cn } from "@/lib/utils"
-import { ComponentPropsWithRef, FC } from "react"
 
 const Card : FC<ComponentPropsWithRef<"div">> = 
   ({ className, ...props }) => (

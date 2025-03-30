@@ -1,20 +1,20 @@
-import NextAuth, { User as NextAuthUser } from "next-auth";
 import { UserRole } from "@prisma/client";
+import { User as NextAuthUser } from "next-auth";
 
-interface User extends NextAuthUser {
+type User = {
   role: UserRole;
   isTwoFactorEnabled: boolean;
   isOAuth: boolean;
-}
+} & NextAuthUser;
 
 declare module "next-auth" {
-  interface JWT {
+  type JWT = {
     role: UserRole;
     isTwoFactorEnabled: boolean;
     isOAuth: boolean;
-  }
+  };
 
-  interface Session {
+  type Session = {
     user: User & Session["user"];
-  }
+  };
 }

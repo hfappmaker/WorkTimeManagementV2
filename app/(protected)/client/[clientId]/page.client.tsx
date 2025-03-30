@@ -1,31 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { DatePickerField } from "@/components/ui/date-picker";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { createContractAction, deleteContractAction, updateContractAction, getContractsByClientIdAction } from '@/actions/contract';
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatePickerField } from "@/components/ui/date-picker";
+import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from "@/components/ui/form";
-import { createContractAction, deleteContractAction, updateContractAction, getContractsByClientIdAction } from '@/actions/contract';
-import { useTransitionContext } from "@/contexts/TransitionContext";
-import { z } from "zod";
+import { Input , NumberInputField } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ComboBoxField } from "@/components/ui/select";
 import { TimePickerFieldForDate, TimePickerFieldForNumber } from "@/components/ui/time-picker";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { NumberInputField } from "@/components/ui/input";
+import { useTransitionContext } from "@/contexts/TransitionContext";
 import { Client } from "@/types/client";
-import { Contract } from "@/types/contract";
-import { StrictOmit } from "ts-essentials";
+import { Contract, ContractInput } from "@/types/contract";
+
 
 type ContractFormValues = z.infer<typeof contractFormSchema>;
 
-interface ContractFormProps {
+type ContractFormProps = {
   defaultValues?: ContractFormValues;
   onSubmit: (values: ContractFormValues) => Promise<void>;
   onCancel: () => void;
@@ -283,7 +283,7 @@ const ContractForm = ({ defaultValues, onSubmit, onCancel, submitButtonText }: C
           placeholder="（例）20（未入力の場合は末日）"
         />
 
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>キャンセル</Button>
           <Button type="submit">{submitButtonText}</Button>
         </div>
@@ -386,22 +386,15 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   };
 
   // 契約データを変換する関数
-  const convertContractFormValuesToContract = (data: ContractFormValues, userId: string, clientId: string): StrictOmit<Contract, 'id'> => {
+  const convertContractFormValuesToContract = (data: ContractFormValues, userId: string, clientId: string): ContractInput => {
     return {
       ...data,
-      endDate: data.endDate || undefined,
-      unitPrice: data.unitPrice || undefined,
-      settlementMin: data.settlementMin || undefined,
-      settlementMax: data.settlementMax || undefined,
-      upperRate: data.upperRate || undefined,
-      lowerRate: data.lowerRate || undefined,
-      middleRate: data.middleRate || undefined,
-      dailyWorkMinutes: data.dailyWorkMinutes || undefined,
-      monthlyWorkMinutes: data.monthlyWorkMinutes || undefined,
-      basicStartTime: data.basicStartTime || undefined,
-      basicEndTime: data.basicEndTime || undefined,
-      basicBreakDuration: data.basicBreakDuration || undefined,
-      closingDay: data.closingDay || undefined,
+      unitPrice: data.unitPrice?.toString(),
+      settlementMin: data.settlementMin?.toString(),
+      settlementMax: data.settlementMax?.toString(),
+      upperRate: data.upperRate?.toString(),
+      lowerRate: data.lowerRate?.toString(),
+      middleRate: data.middleRate?.toString(),
       userId,
       clientId,
     };
@@ -420,20 +413,16 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       upperRate: contract.upperRate ? Number(contract.upperRate) : undefined,
       lowerRate: contract.lowerRate ? Number(contract.lowerRate) : undefined,
       middleRate: contract.middleRate ? Number(contract.middleRate) : undefined,
-      dailyWorkMinutes: contract.dailyWorkMinutes || undefined,
-      monthlyWorkMinutes: contract.monthlyWorkMinutes || undefined,
       basicStartTime: contract.basicStartTime ? new Date(contract.basicStartTime) : undefined,
       basicEndTime: contract.basicEndTime ? new Date(contract.basicEndTime) : undefined,
-      basicBreakDuration: contract.basicBreakDuration || undefined,
-      closingDay: contract.closingDay || undefined,
     };
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{client.name}</h1>
-        <Button variant="outline" onClick={() => handleNavigation("/client")}>
+        <Button variant="outline" onClick={() => { handleNavigation("/client"); }}>
           戻る
         </Button>
       </div>
@@ -447,7 +436,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
         </CardHeader>
         <CardContent>
           {contracts.length === 0 ? (
-            <div className="text-center p-4">
+            <div className="p-4 text-center">
               <p className="text-muted-foreground">契約情報がありません</p>
             </div>
           ) : (
@@ -455,9 +444,9 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
               {contracts.map((contract) => (
                 <div
                   key={contract.id}
-                  className="p-3 border rounded-md flex justify-between items-center gap-4"
+                  className="flex items-center justify-between gap-4 rounded-md border p-3"
                 >
-                  <div className="cursor-pointer hover:text-blue-500" onClick={() => handleNavigation(`/contract/${contract.id}`)}>
+                  <div className="cursor-pointer hover:text-blue-500" onClick={() => { handleNavigation(`/contract/${contract.id}`); }}>
                     <div className="font-medium">{contract.name}</div>
                     <div className="text-sm text-muted-foreground">
                       期間: {new Date(contract.startDate).toLocaleDateString()} ~ {contract.endDate
@@ -465,8 +454,8 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
                         : ""}
                     </div>
                   </div>
-                  <div className="flex gap-2 ml-4">
-                    <Button variant="outline" size="sm" onClick={() => openDetailsDialog(contract)}>詳細</Button>
+                  <div className="ml-4 flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => { openDetailsDialog(contract); }}>詳細</Button>
                   </div>
                 </div>
               ))}
@@ -476,7 +465,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={() => setActiveDialog("create")}>契約を作成</Button>
+        <Button onClick={() => { setActiveDialog("create"); }}>契約を作成</Button>
       </div>
 
       <ContractDialog
@@ -487,7 +476,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
         {activeContract && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium mb-3">基本情報</h3>
+              <h3 className="mb-3 text-lg font-medium">基本情報</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="font-semibold">契約名</div>
                 <div>{activeContract.name}</div>
@@ -499,7 +488,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
             </div>
 
             <div>
-              <h3 className="text-lg font-medium mb-3">精算情報</h3>
+              <h3 className="mb-3 text-lg font-medium">精算情報</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="font-semibold">単価</div>
                 <div>{activeContract.unitPrice ? `${activeContract.unitPrice}円` : 'なし'}</div>
@@ -517,7 +506,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
             </div>
 
             <div>
-              <h3 className="text-lg font-medium mb-3">勤務設定</h3>
+              <h3 className="mb-3 text-lg font-medium">勤務設定</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="font-semibold">1日あたりの作業単位</div>
                 <div>{activeContract.dailyWorkMinutes ? `${activeContract.dailyWorkMinutes}分` : 'なし'}</div>
@@ -534,9 +523,9 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => setActiveDialog("edit")}>編集</Button>
-              <Button variant="destructive" onClick={() => setActiveDialog("delete")}>削除</Button>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setActiveDialog("edit"); }}>編集</Button>
+              <Button variant="destructive" onClick={() => { setActiveDialog("delete"); }}>削除</Button>
               <Button variant="outline" onClick={closeDialog}>閉じる</Button>
             </div>
           </div>
@@ -576,9 +565,9 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       >
         <div>
           <p>本当に契約 "{activeContract?.name}" を削除しますか？</p>
-          <p className="text-sm text-gray-500 mt-2">この操作は元に戻すことができません。</p>
+          <p className="mt-2 text-sm text-gray-500">この操作は元に戻すことができません。</p>
         </div>
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="mt-4 flex justify-end gap-2">
           <Button variant="outline" onClick={closeDialog}>キャンセル</Button>
           <Button variant="destructive" onClick={onDeleteContract}>削除</Button>
         </div>

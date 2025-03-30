@@ -1,10 +1,13 @@
-import { getContractById } from "@/data/contract";
-import ClientWorkReportPage from "./page.client";
-import { getWorkReportById } from "@/data/work-report"
-import { getAttendancesByWorkReportIdAction } from "@/actions/attendance";
-import { currentUser } from "@/lib/auth";
-import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { getAttendancesByWorkReportIdAction } from "@/actions/attendance";
+import { getContractById } from "@/data/contract";
+import { getWorkReportById } from "@/data/work-report";
+import { currentUser } from "@/lib/auth";
+import { Serialize } from "@/lib/utils";
+
+import ClientWorkReportPage from "./page.client";
 
 export const metadata: Metadata = {
   title: "作業報告書",
@@ -19,7 +22,7 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
   if (!workReport) {
     return notFound();
   }
-  
+
   // 契約情報を取得
   const contract = await getContractById(workReport.contractId);
   if (!contract || contract.client.createUserId !== user?.id) {
@@ -27,12 +30,12 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
   }
 
   const attendances = await getAttendancesByWorkReportIdAction(workReportId);
-  
+
   return (
-    <ClientWorkReportPage 
+    <ClientWorkReportPage
       contractId={contract.id}
       workReportId={workReportId}
-      targetDate={workReport.targetDate}
+      targetDate={Serialize(workReport.targetDate)}
       userName={user.name}
       attendances={attendances}
       contractName={contract.name}
@@ -41,10 +44,10 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
       clientEmail={contract.client.email}
       dailyWorkMinutes={contract.dailyWorkMinutes ?? 1}
       monthlyWorkMinutes={contract.monthlyWorkMinutes ?? 1}
-      basicStartTime={contract.basicStartTime ?? undefined}
-      basicEndTime={contract.basicEndTime ?? undefined}
-      basicBreakDuration={contract.basicBreakDuration ?? undefined}
-      closingDay={contract.closingDay ?? undefined}
+      basicStartTime={Serialize(contract.basicStartTime ?? undefined)}
+      basicEndTime={Serialize(contract.basicEndTime ?? undefined)}
+      basicBreakDuration={Serialize(contract.basicBreakDuration ?? undefined)}
+      closingDay={Serialize(contract.closingDay ?? undefined)}
     />
   );
 }

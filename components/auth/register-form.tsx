@@ -1,15 +1,21 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
 
+import { register } from "@/actions/register";
 import { useIsClient } from "@/hooks/use-is-client";
-import Spinner from "../spinner";
 import { RegisterSchema } from "@/schemas";
+
+import Spinner from "../spinner";
 import CardWrapper from "./card-wrapper";
+import FormError from "../form-error";
+import FormSuccess from "../form-success";
+import { PasswordInput } from "../password-input";
+import { Button } from "../ui/button";
 import {
   Form,
   FormControl,
@@ -19,11 +25,6 @@ import {
   FormMessage,
 } from "../ui/form";
 import { Input } from "../ui/input";
-import { PasswordInput } from "../password-input";
-import { Button } from "../ui/button";
-import FormError from "../form-error";
-import FormSuccess from "../form-success";
-import { register } from "@/actions/register";
 
 const RegisterForm = () => {
   const isClient = useIsClient();
@@ -47,7 +48,7 @@ const RegisterForm = () => {
     startTransition(() => {
       register(values).then((data) => {
         if (data.success) setSuccess({ message: data.success, date: new Date() });
-        if (data?.error) setError({ message: data.error, date: new Date() });
+        if (data.error) setError({ message: data.error, date: new Date() });
       });
     });
 

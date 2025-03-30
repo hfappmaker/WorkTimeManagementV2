@@ -1,6 +1,7 @@
-import { db } from "@/lib/db";
 import { Client } from "@prisma/client";
 import { StrictOmit } from "ts-essentials";
+
+import { db } from "@/lib/db";
 
 export async function getClientsByUserId(userId: string) : Promise<Client[]> {
   const clients = await db.client.findMany({

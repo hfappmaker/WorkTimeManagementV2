@@ -2,13 +2,12 @@
 
 import * as React from "react";
 import { ComponentPropsWithRef, FC, useState } from "react";
-import { FaRegEyeSlash } from "react-icons/fa";
-import { FaRegEye } from "react-icons/fa";
+import { FaRegEyeSlash , FaRegEye } from "react-icons/fa";
+
 
 import { cn } from "@/lib/utils";
 
-export interface PasswordInputProps
-  extends ComponentPropsWithRef<"input"> {}
+export type PasswordInputProps = {} & ComponentPropsWithRef<"input">
 
 const PasswordInput : FC<PasswordInputProps> = 
   ({ className, type = "password", ...props }) => {
@@ -29,7 +28,7 @@ const PasswordInput : FC<PasswordInputProps> =
         />
         <span
 
-          className={`absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer`}
+          className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer`}
           onClick={togglePasswordVisibility}
         >
           {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}

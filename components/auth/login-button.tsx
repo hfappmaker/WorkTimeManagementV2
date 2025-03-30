@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import LoginForm from "@/components/auth/login-form";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 
-interface LoginButtonProps {
+type LoginButtonProps = {
   children: React.ReactNode;
   mode?: "modal" | "redirect";
   asChild?: boolean;
@@ -30,7 +30,7 @@ const LoginButton = ({
     return (
       <Dialog>
         <DialogTrigger asChild={asChild}>{children}</DialogTrigger>
-        <DialogContent className="p-0 w-auto bg-transparent border-none">
+        <DialogContent className="w-auto border-none bg-transparent p-0">
           <DialogHeader>
             <DialogTitle className="sr-only">ログイン</DialogTitle>
           </DialogHeader>

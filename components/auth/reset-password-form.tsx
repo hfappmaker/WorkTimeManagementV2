@@ -1,13 +1,15 @@
 "use client";
 
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
-import { ResetSchema } from "@/schemas";
+import { reset } from "@/actions/reset";
 import CardWrapper from "@/components/auth/card-wrapper";
-import { Input } from "@/components/ui/input";
+import FormError from "@/components/form-error";
+import FormSuccess from "@/components/form-success";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -16,11 +18,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-
-import FormError from "@/components/form-error";
-import FormSuccess from "@/components/form-success";
-import { reset } from "@/actions/reset";
+import { Input } from "@/components/ui/input";
+import { ResetSchema } from "@/schemas";
 
 const ResetPasswordForm = () => {
   const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
@@ -40,8 +39,8 @@ const ResetPasswordForm = () => {
 
     startTransition(() => {
       reset(values).then((data) => {
-        setError({ message: data?.error || "", date: new Date() });
-        setSuccess({ message: data?.success || "", date: new Date() });
+        setError({ message: data.error || "", date: new Date() });
+        setSuccess({ message: data.success || "", date: new Date() });
       });
     });
   };

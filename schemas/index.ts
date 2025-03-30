@@ -1,7 +1,7 @@
-import * as z from "zod";
 import { UserRole } from "@prisma/client";
+import * as z from "zod";
 
-interface UserData {
+type UserData = {
   password?: string;
   newPassword?: string;
   newPasswordConfirmation?: string;

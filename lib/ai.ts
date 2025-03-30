@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-interface OllamaConfig {
+type OllamaConfig = {
   model?: string;
   temperature?: number;
   max_tokens?: number;

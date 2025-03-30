@@ -1,14 +1,16 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { usePathname , useRouter } from "next/navigation";
 import { MdMenu } from "react-icons/md";
-import { NAV_LINKS } from "../_constants";
-import { Button } from "@/components/ui/button";
+
 import UserButton from "@/components/auth/user-button";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTransitionContext } from "@/contexts/TransitionContext";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+
+import { NAV_LINKS } from "../_constants";
+
 
 const Navbar = () => {
   const { startTransition } = useTransitionContext();
@@ -23,7 +25,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="hidden lg:flex w-full fixed top-0 h-14 bg-secondary justify-between items-center p-4 shadow-md">
+      <nav className="fixed top-0 hidden h-14 w-full items-center justify-between bg-secondary p-4 shadow-md lg:flex">
         <div className="flex gap-x-2">
           {NAV_LINKS.map((link, index) => (
             <Button
@@ -32,14 +34,14 @@ const Navbar = () => {
               variant={pathName === link.path ? "default" : "outline"}
               className="w-full hover:bg-sky-400 hover:text-primary-foreground"
             >
-              <Link href={link.path} onClick={() => handleNavigation(link.path)}>{link.title}</Link>
+              <Link href={link.path} onClick={() => { handleNavigation(link.path); }}>{link.title}</Link>
             </Button>
           ))}
         </div>
         <UserButton />
       </nav>
 
-      <nav className="flex bg-secondary items-center justify-between p-4 lg:hidden shadow-md">
+      <nav className="flex items-center justify-between bg-secondary p-4 shadow-md lg:hidden">
         <Sheet>
           <SheetTrigger>
             <Button
@@ -58,9 +60,9 @@ const Navbar = () => {
                   key={index}
                   asChild
                   variant={pathName === link.path ? "default" : "outline"}
-                  className="w-full hover:bg-sky-400 my-2 hover:text-primary-foreground"
+                  className="my-2 w-full hover:bg-sky-400 hover:text-primary-foreground"
                 >
-                  <Link href={link.path} onClick={() => handleNavigation(link.path)}>{link.title}</Link>
+                  <Link href={link.path} onClick={() => { handleNavigation(link.path); }}>{link.title}</Link>
                 </Button>
               ))}
             </div>

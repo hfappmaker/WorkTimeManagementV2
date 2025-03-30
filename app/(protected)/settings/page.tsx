@@ -1,5 +1,6 @@
-import SettingsForm from "./page.client";
 import { Metadata } from "next";
+
+import SettingsForm from "./page.client";
 
 export const metadata: Metadata = {
     title: "設定",

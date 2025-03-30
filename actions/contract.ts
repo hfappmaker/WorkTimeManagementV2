@@ -1,6 +1,9 @@
 "use server";
 
+import { Prisma , Contract as PrismaContract } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { StrictOmit } from "ts-essentials";
+
 import {
   createContract,
   updateContract,
@@ -10,28 +13,25 @@ import {
   getContractById,
   getContractsByClientId,
 } from "@/data/contract";
-import { Decimal } from "@prisma/client/runtime/library";
-import { Contract as PrismaContract } from "@prisma/client";
-import { Contract } from "@/types/contract";
+import { Serialize } from "@/lib/utils";
 import { Client } from "@/types/client";
-import { StrictOmit } from "ts-essentials";
+import { Contract, ContractInput } from "@/types/contract";
 
-type ContractInput = StrictOmit<Contract, "id">;
 type ContractOutput = StrictOmit<PrismaContract, "id">;
 
 const transformContractData = (values: ContractInput): ContractOutput => {
   return {
     ...values,
-    unitPrice: values.unitPrice ? new Decimal(values.unitPrice) : null,
+    unitPrice: values.unitPrice ? new Prisma.Decimal(values.unitPrice) : null,
     settlementMin: values.settlementMin
-      ? new Decimal(values.settlementMin)
+      ? new Prisma.Decimal(values.settlementMin)
       : null,
     settlementMax: values.settlementMax
-      ? new Decimal(values.settlementMax)
+      ? new Prisma.Decimal(values.settlementMax)
       : null,
-    upperRate: values.upperRate ? new Decimal(values.upperRate) : null,
-    lowerRate: values.lowerRate ? new Decimal(values.lowerRate) : null,
-    middleRate: values.middleRate ? new Decimal(values.middleRate) : null,
+    upperRate: values.upperRate ? new Prisma.Decimal(values.upperRate) : null,
+    lowerRate: values.lowerRate ? new Prisma.Decimal(values.lowerRate) : null,
+    middleRate: values.middleRate ? new Prisma.Decimal(values.middleRate) : null,
     basicStartTime: values.basicStartTime
       ? new Date(values.basicStartTime)
       : null,
@@ -53,44 +53,7 @@ const transformContractData = (values: ContractInput): ContractOutput => {
 const convertPrismaContractToContract = (
   contract: PrismaContract
 ): Contract => {
-  return {
-    ...contract,
-    endDate: contract.endDate ? new Date(contract.endDate) : undefined,
-    unitPrice: contract.unitPrice
-      ? Number(contract.unitPrice.toString())
-      : undefined,
-    settlementMin: contract.settlementMin
-      ? Number(contract.settlementMin.toString())
-      : undefined,
-    settlementMax: contract.settlementMax
-      ? Number(contract.settlementMax.toString())
-      : undefined,
-    upperRate: contract.upperRate
-      ? Number(contract.upperRate.toString())
-      : undefined,
-    lowerRate: contract.lowerRate
-      ? Number(contract.lowerRate.toString())
-      : undefined,
-    middleRate: contract.middleRate
-      ? Number(contract.middleRate.toString())
-      : undefined,
-    dailyWorkMinutes: contract.dailyWorkMinutes
-      ? Number(contract.dailyWorkMinutes)
-      : undefined,
-    monthlyWorkMinutes: contract.monthlyWorkMinutes
-      ? Number(contract.monthlyWorkMinutes)
-      : undefined,
-    basicStartTime: contract.basicStartTime
-      ? new Date(contract.basicStartTime)
-      : undefined,
-    basicEndTime: contract.basicEndTime
-      ? new Date(contract.basicEndTime)
-      : undefined,
-    basicBreakDuration: contract.basicBreakDuration
-      ? Number(contract.basicBreakDuration)
-      : undefined,
-    closingDay: contract.closingDay ? Number(contract.closingDay) : undefined,
-  };
+  return Serialize(contract);
 };
 
 export const createContractAction = async (

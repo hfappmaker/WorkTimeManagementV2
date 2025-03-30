@@ -1,22 +1,21 @@
 'use client'
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
-import { FaCalendarAlt } from "react-icons/fa";
 import { FC, useRef, useState } from "react";
 import { FieldValues, Control, Path } from "react-hook-form";
-import { FormControl, FormField, FormMessage, FormItem, FormLabel } from "./form";
-import { SelectItem } from "./select";
-import { SelectContent } from "./select";
-import { SelectValue } from "./select";
-import { SelectTrigger } from "./select";
-import { Select } from "./select";
-import { Button } from "./button";
+import { FaCalendarAlt } from "react-icons/fa";
 import { StrictOmit } from "ts-essentials";
-interface DatePickerProps extends StrictOmit<React.ComponentPropsWithRef<"input">, 'onChange' | 'value'> {
+
+import { cn } from "@/lib/utils";
+
+import { Button } from "./button";
+import { FormControl, FormField, FormMessage, FormItem, FormLabel } from "./form";
+import { SelectItem , SelectContent , SelectValue , SelectTrigger , Select } from "./select";
+
+type DatePickerProps = {
   value?: string;
   onChange?: (date: string) => void;
-}
+} & StrictOmit<React.ComponentPropsWithRef<"input">, 'onChange' | 'value'>
 
 export const DatePicker: FC<DatePickerProps> = ({
   className,
@@ -55,7 +54,7 @@ export const DatePicker: FC<DatePickerProps> = ({
           ref={inputRef}
         />
         <FaCalendarAlt
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10 cursor-pointer"
+          className="absolute right-3 top-1/2 z-10 -translate-y-1/2 cursor-pointer"
           onClick={handleIconClick}
         />
       </div>
@@ -65,7 +64,7 @@ export const DatePicker: FC<DatePickerProps> = ({
 
 DatePicker.displayName = "DatePicker";
 
-interface DatePickerFieldProps<T extends FieldValues> {
+type DatePickerFieldProps<T extends FieldValues> = {
   control: Control<T>;
   name: Path<T> & {
     [P in Path<T>]: T[P] extends (Date | undefined) ? P : never;
@@ -104,12 +103,12 @@ export const DatePickerField = <T extends FieldValues>(props: DatePickerFieldPro
   );
 };
 
-interface CommonSelectProps {
+type CommonSelectProps = {
   value?: string;
   onValueChange: (value: string) => void;
   placeholder: React.ReactNode;
   className?: string;
-  options: Array<{ value: string; label: string }>;
+  options: { value: string; label: string }[];
 }
 
 const CommonSelect = React.memo(({ value, onValueChange, placeholder, className, options }: CommonSelectProps) => {
@@ -158,7 +157,7 @@ const MONTH_OPTIONS = [
   { value: '11', label: '12月' },
 ];
 
-interface YearMonthPickerFieldProps<T extends FieldValues> {
+type YearMonthPickerFieldProps<T extends FieldValues> = {
   control: Control<T>;
   name: Path<T> & {
     [P in Path<T>]: T[P] extends (Date | undefined) ? P : never;
@@ -240,7 +239,7 @@ export const YearMonthPickerField = <T extends FieldValues>(props: YearMonthPick
                 onClick={handleClear}
                 variant="outline"
                 size="sm"
-                className="text-sm text-muted-foreground hover:text-foreground w-fit"
+                className="w-fit text-sm text-muted-foreground hover:text-foreground"
               >
                 クリア
               </Button>

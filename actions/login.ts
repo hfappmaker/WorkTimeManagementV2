@@ -1,21 +1,20 @@
 "use server";
 
-import * as z from "zod";
 import { AuthError } from "next-auth";
+import * as z from "zod";
 
-import { LoginSchema } from "@/schemas";
 import { signIn } from "@/auth";
+import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
+import { getTwoFactorTokenByEmail } from "@/data/two-factor-token";
 import { getUserByEmail } from "@/data/user";
-
-import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
+import { db } from "@/lib/db";
+import { sendVerificationEmail, sendTwoFactorTokenEmail } from "@/lib/mail";
 import {
   generateVerificationToken,
   generateTwoFactorToken,
 } from "@/lib/tokens";
-import { sendVerificationEmail, sendTwoFactorTokenEmail } from "@/lib/mail";
-import { getTwoFactorTokenByEmail } from "@/data/two-factor-token";
-import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
-import { db } from "@/lib/db";
+import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
+import { LoginSchema } from "@/schemas";
 
 export const login = async (
   values: z.infer<typeof LoginSchema>,
@@ -31,7 +30,7 @@ export const login = async (
 
   const existingUser = await getUserByEmail(email);
 
-  if (!existingUser || !existingUser.email || !existingUser.password) {
+  if (!existingUser?.email || !existingUser.password) {
     return { error: "User not registered!" };
   }
 

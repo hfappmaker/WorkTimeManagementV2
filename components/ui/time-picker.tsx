@@ -1,8 +1,11 @@
-import { FormControl, FormField, FormItem, FormMessage, FormLabel } from "@/components/ui/form";
-import { Control, Path, FieldValues } from "react-hook-form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "./button";
 import { useState, memo, useCallback } from "react";
+import { Control, Path, FieldValues } from "react-hook-form";
+
+import { FormControl, FormField, FormItem, FormMessage, FormLabel } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+import { Button } from "./button";
+
 // 共通の型定義
 type TimePickerFieldProps<T extends FieldValues, V> = {
     control: Control<T>;
@@ -149,7 +152,7 @@ const TimePickerFieldBase = <T extends FieldValues, V extends number | Date>({
                                     onClick={handleClear}
                                     variant="outline"
                                     size="sm"
-                                    className="text-sm text-muted-foreground hover:text-foreground w-fit"
+                                    className="w-fit text-sm text-muted-foreground hover:text-foreground"
                                 >
                                     クリア
                                 </Button>

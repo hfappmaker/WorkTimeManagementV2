@@ -1,20 +1,23 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import { Form } from '@/components/ui/form';
-import { createWorkReportAction, getWorkReportsByContractIdAndYearMonthDateRangeAction } from '@/actions/work-report';
+import { z } from 'zod';
+
 import { getContractByIdAction } from '@/actions/contract';
-import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal, DialogHeader } from '@/components/ui/dialog';
-import { WorkReport } from "@/types/work-report";
+import { createWorkReportAction, getWorkReportsByContractIdAndYearMonthDateRangeAction } from '@/actions/work-report';
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
-import { useRouter } from 'next/navigation';
-import { useTransitionContext } from '@/contexts/TransitionContext';
+import { Button } from '@/components/ui/button';
 import { YearMonthPickerField } from '@/components/ui/date-picker';
-import { z } from 'zod';
+import { Dialog, DialogContent, DialogTitle, DialogOverlay, DialogPortal, DialogHeader } from '@/components/ui/dialog';
+import { Form } from '@/components/ui/form';
+import { useTransitionContext } from '@/contexts/TransitionContext';
 import { Contract } from "@/types/contract";
+import { WorkReport } from "@/types/work-report";
+
+
 
 const createWorkReportFormSchema = z.object({
   yearMonth: z.date(),
@@ -180,27 +183,27 @@ export default function ContractClientPage({ contractId }: { contractId: string 
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">
+      <h1 className="mb-4 text-xl font-bold">
         作業報告書一覧（{contract?.name}）
       </h1>
       {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
       {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
-      <div className="flex items-center mb-4">
-        <div className="flex items-center gap-2 mr-4">
+      <div className="mb-4 flex items-center">
+        <div className="mr-4 flex items-center gap-2">
           <span className="text-muted-foreground">
-            {searchFormValues.from ? searchFormValues.from.getFullYear() + "年" + (searchFormValues.from?.getMonth() + 1) + "月" : ""}
+            {searchFormValues.from ? searchFormValues.from.getFullYear() + "年" + (searchFormValues.from.getMonth() + 1) + "月" : ""}
           </span>
           <span className="text-muted-foreground">
             ~
           </span>
           <span className="text-muted-foreground">
-            {searchFormValues.to ? searchFormValues.to.getFullYear() + "年" + (searchFormValues.to?.getMonth() + 1) + "月" : ""}
+            {searchFormValues.to ? searchFormValues.to.getFullYear() + "年" + (searchFormValues.to.getMonth() + 1) + "月" : ""}
           </span>
         </div>
-        <Button onClick={() => setActiveDialog("search")} className="mr-4">
+        <Button onClick={() => { setActiveDialog("search"); }} className="mr-4">
           検索
         </Button>
-        <Button onClick={() => setActiveDialog("create")}>
+        <Button onClick={() => { setActiveDialog("create"); }}>
           作業報告書を作成
         </Button>
       </div>
@@ -212,7 +215,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
           {workReports.map((workReport) => (
             <li key={workReport.id} className="py-2">
               <div
-                onClick={() => handleNavigation(workReport.id)}
+                onClick={() => { handleNavigation(workReport.id); }}
                 className="cursor-pointer hover:text-blue-500"
               >
                 {workReport.targetDate.getFullYear()}年{workReport.targetDate.getMonth() + 1}月分
@@ -225,7 +228,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
       {/* 検索ダイアログ */}
       <CommonDialog
         isOpen={activeDialog === "search"}
-        onClose={() => setActiveDialog(null)}
+        onClose={() => { setActiveDialog(null); }}
         title="作業報告書を検索"
       >
         <Form {...searchForm}>
@@ -269,7 +272,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
       {/* 作成ダイアログ */}
       <CommonDialog
         isOpen={activeDialog === "create"}
-        onClose={() => setActiveDialog(null)}
+        onClose={() => { setActiveDialog(null); }}
         title="作業報告書を作成"
       >
         <Form {...createWorkReportForm}>

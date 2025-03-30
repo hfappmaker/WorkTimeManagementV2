@@ -1,13 +1,14 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransitionContext } from "@/contexts/TransitionContext";
-import { WorkReport, WorkReportStatus } from "@/types/work-report";
-import { Contract } from "@/types/contract";
-import { Client } from "@/types/client";
 import { RenameProperty } from "@/lib/utils";
+import { Client } from "@/types/client";
+import { Contract } from "@/types/contract";
+import { WorkReport, WorkReportStatus } from "@/types/work-report";
 
 type WorkReportDashboard = Pick<WorkReport, 'id' | 'targetDate' | 'status'>;
 
@@ -19,7 +20,7 @@ type ClientDashboard = RenameProperty<Pick<Client, 'name'>, 'name', 'clientName'
     contracts: Record<string, ContractDashboard>;
 };
 
-interface DashboardClientPageProps {
+type DashboardClientPageProps = {
     groupedWorkReports: Record<string, ClientDashboard>;
 }
 
@@ -48,8 +49,8 @@ export default function DashboardClientPage({ groupedWorkReports }: DashboardCli
     };
 
     return (
-        <div className="p-6 space-y-6">
-            <h1 className="text-2xl font-bold mb-6">現在の作業報告書一覧</h1>
+        <div className="space-y-6 p-6">
+            <h1 className="mb-6 text-2xl font-bold">現在の作業報告書一覧</h1>
 
             {Object.entries(groupedWorkReports).map(([clientId, client]) => (
                 <Card key={clientId} className="mb-6">
@@ -59,16 +60,16 @@ export default function DashboardClientPage({ groupedWorkReports }: DashboardCli
                     <CardContent>
                         <div className="space-y-4">
                             {Object.entries(client.contracts).map(([contractId, contract]) => (
-                                <div key={contractId} className="border rounded-lg p-4">
-                                    <h3 className="text-lg font-semibold mb-2">{contract.contractName}</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div key={contractId} className="rounded-lg border p-4">
+                                    <h3 className="mb-2 text-lg font-semibold">{contract.contractName}</h3>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                                         {contract.workReports.map((workReport) => (
                                             <div
                                                 key={workReport.id}
-                                                className="block p-4 border rounded-lg transition-colors cursor-pointer"
+                                                className="block cursor-pointer rounded-lg border p-4 transition-colors"
                                             >
-                                                <div className="flex justify-between items-start mb-2 space-x-2">
-                                                    <div className="text-lg font-medium hover:underline" onClick={() => handleNavigation(workReport.id)}>
+                                                <div className="mb-2 flex items-start justify-between space-x-2">
+                                                    <div className="text-lg font-medium hover:underline" onClick={() => { handleNavigation(workReport.id); }}>
                                                         {workReport.targetDate.getFullYear()}年{workReport.targetDate.getMonth() + 1}月
                                                     </div>
                                                     <Badge className={getStatusColor(workReport.status)}>
