@@ -1,20 +1,21 @@
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 import { UserRole } from "@prisma/client";
-import { User as NextAuthUser } from "next-auth";
-
-type User = {
-  role: UserRole;
-  isTwoFactorEnabled: boolean;
-  isOAuth: boolean;
-} & NextAuthUser;
+/* eslint-disable unused-imports/no-unused-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import type { DefaultJWT } from "next-auth/jwt";
 
 declare module "next-auth" {
-  type JWT = {
-    role: UserRole;
-    isTwoFactorEnabled: boolean;
-    isOAuth: boolean;
-  };
+  interface User {
+    role?: UserRole;
+    isTwoFactorEnabled?: boolean;
+    isOAuth?: boolean;
+  }
+}
 
-  type Session = {
-    user: User & Session["user"];
-  };
+declare module "next-auth/jwt" {
+  interface JWT {
+    role?: UserRole;
+    isTwoFactorEnabled?: boolean;
+    isOAuth?: boolean;
+  }
 }
