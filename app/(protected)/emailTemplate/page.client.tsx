@@ -19,12 +19,12 @@ import { EmailTemplate } from "@/types/email-template";
 type DialogType = "create" | "edit" | "delete" | "details" | null;
 
 const emailTemplateFormSchema = z.object({
-    name: z.string().min(1, "メールテンプレート名は必須です"),
-    subject: z.string().min(1, "件名は必須です"),
-    body: z.string().min(1, "本文は必須です"),
-  });
-  
-  type EmailTemplateFormValues = z.infer<typeof emailTemplateFormSchema>;
+  name: z.string().min(1, "メールテンプレート名は必須です"),
+  subject: z.string().min(1, "件名は必須です"),
+  body: z.string().min(1, "本文は必須です"),
+});
+
+type EmailTemplateFormValues = z.infer<typeof emailTemplateFormSchema>;
 
 type EmailTemplateFormDialogProps = {
   defaultValues?: EmailTemplateFormValues;
@@ -36,7 +36,7 @@ type EmailTemplateFormDialogProps = {
 const EmailTemplateFormDialog = ({ defaultValues, onSubmit, submitButtonText, onCancel }: EmailTemplateFormDialogProps) => {
   const form = useForm<EmailTemplateFormValues>({
     resolver: zodResolver(emailTemplateFormSchema),
-    defaultValues: defaultValues || {
+    defaultValues: defaultValues ?? {
       name: "",
       subject: "",
       body: "",
@@ -99,7 +99,7 @@ type EmailTemplateDialogProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   template?: EmailTemplate | null;
-  onSubmit?: (values: EmailTemplateFormValues) => void;
+  onSubmit: (values: EmailTemplateFormValues) => void;
   onDelete?: () => void;
   onCancel: () => void;
 }
@@ -125,7 +125,7 @@ const EmailTemplateDialog = ({ type, isOpen, onOpenChange, template, onSubmit, o
       case "create":
         return (
           <EmailTemplateFormDialog
-            onSubmit={onSubmit!}
+            onSubmit={onSubmit}
             submitButtonText="作成"
             onCancel={onCancel}
           />
@@ -138,7 +138,7 @@ const EmailTemplateDialog = ({ type, isOpen, onOpenChange, template, onSubmit, o
               subject: template.subject,
               body: template.body,
             } : undefined}
-            onSubmit={onSubmit!}
+            onSubmit={onSubmit}
             submitButtonText="更新"
             onCancel={onCancel}
           />
@@ -147,7 +147,7 @@ const EmailTemplateDialog = ({ type, isOpen, onOpenChange, template, onSubmit, o
         return (
           <>
             <div>
-              <p>本当にメールテンプレート "{template?.name}" を削除しますか？</p>
+              <p>本当にメールテンプレート &quot;{template?.name}&quot; を削除しますか？</p>
               <p className="mt-2 text-sm text-gray-500">この操作は元に戻すことができません。</p>
             </div>
             <div className="mt-4 flex justify-end gap-2">
@@ -201,132 +201,129 @@ const EmailTemplateDialog = ({ type, isOpen, onOpenChange, template, onSubmit, o
 };
 
 export default function EmailTemplateClientPage({ userId }: { userId: string }) {
-    const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-    const [activeDialog, setActiveDialog] = useState<DialogType>(null);
-    const [activeEmailTemplate, setActiveEmailTemplate] = useState<EmailTemplate | null>(null);
-    const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-    const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-    const { startTransition } = useTransitionContext();
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [activeDialog, setActiveDialog] = useState<DialogType>(null);
+  const [activeEmailTemplate, setActiveEmailTemplate] = useState<EmailTemplate | null>(null);
+  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const { startTransition } = useTransitionContext();
 
-    const refreshTemplates = async () => {
-        try {
-            const jsonData = await getEmailTemplatesByCreateUserIdAction(userId);
-            if (jsonData) {
-                const data = JSON.parse(JSON.stringify(jsonData));
-                setTemplates(data);
-            }
-        } catch (err) {
-            console.error(err);
-        }
+  const refreshTemplates = async () => {
+    try {
+      const data = await getEmailTemplatesByCreateUserIdAction(userId);
+      setTemplates(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    startTransition(async () => {
+      await refreshTemplates();
+    });
+  }, []);
+
+  const closeDialog = () => {
+    setActiveDialog(null);
+    setActiveEmailTemplate(null);
+  };
+
+  // メールテンプレートデータを変換する関数
+  const convertEmailTemplateData = (data: EmailTemplateFormValues, userId: string) => {
+    return {
+      name: data.name,
+      subject: data.subject,
+      body: data.body,
+      createUserId: userId,
     };
+  };
 
-    useEffect(() => {
-        startTransition(async () => {
-            await refreshTemplates();
-        });
-    }, []);
+  // メールテンプレート作成
+  const onCreateEmailTemplate = (data: EmailTemplateFormValues) => {
+    startTransition(async () => {
+      try {
+        const templateData = convertEmailTemplateData(data, userId);
+        await createEmailTemplateAction(templateData);
+        setSuccess({ message: `メールテンプレート '${data.name}' を作成しました`, date: new Date() });
+        closeDialog();
+        await refreshTemplates();
+      } catch (err) {
+        console.error(err);
+        setError({ message: "メールテンプレートの作成に失敗しました", date: new Date() });
+      }
+    });
+  };
 
-    const closeDialog = () => {
-        setActiveDialog(null);
-        setActiveEmailTemplate(null);
-    };
+  // メールテンプレート編集
+  const onEditEmailTemplate = (data: EmailTemplateFormValues) => {
+    if (!activeEmailTemplate) return;
+    startTransition(async () => {
+      try {
+        const templateData = convertEmailTemplateData(data, userId);
+        await updateEmailTemplateAction(activeEmailTemplate.id, templateData);
+        setSuccess({ message: `メールテンプレート '${data.name}' を編集しました`, date: new Date() });
+        closeDialog();
+        await refreshTemplates();
+      } catch (err) {
+        console.error(err);
+        setError({ message: "メールテンプレートの更新に失敗しました", date: new Date() });
+      }
+    });
+  };
 
-    // メールテンプレートデータを変換する関数
-    const convertEmailTemplateData = (data: EmailTemplateFormValues, userId: string) => {
-        return {
-            name: data.name,
-            subject: data.subject,
-            body: data.body,
-            createUserId: userId,
-        };
-    };
+  // メールテンプレート削除
+  const onDeleteEmailTemplate = () => {
+    if (!activeEmailTemplate) return;
+    startTransition(async () => {
+      try {
+        await deleteEmailTemplateAction(activeEmailTemplate.id);
+        setSuccess({ message: `メールテンプレート '${activeEmailTemplate.name}' を削除しました`, date: new Date() });
+        closeDialog();
+        await refreshTemplates();
+      } catch (err) {
+        console.error(err);
+        setError({ message: "メールテンプレートの削除に失敗しました", date: new Date() });
+      }
+    });
+  };
 
-    // メールテンプレート作成
-    const onCreateEmailTemplate = (data: EmailTemplateFormValues) => {
-        startTransition(async () => {
-            try {
-                const templateData = convertEmailTemplateData(data, userId);
-                await createEmailTemplateAction(templateData);
-                setSuccess({ message: `メールテンプレート '${data.name}' を作成しました`, date: new Date() });
-                closeDialog();
-                await refreshTemplates();
-            } catch (err) {
-                console.error(err);
-                setError({ message: "メールテンプレートの作成に失敗しました", date: new Date() });
-            }
-        });
-    };
+  return (
+    <div className="p-4">
+      <h1 className="mb-4 text-2xl font-bold">メールテンプレート一覧</h1>
+      <div className="mb-4"><FormError message={error.message} resetSignal={error.date.getTime()} /></div>
+      <div className="mb-4"><FormSuccess message={success.message} resetSignal={success.date.getTime()} /></div>
+      <div className="mb-4">
+        <Button onClick={() => { setActiveDialog("create"); }}>新規作成</Button>
+      </div>
+      {templates.length > 0 ? (
+        <ul>
+          {templates.map((template) => (
+            <li key={template.id} className="mb-2 flex items-center justify-between border p-3">
+              <div className="cursor-pointer" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("details"); }}>
+                <div className="font-medium">{template.name}</div>
+                <div className="text-sm text-muted-foreground">Subject: {template.subject}</div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("details"); }}>詳細</Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>メールテンプレートがありません。</p>
+      )}
 
-    // メールテンプレート編集
-    const onEditEmailTemplate = (data: EmailTemplateFormValues) => {
-        if (!activeEmailTemplate) return;
-        startTransition(async () => {
-            try {
-                const templateData = convertEmailTemplateData(data, userId);
-                await updateEmailTemplateAction(activeEmailTemplate.id, templateData);
-                setSuccess({ message: `メールテンプレート '${data.name}' を編集しました`, date: new Date() });
-                closeDialog();
-                await refreshTemplates();
-            } catch (err) {
-                console.error(err);
-                setError({ message: "メールテンプレートの更新に失敗しました", date: new Date() });
-            }
-        });
-    };
-
-    // メールテンプレート削除
-    const onDeleteEmailTemplate = () => {
-        if (!activeEmailTemplate) return;
-        startTransition(async () => {
-            try {
-                await deleteEmailTemplateAction(activeEmailTemplate.id);
-                setSuccess({ message: `メールテンプレート '${activeEmailTemplate.name}' を削除しました`, date: new Date() });
-                closeDialog();
-                await refreshTemplates();
-            } catch (err) {
-                console.error(err);
-                setError({ message: "メールテンプレートの削除に失敗しました", date: new Date() });
-            }
-        });
-    };
-
-    return (
-        <div className="p-4">
-                <h1 className="mb-4 text-2xl font-bold">メールテンプレート一覧</h1>
-                {error && <div className="mb-4"><FormError message={error.message} resetSignal={error.date.getTime()} /></div>}
-                {success && <div className="mb-4"><FormSuccess message={success.message} resetSignal={success.date.getTime()} /></div>}
-                <div className="mb-4">
-                    <Button onClick={() => { setActiveDialog("create"); }}>新規作成</Button>
-                </div>
-                {templates && templates.length > 0 ? (
-                    <ul>
-                        {templates.map((template) => (
-                            <li key={template.id} className="mb-2 flex items-center justify-between border p-3">
-                                <div className="cursor-pointer" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("details"); }}>
-                                    <div className="font-medium">{template.name}</div>
-                                    <div className="text-sm text-muted-foreground">Subject: {template.subject}</div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => { setActiveEmailTemplate(template); setActiveDialog("details"); }}>詳細</Button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p>メールテンプレートがありません。</p>
-                )}
-
-                <EmailTemplateDialog
-                    type={activeDialog}
-                    isOpen={activeDialog !== null}
-                    onOpenChange={(open) => {
-                        if (!open) closeDialog();
-                    }}
-                    template={activeEmailTemplate}
-                    onSubmit={activeDialog === "create" ? onCreateEmailTemplate : onEditEmailTemplate}
-                    onDelete={onDeleteEmailTemplate}
-                    onCancel={closeDialog}
-                />
-        </div>
-    );
+      <EmailTemplateDialog
+        type={activeDialog}
+        isOpen={activeDialog !== null}
+        onOpenChange={(open) => {
+          if (!open) closeDialog();
+        }}
+        template={activeEmailTemplate}
+        onSubmit={activeDialog === "create" ? onCreateEmailTemplate : onEditEmailTemplate}
+        onDelete={onDeleteEmailTemplate}
+        onCancel={closeDialog}
+      />
+    </div>
+  );
 }

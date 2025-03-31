@@ -1,7 +1,8 @@
 'use client';
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -88,6 +89,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   });
 
   const createWorkReportForm = useForm<CreateWorkReportFormValues>({
+    resolver: zodResolver(createWorkReportFormSchema),
     defaultValues: {
       yearMonth: currentYearMonth,
     },
@@ -95,6 +97,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
 
   // 検索フォームの初期値を設定
   const searchForm = useForm<SearchFormValues>({
+    resolver: zodResolver(searchFormSchema),
     defaultValues: searchFormValues
   });
 
@@ -104,53 +107,52 @@ export default function ContractClientPage({ contractId }: { contractId: string 
       try {
         const contractData = await getContractByIdAction(contractId);
         setContract(contractData);
-      } catch (error: any) {
-        setError(error.message || '契約情報の取得に失敗しました');
+      } catch (error: unknown) {
+        setError({
+          message: error instanceof Error ? error.message : '契約情報の取得に失敗しました',
+          date: new Date()
+        });
       }
     });
-  }, [contractId]);
+  }, [contractId, startTransition]);
 
   // Fetch work time reports for the project
-  const fetchReports = async (fromDate?: Date, toDate?: Date) => {
+  const fetchReports = useCallback(async (fromDate?: Date, toDate?: Date) => {
     try {
       const data = await getWorkReportsByContractIdAndYearMonthDateRangeAction(contractId, fromDate, toDate);
-      if (data) {
-        setWorkReports(data);
-        setSearchFormValues({
-          from: fromDate,
-          to: toDate,
-        });
-      } else {
-        setError({ message: '作業報告書の取得に失敗しました', date: new Date() });
-      }
-    } catch (error: any) {
-      setError({ message: error.message || '作業報告書の取得に失敗しました', date: new Date() });
+      setWorkReports(data);
+      setSearchFormValues({
+        from: fromDate,
+        to: toDate
+      });
+    } catch (error: unknown) {
+      setError({ message: error instanceof Error ? error.message : '作業報告書の取得に失敗しました', date: new Date() });
     }
-  };
+  }, [contractId]);
 
   // Load the reports on initial render
   useEffect(() => {
     startTransition(async () => {
       await fetchReports(searchFormValues.from, searchFormValues.to);
     });
-  }, [contractId]);
+  }, [contractId, startTransition, fetchReports, searchFormValues.from, searchFormValues.to]);
 
   // 検索処理の更新
-  const onSearchSubmit = async (data: SearchFormValues) => {
+  const onSearchSubmit = (data: SearchFormValues) => {
     startTransition(async () => {
       try {
         const fromDate = data.from;
         const toDate = data.to;
         // 検索条件を追加してfetchReportsを呼び出す
         await fetchReports(fromDate, toDate);
-      } catch (error: any) {
-        setError({ message: error.message || '検索に失敗しました', date: new Date() });
+      } catch (error: unknown) {
+        setError({ message: error instanceof Error ? error.message : '検索に失敗しました', date: new Date() });
       }
     });
   };
 
   // Handle creation of a new work time report
-  const handleCreateReport = async (values: CreateWorkReportFormValues) => {
+  const handleCreateReport = (values: CreateWorkReportFormValues) => {
     try {
       if (!contract) {
         setError({ message: '契約情報がありません', date: new Date() });
@@ -170,8 +172,8 @@ export default function ContractClientPage({ contractId }: { contractId: string 
           yearMonth: currentYearMonth,
         });
       });
-    } catch (error: any) {
-      setError({ message: error.message || '作業報告書の作成に失敗しました', date: new Date() });
+    } catch (error: unknown) {
+      setError({ message: error instanceof Error ? error.message : '作業報告書の作成に失敗しました', date: new Date() });
     }
   };
 
@@ -186,18 +188,18 @@ export default function ContractClientPage({ contractId }: { contractId: string 
       <h1 className="mb-4 text-xl font-bold">
         作業報告書一覧（{contract?.name}）
       </h1>
-      {error && <FormError message={error.message} resetSignal={error.date.getTime()} />}
-      {success && <FormSuccess message={success.message} resetSignal={success.date.getTime()} />}
+      <FormError message={error.message} resetSignal={error.date.getTime()} />
+      <FormSuccess message={success.message} resetSignal={success.date.getTime()} />
       <div className="mb-4 flex items-center">
         <div className="mr-4 flex items-center gap-2">
           <span className="text-muted-foreground">
-            {searchFormValues.from ? searchFormValues.from.getFullYear() + "年" + (searchFormValues.from.getMonth() + 1) + "月" : ""}
+            {searchFormValues.from ? String(searchFormValues.from.getFullYear()) + "年" + String(searchFormValues.from.getMonth() + 1) + "月" : ""}
           </span>
           <span className="text-muted-foreground">
             ~
           </span>
           <span className="text-muted-foreground">
-            {searchFormValues.to ? searchFormValues.to.getFullYear() + "年" + (searchFormValues.to.getMonth() + 1) + "月" : ""}
+            {searchFormValues.to ? String(searchFormValues.to.getFullYear()) + "年" + String(searchFormValues.to.getMonth() + 1) + "月" : ""}
           </span>
         </div>
         <Button onClick={() => { setActiveDialog("search"); }} className="mr-4">
