@@ -9,13 +9,13 @@ import { getTwoFactorTokenByEmail } from "@/features/auth/data/two-factor-token"
 import { getUserByEmail } from "@/features/auth/data/user";
 import { signIn } from "@/features/auth/lib/auth";
 import {
+  sendVerificationEmail,
+  sendTwoFactorTokenEmail,
+} from "@/features/auth/lib/mail";
+import {
   generateVerificationToken,
   generateTwoFactorToken,
 } from "@/features/auth/lib/tokens";
-import {
-  sendVerificationEmail,
-  sendTwoFactorTokenEmail,
-} from "@/features/email/lib/mail";
 import { db } from "@/lib/db";
 
 import { LoginSchema } from "../schemas/login";
