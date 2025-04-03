@@ -20,7 +20,7 @@ import {
 import { ClientDialog, type DialogType } from "@/features/client/components/client-dialog";
 import { ClientForm, type ClientFormValues } from "@/features/client/components/client-form";
 import { Client } from "@/features/client/types/client";
-import { truncate } from "@/utils/utils";
+import { truncate } from "@/utils/string/string-utils";
 
 
 

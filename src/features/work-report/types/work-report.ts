@@ -1,6 +1,6 @@
 import { WorkReport as PrismaWorkReport } from "@prisma/client";
 
-import { SerializedType } from "@/utils/utils";
+import { SerializedType } from "@/utils/serialization/serialization-utils";
 
 import { AttendanceDto } from "./attendance";
 

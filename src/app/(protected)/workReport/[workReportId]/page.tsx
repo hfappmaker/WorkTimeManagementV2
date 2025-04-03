@@ -5,7 +5,7 @@ import { currentUser } from "@/features/auth/lib/auth";
 import { getContractById } from "@/features/contract/data/contract";
 import { getAttendancesByWorkReportIdAction } from "@/features/work-report/actions/attendance";
 import { getWorkReportById } from "@/features/work-report/data/work-report";
-import { Serialize } from "@/utils/utils";
+import { Serialize } from "@/utils/serialization/serialization-utils";
 
 
 import ClientWorkReportPage from "./page.client";

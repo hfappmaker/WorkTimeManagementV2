@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { getTestAction, Test, createTestAction } from "@/features/test/actions/test";
-import { DeserializeBuiltInObject, SerializedType } from "@/utils/utils";
+import { DeserializeBuiltInObject, SerializedType } from "@/utils/serialization/serialization-utils";
 
 export default function TestPageClient({ test, testDate, testDecimal, testArray, testObject }: SerializedType<Test>) {
 
