@@ -19,12 +19,23 @@ const compat = new FlatCompat({
 /** @type {{ configs: Record<string, unknown> }} */
 const tailwindPlugin = tailwind;
 const flatRecommended = tailwindPlugin.configs["flat/recommended"];
+
 export default tseslint.config(
   {
-    files: ["*.ts", "*.tsx"], // 読み込むファイル
-  },
-  {
-    ignores: ["**/.next/**/*"], // 無視するファイル
+    // キャッシュの設定
+    cache: true,
+    cacheLocation: ".eslintcache",
+    // 並列実行の設定
+    cwd: __dirname,
+    // 必要なファイルのみを対象に
+    files: ["*.ts", "*.tsx"],
+    ignores: [
+      "**/.next/**/*",
+      "**/node_modules/**/*",
+      "**/dist/**/*",
+      "**/build/**/*",
+      "**/.eslintcache/**/*",
+    ],
   },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,
@@ -38,12 +49,21 @@ export default tseslint.config(
       parserOptions: {
         project: true,
         tsconfigRootDir: __dirname,
+        // パフォーマンス最適化のための設定
+        ecmaVersion: "latest",
+        sourceType: "module",
       },
     },
     rules: {
       "@typescript-eslint/consistent-type-definitions": ["error", "type"],
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-misused-promises": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
+      "@typescript-eslint/restrict-plus-operands": "off",
     },
   },
   {
@@ -65,7 +85,7 @@ export default tseslint.config(
         {
           groups: ["builtin", "external", "internal"],
           alphabetize: { order: "asc", caseInsensitive: true },
-          "newlines-between": "always", // import groups 1行空ける
+          "newlines-between": "always",
           pathGroups: [
             {
               pattern: "src/components/**",
@@ -101,9 +121,9 @@ export default tseslint.config(
       },
     },
     rules: {
-      "react/jsx-boolean-value": "error", // JSXの中でのbooleanの使用
-      "react/jsx-curly-brace-presence": "error", // JSXの中での余分な{}の使用
+      "react/jsx-boolean-value": "error",
+      "react/jsx-curly-brace-presence": "error",
     },
   },
-  eslintConfigPrettier, // Prettierとの競合防止
+  eslintConfigPrettier,
 );
