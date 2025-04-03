@@ -4,9 +4,9 @@ import bcrypt from "bcryptjs";
 import * as z from "zod";
 
 import { NewPasswordSchema } from "@/features/auth/schemas/new-password";
-import { db } from "@/repositories/db";
 import { getPasswordResetTokenByToken } from "@/features/auth/repositories/password-reset-token-repository";
 import { getUserByEmail } from "@/features/auth/repositories/user-repository";
+import { db } from "@/repositories/db";
 
 
 export const newPassword = async (

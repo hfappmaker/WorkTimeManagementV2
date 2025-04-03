@@ -13,12 +13,11 @@ import {
   generateVerificationToken,
   generateTwoFactorToken,
 } from "@/features/auth/lib/tokens";
-import { db } from "@/repositories/db";
 import { getTwoFactorConfirmationByUserId } from "@/features/auth/repositories/two-factor-confirmation-repository";
 import { getTwoFactorTokenByEmail } from "@/features/auth/repositories/two-factor-token-repository";
 import { getUserByEmail } from "@/features/auth/repositories/user-repository";
-
-import { LoginSchema } from "../schemas/login";
+import { LoginSchema } from "@/features/auth/schemas/login";
+import { db } from "@/repositories/db";
 
 export const login = async (
   values: z.infer<typeof LoginSchema>,

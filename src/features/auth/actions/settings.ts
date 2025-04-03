@@ -6,12 +6,12 @@ import * as z from "zod";
 import { unstable_update, currentUser } from "@/features/auth/lib/auth";
 import { sendVerificationEmail } from "@/features/auth/lib/mail";
 import { generateVerificationToken } from "@/features/auth/lib/tokens";
-import { SettingsSchema } from "@/features/auth/schemas/settings";
-import { db } from "@/repositories/db";
 import {
   getUserByEmail,
   getUserById,
 } from "@/features/auth/repositories/user-repository";
+import { SettingsSchema } from "@/features/auth/schemas/settings";
+import { db } from "@/repositories/db";
 
 export const settings = async (values: z.infer<typeof SettingsSchema>) => {
   const user = await currentUser();
