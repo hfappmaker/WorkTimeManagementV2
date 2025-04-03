@@ -1,10 +1,10 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth, { type NextAuthConfig } from "next-auth";
 
-import { getAccountByUserId } from "@/features/auth/data/account";
-import { getTwoFactorConfirmationByUserId } from "@/features/auth/data/two-factor-confirmation";
-import { getUserById } from "@/features/auth/data/user";
-import { baseDb } from "@/lib/base-db";
+import { baseDb } from "@/repositories/base-db";
+import { getAccountByUserId } from "@/repositories/account/account-repository";
+import { getTwoFactorConfirmationByUserId } from "@/repositories/two-factor-confirmation/two-factor-confirmation-repository";
+import { getUserById } from "@/repositories/user/user-repository";
 
 import authConfig from "./auth.config";
 

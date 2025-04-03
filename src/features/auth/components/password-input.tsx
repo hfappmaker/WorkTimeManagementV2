@@ -5,7 +5,7 @@ import { ComponentPropsWithRef, FC, useState } from "react";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 
 
-import { cn } from "@/utils/utils";
+import { cn } from "@/utils/styles/tailwind-utils";
 
 export type PasswordInputProps = {} & ComponentPropsWithRef<"input">
 

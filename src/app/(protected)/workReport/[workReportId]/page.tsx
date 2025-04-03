@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { currentUser } from "@/features/auth/lib/auth";
-import { getContractById } from "@/features/contract/data/contract";
 import { getAttendancesByWorkReportIdAction } from "@/features/work-report/actions/attendance";
 import { getWorkReportById } from "@/features/work-report/data/work-report";
+import { getContractById } from "@/repositories/contract/contract-repository";
 import { Serialize } from "@/utils/serialization/serialization-utils";
 
 
@@ -27,7 +27,8 @@ export default async function WorkReportPage({ params }: { params: Promise<{ wor
 
   // 契約情報を取得
   const contract = await getContractById(workReport.contractId);
-  if (!contract || contract.client.createUserId !== user?.id) {
+  // TODO: 契約の作成者がログインユーザーと一致するか確認
+  if (!contract || contract.userId !== user?.id) {
     return notFound();
   }
 

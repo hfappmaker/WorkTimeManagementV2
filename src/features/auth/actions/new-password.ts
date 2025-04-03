@@ -3,10 +3,10 @@
 import bcrypt from "bcryptjs";
 import * as z from "zod";
 
-import { getPasswordResetTokenByToken } from "@/features/auth/data/password-reset-token";
-import { getUserByEmail } from "@/features/auth/data/user";
 import { NewPasswordSchema } from "@/features/auth/schemas/new-password";
-import { db } from "@/lib/db";
+import { db } from "@/repositories/db";
+import { getPasswordResetTokenByToken } from "@/repositories/password-reset-token/password-reset-token-repository";
+import { getUserByEmail } from "@/repositories/user/user-repository";
 
 
 export const newPassword = async (

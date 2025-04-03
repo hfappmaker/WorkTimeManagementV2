@@ -2,10 +2,10 @@ import crypto from "crypto";
 
 import { v4 as uuidv4 } from "uuid";
 
-import { getPasswordResetTokenByEmail } from "@/features/auth/data/password-reset-token";
-import { getTwoFactorTokenByEmail } from "@/features/auth/data/two-factor-token";
-import { getVerificationTokenByEmail } from "@/features/auth/data/verification-token";
-import { db } from "@/lib/db";
+import { db } from "@/repositories/db";
+import { getPasswordResetTokenByEmail } from "@/repositories/password-reset-token/password-reset-token-repository";
+import { getTwoFactorTokenByEmail } from "@/repositories/two-factor-token/two-factor-token-repository";
+import { getVerificationTokenByEmail } from "@/repositories/verification-token/verification-token-repository";
 
 export const generateTwoFactorToken = async (email: string) => {
   const token = crypto.randomInt(100_000, 1_000_000).toString();

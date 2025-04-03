@@ -1,8 +1,6 @@
- 
 /* eslint-disable @typescript-eslint/no-explicit-any */
- 
-import { currentUser } from "./auth";
-import { baseDb } from "./base-db";
+import { currentUser } from "@/features/auth/lib/auth";
+import { baseDb } from "@/repositories/base-db";
 
 declare global {
   // eslint-disable-next-line no-var

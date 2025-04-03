@@ -1,20 +1,30 @@
-import { Client } from "@prisma/client";
+import { Client as PrismaClient } from "@prisma/client";
 import { StrictOmit } from "ts-essentials";
 
+import { Client } from "@/features/client/types/client";
 import { db } from "@/lib/db";
+
+function convertPrismaClientToClient(values: PrismaClient): Client {
+  const { defaultEmailTemplateId, ...rest } = values;
+
+  return {
+    defaultEmailTemplateId: defaultEmailTemplateId ?? undefined,
+    ...rest,
+  };
+}
 
 export async function getClientsByUserId(userId: string): Promise<Client[]> {
   const clients = await db.client.findMany({
     where: { createUserId: userId },
   });
-  return clients;
+  return clients.map(convertPrismaClientToClient);
 }
 
 export async function getClientById(clientId: string): Promise<Client | null> {
   const client = await db.client.findUnique({
     where: { id: clientId },
   });
-  return client;
+  return client ? convertPrismaClientToClient(client) : null;
 }
 
 export async function createClient(
@@ -41,7 +51,7 @@ export async function createClient(
         : {}),
     },
   });
-  return client;
+  return convertPrismaClientToClient(client);
 }
 
 export async function updateClient(
@@ -57,7 +67,7 @@ export async function updateClient(
       defaultEmailTemplateId: values.defaultEmailTemplateId,
     },
   });
-  return client;
+  return convertPrismaClientToClient(client);
 }
 
 export async function deleteClient(id: string): Promise<void> {

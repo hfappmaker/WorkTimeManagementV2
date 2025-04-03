@@ -1,10 +1,8 @@
 "use server";
 
-import { Prisma, Contract as PrismaContract } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { StrictOmit } from "ts-essentials";
 
-import { Client } from "@/features/client/types/client";
+import { Contract, ContractInput } from "@/features/contract/types/contract";
 import {
   createContract,
   updateContract,
@@ -13,56 +11,12 @@ import {
   getContractsByUserId,
   getContractById,
   getContractsByClientId,
-} from "@/features/contract/data/contract";
-import { Contract, ContractInput } from "@/features/contract/types/contract";
-import { Serialize } from "@/utils/serialization/serialization-utils";
-
-type ContractOutput = StrictOmit<PrismaContract, "id">;
-
-const transformContractData = (values: ContractInput): ContractOutput => {
-  return {
-    ...values,
-    unitPrice: values.unitPrice ? new Prisma.Decimal(values.unitPrice) : null,
-    settlementMin: values.settlementMin
-      ? new Prisma.Decimal(values.settlementMin)
-      : null,
-    settlementMax: values.settlementMax
-      ? new Prisma.Decimal(values.settlementMax)
-      : null,
-    upperRate: values.upperRate ? new Prisma.Decimal(values.upperRate) : null,
-    lowerRate: values.lowerRate ? new Prisma.Decimal(values.lowerRate) : null,
-    middleRate: values.middleRate
-      ? new Prisma.Decimal(values.middleRate)
-      : null,
-    basicStartTime: values.basicStartTime
-      ? new Date(values.basicStartTime)
-      : null,
-    basicEndTime: values.basicEndTime ? new Date(values.basicEndTime) : null,
-    basicBreakDuration: values.basicBreakDuration
-      ? Number(values.basicBreakDuration)
-      : null,
-    closingDay: values.closingDay ? Number(values.closingDay) : null,
-    monthlyWorkMinutes: values.monthlyWorkMinutes
-      ? Number(values.monthlyWorkMinutes)
-      : null,
-    dailyWorkMinutes: values.dailyWorkMinutes
-      ? Number(values.dailyWorkMinutes)
-      : null,
-    endDate: values.endDate ? new Date(values.endDate) : null,
-  };
-};
-
-const convertPrismaContractToContract = (
-  contract: PrismaContract,
-): Contract => {
-  return Serialize(contract);
-};
+} from "@/lib/contract/contract-repository";
 
 export const createContractAction = async (
   values: ContractInput,
 ): Promise<void> => {
-  const contractData = transformContractData(values);
-  await createContract(contractData);
+  await createContract(values);
   revalidatePath(`/client/${values.clientId}`);
 };
 
@@ -70,8 +24,7 @@ export const updateContractAction = async (
   id: string,
   values: ContractInput,
 ): Promise<void> => {
-  const contractData = transformContractData(values);
-  await updateContract(id, contractData);
+  await updateContract(id, values);
   revalidatePath(`/client/${values.clientId}`);
 };
 
@@ -86,7 +39,7 @@ export const searchContractsAction = async (
 ): Promise<Contract[]> => {
   try {
     const contracts = await searchContracts(userId, searchQuery);
-    return contracts.map(convertPrismaContractToContract);
+    return contracts;
   } catch (error) {
     console.error("Error searching contracts:", error);
     throw new Error("Failed to search contracts");
@@ -98,7 +51,7 @@ export const getContractsByUserIdAction = async (
 ): Promise<Contract[]> => {
   try {
     const contracts = await getContractsByUserId(userId);
-    return contracts.map(convertPrismaContractToContract);
+    return contracts;
   } catch (error) {
     console.error("Error fetching contracts:", error);
     throw new Error("Failed to fetch contracts");
@@ -110,7 +63,7 @@ export const getContractsByClientIdAction = async (
 ): Promise<Contract[]> => {
   try {
     const contracts = await getContractsByClientId(clientId);
-    return contracts.map(convertPrismaContractToContract);
+    return contracts;
   } catch (error) {
     console.error("Error fetching contracts:", error);
     throw new Error("Failed to fetch contracts");
@@ -119,19 +72,10 @@ export const getContractsByClientIdAction = async (
 
 export const getContractByIdAction = async (
   contractId: string,
-): Promise<(Contract & { client: Client }) | null> => {
+): Promise<Contract | null> => {
   try {
     const contract = await getContractById(contractId);
-    return contract
-      ? {
-          ...convertPrismaContractToContract(contract),
-          client: {
-            ...contract.client,
-            defaultEmailTemplateId:
-              contract.client.defaultEmailTemplateId ?? undefined,
-          },
-        }
-      : null;
+    return contract;
   } catch (error) {
     console.error("Error fetching contract:", error);
     throw new Error("Failed to fetch contract details");

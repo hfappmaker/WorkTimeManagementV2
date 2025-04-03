@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { currentUser } from "@/features/auth/lib/auth";
 import { getContractByIdAction } from "@/features/contract/actions/contract";
 
 import ClientContractPage from "./page.client";
@@ -13,9 +12,9 @@ export const metadata: Metadata = {
 
 export default async function ContractPage({ params }: { params: Promise<{ contractId: string }> }) {
     const { contractId } = await params;
-    const user = await currentUser();
+    // TODO: 契約の作成者がログインユーザーと一致するか確認
     const contract = await getContractByIdAction(contractId);
-    if (!contract || contract.client.createUserId !== user?.id) {
+    if (!contract) {
         return notFound();
     }
     return (

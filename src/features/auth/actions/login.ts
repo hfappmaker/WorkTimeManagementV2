@@ -4,9 +4,6 @@ import { AuthError } from "next-auth";
 import * as z from "zod";
 
 import { DEFAULT_LOGIN_REDIRECT } from "@/app/routes";
-import { getTwoFactorConfirmationByUserId } from "@/features/auth/data/two-factor-confirmation";
-import { getTwoFactorTokenByEmail } from "@/features/auth/data/two-factor-token";
-import { getUserByEmail } from "@/features/auth/data/user";
 import { signIn } from "@/features/auth/lib/auth";
 import {
   sendVerificationEmail,
@@ -16,7 +13,10 @@ import {
   generateVerificationToken,
   generateTwoFactorToken,
 } from "@/features/auth/lib/tokens";
-import { db } from "@/lib/db";
+import { db } from "@/repositories/db";
+import { getTwoFactorConfirmationByUserId } from "@/repositories/two-factor-confirmation/two-factor-confirmation-repository";
+import { getTwoFactorTokenByEmail } from "@/repositories/two-factor-token/two-factor-token-repository";
+import { getUserByEmail } from "@/repositories/user/user-repository";
 
 import { LoginSchema } from "../schemas/login";
 

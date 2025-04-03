@@ -3,12 +3,12 @@
 import bcrypt from "bcryptjs";
 import * as z from "zod";
 
-import { getUserByEmail, getUserById } from "@/features/auth/data/user";
 import { unstable_update, currentUser } from "@/features/auth/lib/auth";
 import { sendVerificationEmail } from "@/features/auth/lib/mail";
 import { generateVerificationToken } from "@/features/auth/lib/tokens";
 import { SettingsSchema } from "@/features/auth/schemas/settings";
-import { db } from "@/lib/db";
+import { db } from "@/repositories/db";
+import { getUserByEmail, getUserById } from "@/repositories/user/user-repository";
 
 export const settings = async (values: z.infer<typeof SettingsSchema>) => {
   const user = await currentUser();
