@@ -7,4 +7,3 @@ export const emailTemplateFormSchema = z.object({
 });
 
 export type EmailTemplateFormValues = z.infer<typeof emailTemplateFormSchema>;
-export type DialogType = "create" | "edit" | "delete" | "details" | null;
