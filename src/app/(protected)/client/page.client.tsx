@@ -10,7 +10,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import FormError from "@/components/ui/feedback/error-alert";
 import FormSuccess from "@/components/ui/feedback/success-alert";
 import { Label } from "@/components/ui/label";
-import { useTransitionContext } from "@/contexts/TransitionContext";
+import { useTransitionContext } from "@/contexts/transition-context";
 import {
   getClientsByUserIdAction,
   createClientAction,

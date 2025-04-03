@@ -4,7 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 
 import { Toaster } from "@/components/ui/sonner";
-import { TransitionProvider } from "@/contexts/TransitionContext";
+import { TransitionProvider } from "@/contexts/transition-context";
 
 import ClientLayout from "./client-layout";
 

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/feedback/error-alert";
 import FormSuccess from "@/components/ui/feedback/success-alert";
-import { useTransitionContext } from "@/contexts/TransitionContext";
+import { useTransitionContext } from "@/contexts/transition-context";
 import {
   createEmailTemplateAction,
   updateEmailTemplateAction,

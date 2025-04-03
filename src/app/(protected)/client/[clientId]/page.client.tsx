@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FormError from "@/components/ui/feedback/error-alert";
 import FormSuccess from "@/components/ui/feedback/success-alert";
-import { useTransitionContext } from "@/contexts/TransitionContext";
+import { useTransitionContext } from "@/contexts/transition-context";
 import { Client } from "@/features/client/types/client";
 import { createContractAction, deleteContractAction, updateContractAction, getContractsByClientIdAction } from '@/features/contract/actions/contract';
 import { ContractDialog, type DialogType } from "@/features/contract/components/contract-dialog";

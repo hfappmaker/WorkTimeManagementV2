@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db } from "@/repositories/db";
 import { isValidTemplateString } from "@/utils/string/template-parser";
 
 export class EmailTemplateError extends Error {

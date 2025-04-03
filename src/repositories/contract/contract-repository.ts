@@ -2,7 +2,7 @@ import { Contract as PrismaContract, Prisma } from "@prisma/client";
 import { StrictOmit } from "ts-essentials";
 
 import { Contract, ContractInput } from "@/features/contract/types/contract";
-import { db } from "@/lib/db";
+import { db } from "@/repositories/db";
 import { Serialize } from "@/utils/serialization/serialization-utils";
 
 type ContractOutput = StrictOmit<PrismaContract, "id">;

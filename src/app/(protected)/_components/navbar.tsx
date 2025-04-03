@@ -6,7 +6,7 @@ import { MdMenu } from "react-icons/md";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useTransitionContext } from "@/contexts/TransitionContext";
+import { useTransitionContext } from "@/contexts/transition-context";
 import UserButton from "@/features/auth/components/user-button";
 
 import { NAV_LINKS } from "../_constants";

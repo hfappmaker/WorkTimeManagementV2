@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useTransitionContext } from "@/contexts/TransitionContext";
+import { useTransitionContext } from "@/contexts/transition-context";
 import {
     type DashboardClientPageProps
 } from "@/features/dashboard/types/dashboard";

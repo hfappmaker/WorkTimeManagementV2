@@ -2,7 +2,7 @@ import { Client as PrismaClient } from "@prisma/client";
 import { StrictOmit } from "ts-essentials";
 
 import { Client } from "@/features/client/types/client";
-import { db } from "@/lib/db";
+import { db } from "@/repositories/db";
 
 function convertPrismaClientToClient(values: PrismaClient): Client {
   const { defaultEmailTemplateId, ...rest } = values;
