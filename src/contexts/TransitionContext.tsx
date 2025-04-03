@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
 
-import { Spinner } from "@/components/spinner";
+import { Spinner } from "@/components/ui/loading/spinner";
 import { useIsClient } from "@/hooks/use-is-client";
 
 type TransitionContextType = {

@@ -3,8 +3,8 @@
 import { useTheme } from "next-themes";
 import { RiUserSettingsLine } from "react-icons/ri";
 
-import { Spinner } from "@/components/spinner";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/loading/spinner";
 import { Switch } from "@/components/ui/switch";
 import { useIsClient } from "@/hooks/use-is-client";
 

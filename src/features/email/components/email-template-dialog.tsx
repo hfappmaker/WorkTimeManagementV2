@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { EmailTemplateForm } from "@/features/email/components/email-template-form";
-import { type DialogType, type EmailTemplateFormValues } from "@/features/email/schemas/schemas";
+import { type DialogType, type EmailTemplateFormValues } from "@/features/email/schemas/email-template-form-schema";
 import { EmailTemplate } from "@/features/email/types/email-template";
 
 

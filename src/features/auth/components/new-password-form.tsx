@@ -6,9 +6,9 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import FormError from "@/components/form-error";
-import FormSuccess from "@/components/form-success";
 import { Button } from "@/components/ui/button";
+import FormError from "@/components/ui/feedback/error-alert";
+import FormSuccess from "@/components/ui/feedback/success-alert";
 import {
   Form,
   FormControl,

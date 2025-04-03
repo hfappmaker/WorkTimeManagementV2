@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-import FormError from "@/components/form-error";
-import FormSuccess from "@/components/form-success";
 import { Button } from "@/components/ui/button";
+import FormError from "@/components/ui/feedback/error-alert";
+import FormSuccess from "@/components/ui/feedback/success-alert";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import {
   createEmailTemplateAction,
@@ -15,7 +15,7 @@ import {
 import {
   EmailTemplateDialog,
 } from "@/features/email/components/email-template-dialog";
-import { type DialogType, type EmailTemplateFormValues } from "@/features/email/schemas/schemas";
+import { type DialogType, type EmailTemplateFormValues } from "@/features/email/schemas/email-template-form-schema";
 import { EmailTemplate } from "@/features/email/types/email-template";
 
 export default function EmailTemplateClientPage({ userId }: { userId: string }) {

@@ -7,10 +7,9 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 
-import FormError from "@/components/form-error";
-import FormSuccess from "@/components/form-success";
-import { Spinner } from "@/components/spinner";
 import { Button } from "@/components/ui/button";
+import FormError from "@/components/ui/feedback/error-alert";
+import FormSuccess from "@/components/ui/feedback/success-alert";
 import {
   Form,
   FormControl,
@@ -20,6 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/loading/spinner";
 import { register } from "@/features/auth/actions/register";
 import CardWrapper from "@/features/auth/components/card-wrapper";
 import { PasswordInput } from "@/features/auth/components/password-input";

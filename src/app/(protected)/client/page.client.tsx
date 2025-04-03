@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { StrictOmit } from "ts-essentials";
 
-import FormError from "@/components/form-error";
-import FormSuccess from "@/components/form-success";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
+import FormError from "@/components/ui/feedback/error-alert";
+import FormSuccess from "@/components/ui/feedback/success-alert";
 import { Label } from "@/components/ui/label";
 import { useTransitionContext } from "@/contexts/TransitionContext";
 import {

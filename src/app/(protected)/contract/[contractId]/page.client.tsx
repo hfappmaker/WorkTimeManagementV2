@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 
-import FormError from "@/components/form-error";
-import FormSuccess from "@/components/form-success";
 import { Button } from '@/components/ui/button';
 import { YearMonthPickerField } from '@/components/ui/date-picker';
+import FormError from "@/components/ui/feedback/error-alert";
+import FormSuccess from "@/components/ui/feedback/success-alert";
 import { Form } from '@/components/ui/form';
 import { useTransitionContext } from '@/contexts/TransitionContext';
 import { getContractByIdAction } from '@/features/contract/actions/contract';

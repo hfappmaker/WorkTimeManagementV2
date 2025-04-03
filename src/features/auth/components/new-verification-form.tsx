@@ -3,9 +3,9 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import FormError from "@/components/form-error";
-import FormSuccess from "@/components/form-success";
-import { Spinner } from "@/components/spinner";
+import FormError from "@/components/ui/feedback/error-alert";
+import FormSuccess from "@/components/ui/feedback/success-alert";
+import { Spinner } from "@/components/ui/loading/spinner";
 import { newVerification } from "@/features/auth/actions/new-verification";
 import CardWrapper from "@/features/auth/components/card-wrapper";
 
