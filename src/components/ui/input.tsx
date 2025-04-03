@@ -2,7 +2,7 @@ import * as React from "react"
 import { FC, useState, memo, useCallback } from "react"
 import { Control, FieldValues, Path } from "react-hook-form"
 
-import { cn } from "@/utils/utils"
+import { cn } from "@/utils/styles/tailwind-utils"
 
 import { FormControl, FormLabel, FormField, FormMessage, FormItem } from "./form"
 

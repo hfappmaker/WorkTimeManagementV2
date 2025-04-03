@@ -2,7 +2,7 @@
 
 import { Prisma } from "@prisma/client";
 
-import { Serialize, SerializedType } from "@/utils/utils";
+import { Serialize, SerializedType } from "@/utils/serialization/serialization-utils";
 
 export type Test = {
   test: string;

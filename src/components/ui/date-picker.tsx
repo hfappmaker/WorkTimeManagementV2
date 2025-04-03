@@ -6,7 +6,7 @@ import { FieldValues, Control, Path } from "react-hook-form";
 import { FaCalendarAlt } from "react-icons/fa";
 import { StrictOmit } from "ts-essentials";
 
-import { cn } from "@/utils/utils";
+import { cn } from "@/utils/styles/tailwind-utils"
 
 import { Button } from "./button";
 import { FormControl, FormField, FormMessage, FormItem, FormLabel } from "./form";

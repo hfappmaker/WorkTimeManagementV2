@@ -1,7 +1,7 @@
 import {
   DateRangeMode,
   ExcelRange,
-} from "@/features/work-report/schemas/schemas";
+} from "@/features/work-report/schemas/work-report-form-schemas";
 import { AttendanceData } from "@/features/work-report/types/attendance";
 
 export function generateDefaultAttendances(

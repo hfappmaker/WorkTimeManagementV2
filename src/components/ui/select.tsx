@@ -12,7 +12,7 @@ import * as React from "react"
 import { Control, FieldValues, Path } from "react-hook-form"
 
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { cn } from "@/utils/utils"
+import { cn } from "@/utils/styles/tailwind-utils"
 
 import { Button } from "./button"
 

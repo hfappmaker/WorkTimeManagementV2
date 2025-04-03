@@ -5,7 +5,7 @@ import { Cross2Icon } from "@radix-ui/react-icons"
 import * as React from "react"
 import { ComponentPropsWithRef, FC } from "react"
 
-import { cn } from "@/utils/utils"
+import { cn } from "@/utils/styles/tailwind-utils"
 
 
 

@@ -1,9 +1,11 @@
+"use client"
+
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
 import { CheckIcon } from "@radix-ui/react-icons"
 import * as React from "react"
 import { FC } from "react"
 
-import { cn } from "@/utils/utils"
+import { cn } from "@/utils/styles/tailwind-utils"
 
 
 const Checkbox: FC<React.ComponentPropsWithRef<typeof CheckboxPrimitive.Root>> =

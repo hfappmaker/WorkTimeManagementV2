@@ -15,7 +15,7 @@ import {
   getContractsByClientId,
 } from "@/features/contract/data/contract";
 import { Contract, ContractInput } from "@/features/contract/types/contract";
-import { Serialize } from "@/utils/utils";
+import { Serialize } from "@/utils/serialization/serialization-utils";
 
 type ContractOutput = StrictOmit<PrismaContract, "id">;
 

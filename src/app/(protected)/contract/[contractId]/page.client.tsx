@@ -20,7 +20,7 @@ import {
   type CreateWorkReportFormValues,
   searchFormSchema,
   type SearchFormValues,
-} from "@/features/work-report/schemas/schemas";
+} from "@/features/work-report/schemas/work-report-form-schemas";
 import { WorkReport } from "@/features/work-report/types/work-report";
 
 

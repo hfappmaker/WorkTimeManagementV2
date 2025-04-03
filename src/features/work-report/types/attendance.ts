@@ -1,7 +1,7 @@
 import { Attendance as PrismaAttendance } from "@prisma/client";
 import { StrictOmit } from "ts-essentials";
 
-import { SerializedType } from "@/utils/utils";
+import { SerializedType } from "@/utils/serialization/serialization-utils";
 
 export type AttendanceDto = SerializedType<StrictOmit<PrismaAttendance, "id">>;
 

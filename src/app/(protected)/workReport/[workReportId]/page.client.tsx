@@ -39,7 +39,7 @@ import {
     type BulkEditFormValues,
     editFormSchema,
     bulkEditFormSchema,
-} from "@/features/work-report/schemas/schemas";
+} from "@/features/work-report/schemas/work-report-form-schemas";
 import {
     type AttendanceData,
 } from "@/features/work-report/types/attendance";
@@ -54,7 +54,7 @@ import {
     formatMonthDay,
     shouldUpdateDate,
     getBulkEditFormDefaults,
-} from "@/features/work-report/utils/utils";
+} from "@/features/work-report/utils/attendance-utils";
 
 
 export default function ClientWorkReportPage({

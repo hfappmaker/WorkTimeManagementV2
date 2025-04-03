@@ -4,7 +4,7 @@ import * as SwitchPrimitives from "@radix-ui/react-switch"
 import * as React from "react"
 import { FC, ComponentPropsWithRef } from "react"
 
-import { cn } from "@/utils/utils"
+import { cn } from "@/utils/styles/tailwind-utils"
 
 const Switch: FC<ComponentPropsWithRef<typeof SwitchPrimitives.Root>> =
   ({ className, ...props }) => (
