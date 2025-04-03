@@ -14,9 +14,9 @@ import {
   generateTwoFactorToken,
 } from "@/features/auth/lib/tokens";
 import { db } from "@/repositories/db";
-import { getTwoFactorConfirmationByUserId } from "@/repositories/two-factor-confirmation/two-factor-confirmation-repository";
-import { getTwoFactorTokenByEmail } from "@/repositories/two-factor-token/two-factor-token-repository";
-import { getUserByEmail } from "@/repositories/user/user-repository";
+import { getTwoFactorConfirmationByUserId } from "@/features/auth/repositories/two-factor-confirmation-repository";
+import { getTwoFactorTokenByEmail } from "@/features/auth/repositories/two-factor-token-repository";
+import { getUserByEmail } from "@/features/auth/repositories/user-repository";
 
 import { LoginSchema } from "../schemas/login";
 

@@ -5,8 +5,8 @@ import * as z from "zod";
 
 import { NewPasswordSchema } from "@/features/auth/schemas/new-password";
 import { db } from "@/repositories/db";
-import { getPasswordResetTokenByToken } from "@/repositories/password-reset-token/password-reset-token-repository";
-import { getUserByEmail } from "@/repositories/user/user-repository";
+import { getPasswordResetTokenByToken } from "@/features/auth/repositories/password-reset-token-repository";
+import { getUserByEmail } from "@/features/auth/repositories/user-repository";
 
 
 export const newPassword = async (

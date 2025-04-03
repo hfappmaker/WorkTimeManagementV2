@@ -2,11 +2,11 @@
 import { Attendance as PrismaAttendance } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { AttendanceDto } from "@/features/work-report/types/attendance";
 import {
   getAttendancesByWorkReportId,
   updateWorkReportAttendance,
-} from "@/repositories/attendance/attendance-repository";
+} from "@/features/work-report/repositories/attendance-repository";
+import { AttendanceDto } from "@/features/work-report/types/attendance";
 
 export const getAttendancesByWorkReportIdAction = async (
   workReportId: string,

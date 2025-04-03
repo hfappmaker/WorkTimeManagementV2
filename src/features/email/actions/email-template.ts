@@ -7,7 +7,7 @@ import { EmailTemplate } from "@/features/email/types/email-template";
 import {
   EmailTemplateRepository,
   EmailTemplateError,
-} from "@/repositories/email-template/email-template-repository";
+} from "@/features/email/repositories/email-template-repository";
 
 const repository = new EmailTemplateRepository();
 

@@ -10,7 +10,7 @@ import {
   getWorkReportsByContractId,
   getWorkReportsByContractIdAndYearMonthDateRange,
   updateWorkReportAttendances,
-} from "@/repositories/work-report/work-report-repository";
+} from "@/features/work-report/repositories/work-report-repository";
 
 export const createWorkReportAction = async (
   contractId: string,

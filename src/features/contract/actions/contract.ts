@@ -11,7 +11,7 @@ import {
   getContractsByUserId,
   getContractById,
   getContractsByClientId,
-} from "@/repositories/contract/contract-repository";
+} from "@/features/contract/repositories/contract-repository";
 
 export const createContractAction = async (
   values: ContractInput,
