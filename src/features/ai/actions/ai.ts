@@ -1,12 +1,11 @@
 "use server";
 
 import { generateWithOllama } from "@/features/ai/lib/ai";
-import { FormActionResult } from "@/types/form-action-result";
 
 export const generateOllamaAction = async (
   prompt: string,
   aiModel: string,
-): Promise<FormActionResult> => {
+): Promise<{ success?: string; error?: string }> => {
   const config = {
     model: aiModel,
     temperature: 0.7,

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { currentUser } from "@/features/auth/lib/auth";
 import { getAttendancesByWorkReportIdAction } from "@/features/work-report/actions/attendance";
-import { getWorkReportById } from "@/features/work-report/data/work-report";
+import { getWorkReportById } from "@/repositories/work-report/work-report-repository";
 import { getContractById } from "@/repositories/contract/contract-repository";
 import { Serialize } from "@/utils/serialization/serialization-utils";
 

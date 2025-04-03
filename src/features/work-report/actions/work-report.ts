@@ -3,15 +3,14 @@
 import { WorkReport as PrismaWorkReport } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { AttendanceDto } from "@/features/work-report/types/attendance";
+import { WorkReport } from "@/features/work-report/types/work-report";
 import {
   createWorkReport,
   getWorkReportsByContractId,
   getWorkReportsByContractIdAndYearMonthDateRange,
   updateWorkReportAttendances,
-} from "@/features/work-report/data/work-report";
-import { AttendanceDto } from "@/features/work-report/types/attendance";
-import { WorkReport } from "@/features/work-report/types/work-report";
-
+} from "@/repositories/work-report/work-report-repository";
 
 export const createWorkReportAction = async (
   contractId: string,

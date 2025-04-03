@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { TextArea } from "@/components/ui/textarea";
-
-import { emailTemplateFormSchema, type EmailTemplateFormValues } from "../schemas";
+import { emailTemplateFormSchema, type EmailTemplateFormValues } from "@/features/email/schemas/email-template-form-schema";
 
 type EmailTemplateFormProps = {
     defaultValues?: EmailTemplateFormValues;

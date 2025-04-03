@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 
-import { getCurrentWorkReports } from "@/features/work-report/data/work-report";
+import { getCurrentWorkReports } from "@/repositories/work-report/work-report-repository";
 
 import DashboardClientPage from "./page.client";
 

@@ -1,7 +1,7 @@
 import { Attendance as PrismaAttendance } from "@prisma/client";
 
 import { AttendanceDto } from "@/features/work-report/types/attendance";
-import { db } from "@/lib/db";
+import { db } from "@/repositories/db";
 
 export async function getAttendancesByWorkReportId(
   workReportId: string,

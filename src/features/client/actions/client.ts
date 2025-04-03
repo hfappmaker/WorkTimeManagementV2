@@ -10,7 +10,7 @@ import {
   updateClient,
   deleteClient,
   getClientsByUserId,
-} from "@/lib/client/client-repository";
+} from "@/repositories/client/client-repository";
 
 export const getClientByIdAction = async (
   clientId: string,

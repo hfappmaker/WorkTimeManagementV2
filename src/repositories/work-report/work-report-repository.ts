@@ -1,7 +1,7 @@
 import { WorkReportStatus } from "@prisma/client";
 
 import { AttendanceDto } from "@/features/work-report/types/attendance";
-import { db } from "@/lib/db";
+import { db } from "@/repositories/db";
 
 export async function getWorkReportById(workReportId: string) {
   const workReport = await db.workReport.findUnique({
