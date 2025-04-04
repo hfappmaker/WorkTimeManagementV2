@@ -39,13 +39,13 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
       showError("クライアント情報の取得に失敗しました");
       console.error(error);
     }
-  }, [userId, showError]);
+  }, [userId]);
 
   useEffect(() => {
     startTransition(async () => {
       await fetchClients();
     });
-  }, [fetchClients, startTransition]);
+  }, []);
 
   const closeDialog = () => {
     setActiveDialog(null);
@@ -58,8 +58,8 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   ): StrictOmit<Client, "id"> => {
     return {
       name: data.name,
-      contactName: data.contactName || "",
-      email: data.email || "",
+      contactName: data.contactName ?? "",
+      email: data.email ?? "",
       defaultEmailTemplateId: undefined,
       createUserId: userId,
     };

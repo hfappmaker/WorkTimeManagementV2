@@ -38,7 +38,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
     startTransition(async () => {
       await refreshContracts();
     });
-  }, [refreshContracts, startTransition]);
+  }, []);
 
   // ダイアログを閉じる
   const closeDialog = () => {
