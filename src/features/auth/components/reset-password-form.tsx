@@ -6,8 +6,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
-import FormError from "@/components/ui/feedback/error-alert";
-import FormSuccess from "@/components/ui/feedback/success-alert";
+import { MessageDisplay } from "@/components/ui/feedback/message-display";
 import {
   Form,
   FormControl,
@@ -17,13 +16,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useMessageState } from "@/hooks/use-message-state";
 import { reset } from "@/features/auth/actions/reset";
 import CardWrapper from "@/features/auth/components/card-wrapper";
 import { ResetSchema } from "@/features/auth/schemas/reset";
 
 const ResetPasswordForm = () => {
-  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const { error, success, showError, showSuccess } = useMessageState();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof ResetSchema>>({
@@ -34,17 +33,14 @@ const ResetPasswordForm = () => {
   });
 
   const onSubmit = (values: z.infer<typeof ResetSchema>) => {
-    setError({ message: "", date: new Date() });
-    setSuccess({ message: "", date: new Date() });
-
     startTransition(() => {
       void (async () => {
         try {
           const data = await reset(values);
-          setError({ message: data.error ?? "", date: new Date() });
-          setSuccess({ message: data.success ?? "", date: new Date() });
+          if (data.error) showError(data.error);
+          if (data.success) showSuccess(data.success);
         } catch (err) {
-          setError({ message: `Something went wrong! ${err}`, date: new Date() });
+          showError(`Something went wrong! ${err}`);
         }
       })();
     });
@@ -81,8 +77,7 @@ const ResetPasswordForm = () => {
               )}
             />
           </div>
-          <FormError message={error.message} resetSignal={error.date.getTime()} />
-          <FormSuccess message={success.message} resetSignal={success.date.getTime()} />
+          <MessageDisplay error={error} success={success} />
           <Button
             disabled={isPending}
             type="submit"

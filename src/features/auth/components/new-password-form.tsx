@@ -7,8 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
-import FormError from "@/components/ui/feedback/error-alert";
-import FormSuccess from "@/components/ui/feedback/success-alert";
+import { MessageDisplay } from "@/components/ui/feedback/message-display";
 import {
   Form,
   FormControl,
@@ -17,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useMessageState } from "@/hooks/use-message-state";
 import { newPassword } from "@/features/auth/actions/new-password";
 import CardWrapper from "@/features/auth/components/card-wrapper";
 import { PasswordInput } from "@/features/auth/components/password-input";
@@ -26,8 +26,7 @@ const NewPasswordForm = () => {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const { error, success, showError, showSuccess } = useMessageState();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof NewPasswordSchema>>({
@@ -42,17 +41,15 @@ const NewPasswordForm = () => {
     startTransition(async () => {
       try {
         const data = await newPassword(values, token);
-        setError({ message: data.error ?? "", date: new Date() });
-        setSuccess({ message: data.success ?? "", date: new Date() });
+        if (data.error) showError(data.error);
+        if (data.success) showSuccess(data.success);
       } catch (err) {
         console.error(err);
-        setError({ message: "Something went wrong!", date: new Date() });
+        showError("Something went wrong!");
       }
     });
 
     form.reset();
-    setSuccess({ message: "", date: new Date() });
-    setError({ message: "", date: new Date() });
   };
 
   return (
@@ -104,8 +101,7 @@ const NewPasswordForm = () => {
               )}
             />
           </div>
-          <FormError message={error.message} resetSignal={error.date.getTime()} />
-          <FormSuccess message={success.message} resetSignal={success.date.getTime()} />
+          <MessageDisplay error={error} success={success} />
           <Button
             disabled={isPending}
             type="submit"

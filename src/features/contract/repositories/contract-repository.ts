@@ -40,12 +40,6 @@ const transformContractData = (values: ContractInput): ContractOutput => {
   };
 };
 
-const convertPrismaContractToContract = (
-  contract: PrismaContract,
-): Contract => {
-  return Serialize(contract);
-};
-
 function processContractValues(values: StrictOmit<PrismaContract, "id">) {
   const { clientId, userId } = values;
 
@@ -70,14 +64,14 @@ export async function getContractsByUserId(userId: string) {
   const contracts = await db.contract.findMany({
     where: { client: { createUserId: userId } },
   });
-  return contracts.map(convertPrismaContractToContract);
+  return contracts.map(Serialize);
 }
 
 export async function getContractsByClientId(clientId: string) {
   const contracts = await db.contract.findMany({
     where: { clientId: clientId },
   });
-  return contracts.map(convertPrismaContractToContract);
+  return contracts.map(Serialize);
 }
 
 export async function getContractById(contractId: string) {
@@ -87,7 +81,7 @@ export async function getContractById(contractId: string) {
       client: true,
     },
   });
-  return contract ? convertPrismaContractToContract(contract) : null;
+  return contract ? Serialize(contract) : null;
 }
 
 export async function createContract(values: ContractInput) {
@@ -121,7 +115,7 @@ export async function searchContracts(userId: string, searchQuery: string) {
       ],
     },
   });
-  return contracts.map(convertPrismaContractToContract);
+  return contracts.map(Serialize);
 }
 
 export async function updateContract(id: string, values: ContractInput) {

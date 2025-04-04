@@ -7,8 +7,7 @@ import { StrictOmit } from "ts-essentials";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
-import FormError from "@/components/ui/feedback/error-alert";
-import FormSuccess from "@/components/ui/feedback/success-alert";
+import { MessageDisplay } from "@/components/ui/feedback/message-display";
 import { Label } from "@/components/ui/label";
 import { useTransitionContext } from "@/contexts/transition-context";
 import {
@@ -20,23 +19,15 @@ import {
 import { ClientDialog, type DialogType } from "@/features/client/components/client-dialog";
 import { ClientForm, type ClientFormValues } from "@/features/client/components/client-form";
 import { Client } from "@/features/client/types/client";
+import { useMessageState } from "@/hooks/use-message-state";
 import { truncate } from "@/utils/string/string-utils";
 
-
-
 export default function ClientClientListPage({ userId }: { userId: string }) {
-  const [error, setError] = useState<{ message: string; date: Date }>({
-    message: "",
-    date: new Date(),
-  });
-  const [success, setSuccess] = useState<{ message: string; date: Date }>({
-    message: "",
-    date: new Date(),
-  });
   const [clients, setClients] = useState<Client[]>([]);
   const { startTransition } = useTransitionContext();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [activeDialog, setActiveDialog] = useState<DialogType>(null);
+  const { error, success, showError, showSuccess } = useMessageState();
 
   const router = useRouter();
 
@@ -45,13 +36,10 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
       const data = await getClientsByUserIdAction(userId);
       setClients(data);
     } catch (error) {
-      setError({
-        message: "クライアント情報の取得に失敗しました",
-        date: new Date(),
-      });
+      showError("クライアント情報の取得に失敗しました");
       console.error(error);
     }
-  }, [userId]);
+  }, [userId, showError]);
 
   useEffect(() => {
     startTransition(async () => {
@@ -82,18 +70,12 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
       try {
         const clientData = convertClientFormValuesToClient(values, userId);
         await createClientAction(clientData);
-        setSuccess({
-          message: `クライアント '${values.name}' を作成しました`,
-          date: new Date(),
-        });
+        showSuccess(`クライアント '${values.name}' を作成しました`);
         closeDialog();
         await fetchClients();
       } catch (err) {
         console.error(err);
-        setError({
-          message: "クライアントの作成に失敗しました",
-          date: new Date(),
-        });
+        showError("クライアントの作成に失敗しました");
       }
     });
   };
@@ -104,18 +86,12 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
       try {
         const clientData = convertClientFormValuesToClient(values, userId);
         await updateClientAction(selectedClient.id, clientData);
-        setSuccess({
-          message: `クライアント '${values.name}' を編集しました`,
-          date: new Date(),
-        });
+        showSuccess(`クライアント '${values.name}' を編集しました`);
         closeDialog();
         await fetchClients();
       } catch (err) {
         console.error(err);
-        setError({
-          message: "クライアントの更新に失敗しました",
-          date: new Date(),
-        });
+        showError("クライアントの更新に失敗しました");
       }
     });
   };
@@ -125,17 +101,14 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
     startTransition(async () => {
       try {
         await deleteClientAction(selectedClient.id);
-        setSuccess({ message: "クライアントを削除しました", date: new Date() });
+        showSuccess("クライアントを削除しました");
         await fetchClients();
         closeDialog();
       } catch (error) {
         if (error instanceof Error) {
-          setError({ message: error.message, date: new Date() });
+          showError(error.message);
         } else {
-          setError({
-            message: "クライアントの削除に失敗しました",
-            date: new Date(),
-          });
+          showError("クライアントの削除に失敗しました");
         }
         console.error(error);
       }
@@ -164,20 +137,13 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
           <CardTitle>クライアント一覧</CardTitle>
         </CardHeader>
         <CardContent>
-          {clients.length === 0 ? (
-            <div className="p-4 text-center">
-              <p className="text-muted-foreground">クライアントがありません</p>
-            </div>
-          ) : (
-            <div className="p-4">
-              <FormError
-                message={error.message}
-                resetSignal={error.date.getTime()}
-              />
-              <FormSuccess
-                message={success.message}
-                resetSignal={success.date.getTime()}
-              />
+          <div className="p-4">
+            <MessageDisplay error={error} success={success} />
+            {clients.length === 0 ? (
+              <div className="text-center">
+                <p className="text-muted-foreground">クライアントがありません</p>
+              </div>
+            ) : (
               <div className="space-y-4">
                 {clients.map((client) => (
                   <div
@@ -208,8 +174,8 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
 

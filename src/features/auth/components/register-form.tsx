@@ -2,14 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-
 import { Button } from "@/components/ui/button";
-import FormError from "@/components/ui/feedback/error-alert";
-import FormSuccess from "@/components/ui/feedback/success-alert";
+import { MessageDisplay } from "@/components/ui/feedback/message-display";
 import {
   Form,
   FormControl,
@@ -25,14 +23,11 @@ import CardWrapper from "@/features/auth/components/card-wrapper";
 import { PasswordInput } from "@/features/auth/components/password-input";
 import { RegisterSchema } from "@/features/auth/schemas/register";
 import { useIsClient } from "@/hooks/use-is-client";
-
+import { useMessageState } from "@/hooks/use-message-state";
 
 const RegisterForm = () => {
   const isClient = useIsClient();
-
-  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-
+  const { error, success, showError, showSuccess } = useMessageState();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof RegisterSchema>>({
@@ -49,24 +44,22 @@ const RegisterForm = () => {
     startTransition(async () => {
       try {
         const data = await register(values);
-        if (data.success) setSuccess({ message: data.success, date: new Date() });
-        if (data.error) setError({ message: data.error, date: new Date() });
+        if (data.success) showSuccess(data.success);
+        if (data.error) showError(data.error);
       } catch (err) {
-        setError({ message: `Something went wrong! ${err}`, date: new Date() });
+        showError(`Something went wrong! ${err}`);
       }
     });
 
     form.reset();
-    setSuccess({ message: "", date: new Date() });
-    setError({ message: "", date: new Date() });
   };
 
   if (!isClient) return <Spinner />;
 
   return (
     <CardWrapper
-      headerLabel="Register an account to get started!"
-      backButtonLabel="Have an account already?"
+      headerLabel="Create an account"
+      backButtonLabel="Already have an account?"
       backButtonHref="/auth/login"
       showSocial
     >
@@ -86,15 +79,14 @@ const RegisterForm = () => {
                     <Input
                       {...field}
                       disabled={isPending}
+                      placeholder="John Doe"
                       type="text"
-                      placeholder="Your Name"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="email"
@@ -105,15 +97,14 @@ const RegisterForm = () => {
                     <Input
                       {...field}
                       disabled={isPending}
+                      placeholder="john.doe@example.com"
                       type="email"
-                      placeholder="your.email@example.com"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="password"
@@ -132,7 +123,6 @@ const RegisterForm = () => {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="passwordConfirmation"
@@ -160,8 +150,7 @@ const RegisterForm = () => {
               )}
             />
           </div>
-          <FormError message={error.message} resetSignal={error.date.getTime()} />
-          <FormSuccess message={success.message} resetSignal={success.date.getTime()} />
+          <MessageDisplay error={error} success={success} />
           <Button
             type="submit"
             disabled={isPending}

@@ -1,7 +1,7 @@
 import * as React from "react"
 import { ComponentPropsWithRef, FC } from "react"
 
-import { cn } from "@/utils/utils"
+import { cn } from "@/utils/styles/tailwind-utils"
 
 const Card: FC<ComponentPropsWithRef<"div">> =
   ({ className, ...props }) => (
