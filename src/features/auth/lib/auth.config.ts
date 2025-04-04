@@ -5,13 +5,16 @@ import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 
-import { LoginSchema } from "@/features/auth/schemas/login";
 import { getUserByEmail } from "@/features/auth/repositories/user-repository";
+import { LoginSchema } from "@/features/auth/schemas/login";
 
 export default {
   providers: [
     GitHub,
-    Google,
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+    }),
     Credentials({
       async authorize(credentials): Promise<User | null> {
         const validatedFields = LoginSchema.safeParse(credentials);
