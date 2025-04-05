@@ -17,6 +17,11 @@ jest.mock("@/contexts/transition-context", () => ({
     useTransitionContext: jest.fn(),
 }));
 
+jest.mock("@/features/auth/components/user-button", () => ({
+    __esModule: true,
+    default: () => <button data-testid="mock-user-button">Mocked Button</button>
+}));
+
 // テスト用のデータ
 const mockRouter = {
     push: jest.fn(),
@@ -45,7 +50,7 @@ describe("Navbar", () => {
         (usePathname as jest.Mock).mockReturnValue("/dashboard");
         render(<Navbar />);
         const activeLink = screen.getByText("ダッシュボード");
-        expect(activeLink.closest("button")).toHaveClass("bg-primary");
+        expect(activeLink.closest('[role="link"]')).toHaveClass("bg-primary");
     });
 
     it("リンククリック時にトランジションとナビゲーションが実行される", async () => {
