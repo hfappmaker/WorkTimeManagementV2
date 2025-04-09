@@ -54,7 +54,6 @@ export const {
     },
 
     session({ token, session }) {
-      console.log("session start", token, session);
       if (token.sub) {
         session.user.id = token.sub;
       }
@@ -67,12 +66,10 @@ export const {
       if (token.email) {
         session.user.email = token.email;
       }
-      console.log("session end", token, session);
       return session;
     },
 
     async jwt({ token }) {
-      console.log("jwt start", token);
       if (!token.sub) return token;
 
       const existingUser = await getUserById(token.sub);
@@ -86,7 +83,6 @@ export const {
       token.name = existingUser.name;
       token.email = existingUser.email;
       token.role = existingUser.role;
-      console.log("jwt end", token);
 
       return token;
     },
@@ -94,6 +90,7 @@ export const {
 
   adapter: PrismaAdapter(baseDb),
   session: { strategy: "jwt" },
+  debug: process.env.NODE_ENV === "development",
   ...authConfig,
 } satisfies NextAuthConfig);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { StrictOmit } from "ts-essentials";
 
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
 
   const router = useRouter();
 
-  const fetchClients = useCallback(async () => {
+  const fetchClients = async () => {
     try {
       const data = await getClientsByUserIdAction(userId);
       setClients(data);
@@ -39,7 +39,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
       showError("クライアント情報の取得に失敗しました");
       console.error(error);
     }
-  }, [userId]);
+  };
 
   useEffect(() => {
     startTransition(async () => {
