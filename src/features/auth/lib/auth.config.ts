@@ -11,10 +11,11 @@ import { LoginSchema } from "@/features/auth/schemas/login";
 export default {
   providers: [
     GitHub,
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    }),
+    // Google({
+    //   clientId: process.env.AUTH_GOOGLE_ID,
+    //   clientSecret: process.env.AUTH_GOOGLE_SECRET,
+    // }),
+    Google,
     Credentials({
       async authorize(credentials): Promise<User | null> {
         const validatedFields = LoginSchema.safeParse(credentials);

@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 
-import { Contract, ContractInput } from "@/features/contract/types/contract";
 import {
   createContract,
   updateContract,
@@ -12,6 +11,10 @@ import {
   getContractById,
   getContractsByClientId,
 } from "@/features/contract/repositories/contract-repository";
+import {
+  ContractOutput,
+  ContractInput,
+} from "@/features/contract/types/contract";
 
 export const createContractAction = async (
   values: ContractInput,
@@ -36,7 +39,7 @@ export const deleteContractAction = async (id: string): Promise<void> => {
 export const searchContractsAction = async (
   userId: string,
   searchQuery: string,
-): Promise<Contract[]> => {
+): Promise<ContractOutput[]> => {
   try {
     const contracts = await searchContracts(userId, searchQuery);
     return contracts;
@@ -48,7 +51,7 @@ export const searchContractsAction = async (
 
 export const getContractsByUserIdAction = async (
   userId: string,
-): Promise<Contract[]> => {
+): Promise<ContractOutput[]> => {
   try {
     const contracts = await getContractsByUserId(userId);
     return contracts;
@@ -60,7 +63,7 @@ export const getContractsByUserIdAction = async (
 
 export const getContractsByClientIdAction = async (
   clientId: string,
-): Promise<Contract[]> => {
+): Promise<ContractOutput[]> => {
   try {
     const contracts = await getContractsByClientId(clientId);
     return contracts;
@@ -72,7 +75,7 @@ export const getContractsByClientIdAction = async (
 
 export const getContractByIdAction = async (
   contractId: string,
-): Promise<Contract | null> => {
+): Promise<ContractOutput | null> => {
   try {
     const contract = await getContractById(contractId);
     return contract;

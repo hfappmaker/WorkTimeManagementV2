@@ -72,6 +72,7 @@ export const {
     },
 
     async jwt({ token }) {
+      console.log("jwt start", token);
       if (!token.sub) return token;
 
       const existingUser = await getUserById(token.sub);
@@ -85,6 +86,7 @@ export const {
       token.name = existingUser.name;
       token.email = existingUser.email;
       token.role = existingUser.role;
+      console.log("jwt end", token);
 
       return token;
     },

@@ -58,8 +58,8 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
   ): StrictOmit<Client, "id"> => {
     return {
       name: data.name,
-      contactName: data.contactName ?? "",
-      email: data.email ?? "",
+      contactName: data.contactName,
+      email: data.email,
       defaultEmailTemplateId: undefined,
       createUserId: userId,
     };

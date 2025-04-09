@@ -12,7 +12,7 @@ import FormSuccess from "@/components/ui/feedback/success-alert";
 import { Form } from '@/components/ui/form';
 import { useTransitionContext } from '@/contexts/transition-context';
 import { getContractByIdAction } from '@/features/contract/actions/contract';
-import { Contract } from "@/features/contract/types/contract";
+import { ContractOutput } from "@/features/contract/types/contract";
 import { createWorkReportAction, getWorkReportsByContractIdAndYearMonthDateRangeAction } from '@/features/work-report/actions/work-report';
 import { WorkReportDialog, type DialogType } from "@/features/work-report/components/work-report-dialog"
 import {
@@ -28,7 +28,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [workReports, setWorkReports] = useState<WorkReport[]>([]);
-  const [contract, setContract] = useState<Contract | null>(null);
+  const [contract, setContract] = useState<ContractOutput | null>(null);
   const [activeDialog, setActiveDialog] = useState<DialogType>(null);
 
   const { startTransition } = useTransitionContext();

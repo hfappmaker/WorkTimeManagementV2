@@ -62,7 +62,7 @@ const Navbar = () => {
                   variant={pathName === link.path ? "default" : "outline"}
                   className="my-2 w-full hover:bg-sky-400 hover:text-primary-foreground"
                 >
-                  <Link href={link.path} onClick={() => { handleNavigation(link.path); }}>{link.title}</Link>
+                  <Link role="link" href={link.path} onClick={() => { handleNavigation(link.path); }}>{link.title}</Link>
                 </Button>
               ))}
             </div>

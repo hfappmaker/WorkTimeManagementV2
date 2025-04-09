@@ -1,13 +1,16 @@
 import { Contract as PrismaContract, Prisma } from "@prisma/client";
 import { StrictOmit } from "ts-essentials";
 
-import { Contract, ContractInput } from "@/features/contract/types/contract";
+import {
+  ContractOutput,
+  ContractInput,
+} from "@/features/contract/types/contract";
 import { db } from "@/repositories/db";
 import { Serialize } from "@/utils/serialization/serialization-utils";
 
-type ContractOutput = StrictOmit<PrismaContract, "id">;
-
-const transformContractData = (values: ContractInput): ContractOutput => {
+const transformContractData = (
+  values: ContractInput,
+): StrictOmit<PrismaContract, "id"> => {
   return {
     ...values,
     unitPrice: values.unitPrice ? new Prisma.Decimal(values.unitPrice) : null,
@@ -91,7 +94,10 @@ export async function createContract(values: ContractInput) {
 
   await db.contract.create({
     data: {
-      ...(processedRest as StrictOmit<Contract, "id" | "clientId" | "userId">),
+      ...(processedRest as StrictOmit<
+        ContractOutput,
+        "id" | "clientId" | "userId"
+      >),
       client: {
         connect: {
           id: clientId,
@@ -126,7 +132,10 @@ export async function updateContract(id: string, values: ContractInput) {
   await db.contract.update({
     where: { id },
     data: {
-      ...(processedRest as StrictOmit<Contract, "id" | "clientId" | "userId">),
+      ...(processedRest as StrictOmit<
+        ContractOutput,
+        "id" | "clientId" | "userId"
+      >),
       client: {
         connect: {
           id: clientId,

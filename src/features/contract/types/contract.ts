@@ -3,10 +3,9 @@ import { StrictOmit } from "ts-essentials";
 
 import { SerializedType } from "@/utils/serialization/serialization-utils";
 
-export type Contract = SerializedType<PrismaContract>;
+export type ContractOutput = SerializedType<PrismaContract>;
 
 export type ContractInput = StrictOmit<
   SerializedType<PrismaContract, false>,
   "id"
 >;
-export type ContractOutput = StrictOmit<PrismaContract, "id">;

@@ -16,8 +16,8 @@ import {
   EmailTemplateDialog,
 } from "@/features/email/components/email-template-dialog";
 import { type EmailTemplateFormValues } from "@/features/email/schemas/email-template-form-schema";
-import { EmailTemplate } from "@/features/email/types/email-template";
 import { DialogType } from "@/features/email/types/dialog";
+import { EmailTemplate } from "@/features/email/types/email-template";
 
 export default function EmailTemplateClientPage({ userId }: { userId: string }) {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);

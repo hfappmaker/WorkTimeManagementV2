@@ -12,13 +12,13 @@ import { Client } from "@/features/client/types/client";
 import { createContractAction, deleteContractAction, updateContractAction, getContractsByClientIdAction } from '@/features/contract/actions/contract';
 import { ContractDialog, type DialogType } from "@/features/contract/components/contract-dialog";
 import { ContractForm, type ContractFormValues } from "@/features/contract/components/contract-form";
-import { Contract } from "@/features/contract/types/contract";
+import { ContractOutput } from "@/features/contract/types/contract";
 import { convertContractFormValuesToContract, convertContractToFormValues } from "@/features/contract/utils/contract-converter";
 
 
 export default function ClientClientDetailsPage({ client, userId }: { client: Client, userId: string }) {
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [activeContract, setActiveContract] = useState<Contract | null>(null);
+  const [contracts, setContracts] = useState<ContractOutput[]>([]);
+  const [activeContract, setActiveContract] = useState<ContractOutput | null>(null);
   const [activeDialog, setActiveDialog] = useState<DialogType>(null);
   const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
   const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
@@ -47,7 +47,7 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
   };
 
   // 契約詳細ダイアログを開く
-  const openDetailsDialog = (contract: Contract) => {
+  const openDetailsDialog = (contract: ContractOutput) => {
     setActiveContract(contract);
     setActiveDialog("details");
   };

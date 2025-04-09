@@ -1,6 +1,8 @@
 import { ContractFormValues } from "@/features/contract/components/contract-form";
-import { Contract, ContractInput } from "@/features/contract/types/contract";
-
+import {
+  ContractOutput,
+  ContractInput,
+} from "@/features/contract/types/contract";
 
 export const convertContractFormValuesToContract = (
   data: ContractFormValues,
@@ -30,7 +32,7 @@ export const convertContractFormValuesToContract = (
 };
 
 export const convertContractToFormValues = (
-  contract: Contract,
+  contract: ContractOutput,
 ): ContractFormValues => {
   return {
     name: contract.name,

@@ -1,5 +1,5 @@
 import { Client } from "@/features/client/types/client";
-import { Contract } from "@/features/contract/types/contract";
+import { ContractOutput } from "@/features/contract/types/contract";
 import { WorkReport } from "@/features/work-report/types/work-report";
 import { RenameProperty } from "@/utils/types/type-utils";
 
@@ -9,7 +9,7 @@ export type WorkReportDashboard = Pick<
 >;
 
 export type ContractDashboard = RenameProperty<
-  Pick<Contract, "name">,
+  Pick<ContractOutput, "name">,
   "name",
   "contractName"
 > & {
