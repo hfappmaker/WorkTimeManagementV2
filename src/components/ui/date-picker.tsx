@@ -167,7 +167,7 @@ const MONTH_OPTIONS = [
 type YearMonthPickerFieldProps<T extends FieldValues> = {
   control: Control<T>;
   name: Path<T> & {
-    [P in Path<T>]: T[P] extends (Date | undefined) ? P : never;
+    [P in Path<T>]: T[P] extends (Date | null) ? P : never;
   }[Path<T>];
   label?: string;
   yearPlaceholder?: string;
@@ -197,25 +197,25 @@ const YearMonthPickerContent = ({
   yearTriggerClassName,
   monthTriggerClassName,
 }: YearMonthPickerContentProps) => {
-  const date = field.value as Date | undefined;
+  const date = field.value as Date | null;
   const selectedYear = date?.getFullYear().toString();
   const selectedMonth = date?.getMonth().toString();
 
-  const handleYearChange = React.useCallback((value: string) => {
-    if (value && selectedMonth) {
-      field.onChange(new Date(Date.UTC(parseInt(value), parseInt(selectedMonth), 1)));
+  const handleYearChange = (value: string) => {
+    if (value) {
+      field.onChange(new Date(Date.UTC(parseInt(value), parseInt(selectedMonth ?? "0"), 1)));
     }
-  }, [field, selectedMonth]);
+  };
 
-  const handleMonthChange = React.useCallback((value: string) => {
-    if (selectedYear && value) {
-      field.onChange(new Date(Date.UTC(parseInt(selectedYear), parseInt(value), 1)));
+  const handleMonthChange = (value: string) => {
+    if (value) {
+      field.onChange(new Date(Date.UTC(parseInt(selectedYear ?? "2025"), parseInt(value), 1)));
     }
-  }, [field, selectedYear]);
+  };
 
-  const handleClear = React.useCallback(() => {
-    field.onChange(undefined);
-  }, [field]);
+  const handleClear = () => {
+    field.onChange(null);
+  };
 
   const yearPlaceholderElement = React.useMemo(() => (
     <span className="text-muted-foreground">{yearPlaceholder}</span>
@@ -230,14 +230,14 @@ const YearMonthPickerContent = ({
       <FormLabel>{label ?? ""}</FormLabel>
       <div className="flex gap-2">
         <CommonSelect
-          value={selectedYear}
+          value={selectedYear ?? ""}
           onValueChange={handleYearChange}
           placeholder={yearPlaceholderElement}
           className={yearTriggerClassName}
           options={YEAR_OPTIONS}
         />
         <CommonSelect
-          value={selectedMonth}
+          value={selectedMonth ?? ""}
           onValueChange={handleMonthChange}
           placeholder={monthPlaceholderElement}
           className={monthTriggerClassName}

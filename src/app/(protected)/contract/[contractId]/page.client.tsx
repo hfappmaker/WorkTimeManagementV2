@@ -60,7 +60,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   // 検索フォームの初期値を設定
   const searchForm = useForm<SearchFormValues>({
     resolver: zodResolver(searchFormSchema),
-    defaultValues: searchFormValues
+    defaultValues: searchFormValues,
   });
 
   // コントラクト情報を取得
@@ -77,9 +77,9 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   }, [contractId, startTransition]);
 
   // Fetch work time reports for the project
-  const fetchReports = useCallback(async (fromDate?: Date, toDate?: Date) => {
+  const fetchReports = useCallback(async (fromDate: Date | null, toDate: Date | null) => {
     try {
-      const data = await getWorkReportsByContractIdAndYearMonthDateRangeAction(contractId, fromDate, toDate);
+      const data = await getWorkReportsByContractIdAndYearMonthDateRangeAction(contractId, fromDate ?? undefined, toDate ?? undefined);
       setWorkReports(data);
       setSearchFormValues({
         from: fromDate,
@@ -94,7 +94,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   // Load the reports on initial render
   useEffect(() => {
     startTransition(async () => {
-      await fetchReports(searchFormValues.from, searchFormValues.to);
+      await fetchReports(searchFormValues.from , searchFormValues.to);
     });
   }, [contractId, startTransition, fetchReports, searchFormValues.from, searchFormValues.to]);
 

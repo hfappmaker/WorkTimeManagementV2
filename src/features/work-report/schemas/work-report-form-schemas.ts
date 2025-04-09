@@ -15,8 +15,8 @@ export const createWorkReportFormSchema = z.object({
 });
 
 export const searchFormSchema = z.object({
-  from: z.date().optional(),
-  to: z.date().optional(),
+  from: z.date().nullable(),
+  to: z.date().nullable(),
 });
 
 export const editFormSchema = z.object({
