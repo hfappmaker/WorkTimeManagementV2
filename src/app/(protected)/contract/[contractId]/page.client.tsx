@@ -22,11 +22,11 @@ import {
   type SearchFormValues,
 } from "@/features/work-report/schemas/work-report-form-schemas";
 import { WorkReport } from "@/features/work-report/types/work-report";
+import { useMessageState } from '@/hooks/use-message-state';
 
 
 export default function ContractClientPage({ contractId }: { contractId: string }) {
-  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const { error, success, showError, showSuccess } = useMessageState();
   const [workReports, setWorkReports] = useState<WorkReport[]>([]);
   const [contract, setContract] = useState<ContractOutput | null>(null);
   const [activeDialog, setActiveDialog] = useState<DialogType>(null);
@@ -70,10 +70,8 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         const contractData = await getContractByIdAction(contractId);
         setContract(contractData);
       } catch (error: unknown) {
-        setError({
-          message: error instanceof Error ? error.message : '契約情報の取得に失敗しました',
-          date: new Date()
-        });
+        console.error(error);
+        showError('契約情報の取得に失敗しました');
       }
     });
   }, [contractId, startTransition]);
@@ -88,7 +86,8 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         to: toDate
       });
     } catch (error: unknown) {
-      setError({ message: error instanceof Error ? error.message : '作業報告書の取得に失敗しました', date: new Date() });
+      console.error(error);
+      showError('作業報告書の取得に失敗しました');
     }
   }, [contractId]);
 
@@ -108,7 +107,8 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         // 検索条件を追加してfetchReportsを呼び出す
         await fetchReports(fromDate, toDate);
       } catch (error: unknown) {
-        setError({ message: error instanceof Error ? error.message : '検索に失敗しました', date: new Date() });
+        console.error(error);
+        showError('検索に失敗しました');
       }
     });
   };
@@ -117,7 +117,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
   const handleCreateReport = (values: CreateWorkReportFormValues) => {
     try {
       if (!contract) {
-        setError({ message: '契約情報がありません', date: new Date() });
+        showError('契約情報がありません');
         return;
       }
 
@@ -125,7 +125,7 @@ export default function ContractClientPage({ contractId }: { contractId: string 
 
       startTransition(async () => {
         await createWorkReportAction(contractId, targetDate);
-        setSuccess({ message: '作業報告書を作成しました', date: new Date() });
+        showSuccess('作業報告書を作成しました');
         // Refresh report list after creation
         await fetchReports(searchFormValues.from, searchFormValues.to);
         // Close dialog and reset the creation form
@@ -135,7 +135,8 @@ export default function ContractClientPage({ contractId }: { contractId: string 
         });
       });
     } catch (error: unknown) {
-      setError({ message: error instanceof Error ? error.message : '作業報告書の作成に失敗しました', date: new Date() });
+      console.error(error);
+      showError('作業報告書の作成に失敗しました');
     }
   };
 

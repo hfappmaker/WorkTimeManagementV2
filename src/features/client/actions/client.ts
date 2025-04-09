@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { StrictOmit } from "ts-essentials";
 
-import { Client } from "@/features/client/types/client";
 import {
   getClientById,
   createClient,
@@ -11,6 +10,7 @@ import {
   deleteClient,
   getClientsByUserId,
 } from "@/features/client/repositories/client-repository";
+import { Client } from "@/features/client/types/client";
 
 export const getClientByIdAction = async (
   clientId: string,

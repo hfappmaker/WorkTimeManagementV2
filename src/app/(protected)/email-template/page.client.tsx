@@ -18,13 +18,13 @@ import {
 import { type EmailTemplateFormValues } from "@/features/email/schemas/email-template-form-schema";
 import { DialogType } from "@/features/email/types/dialog";
 import { EmailTemplate } from "@/features/email/types/email-template";
+import { useMessageState } from "@/hooks/use-message-state";
 
 export default function EmailTemplateClientPage({ userId }: { userId: string }) {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [activeDialog, setActiveDialog] = useState<DialogType>(null);
   const [activeEmailTemplate, setActiveEmailTemplate] = useState<EmailTemplate | null>(null);
-  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const { error, success, showError, showSuccess } = useMessageState();
   const { startTransition } = useTransitionContext();
 
   const refreshTemplates = useCallback(async () => {
@@ -63,12 +63,12 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
       try {
         const templateData = convertEmailTemplateData(data, userId);
         await createEmailTemplateAction(templateData);
-        setSuccess({ message: `メールテンプレート '${data.name}' を作成しました`, date: new Date() });
+        showSuccess(`メールテンプレート '${data.name}' を作成しました`);
         closeDialog();
         await refreshTemplates();
       } catch (err) {
         console.error(err);
-        setError({ message: "メールテンプレートの作成に失敗しました", date: new Date() });
+        showError("メールテンプレートの作成に失敗しました");
       }
     });
   };
@@ -80,12 +80,12 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
       try {
         const templateData = convertEmailTemplateData(data, userId);
         await updateEmailTemplateAction(activeEmailTemplate.id, templateData);
-        setSuccess({ message: `メールテンプレート '${data.name}' を編集しました`, date: new Date() });
+        showSuccess(`メールテンプレート '${data.name}' を編集しました`);
         closeDialog();
         await refreshTemplates();
       } catch (err) {
         console.error(err);
-        setError({ message: "メールテンプレートの更新に失敗しました", date: new Date() });
+        showError("メールテンプレートの更新に失敗しました");
       }
     });
   };
@@ -96,12 +96,12 @@ export default function EmailTemplateClientPage({ userId }: { userId: string }) 
     startTransition(async () => {
       try {
         await deleteEmailTemplateAction(activeEmailTemplate.id);
-        setSuccess({ message: `メールテンプレート '${activeEmailTemplate.name}' を削除しました`, date: new Date() });
+        showSuccess(`メールテンプレート '${activeEmailTemplate.name}' を削除しました`);
         closeDialog();
         await refreshTemplates();
       } catch (err) {
         console.error(err);
-        setError({ message: "メールテンプレートの削除に失敗しました", date: new Date() });
+        showError("メールテンプレートの削除に失敗しました");
       }
     });
   };

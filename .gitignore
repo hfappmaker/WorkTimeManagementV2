@@ -43,3 +43,5 @@ work-time-management-user-deploy_accessKeys.csv
 
 # prisma
 /prisma/generated
+
+/test-results

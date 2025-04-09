@@ -9,7 +9,9 @@
     "build": "next build",
     "start": "prisma migrate deploy && next start -p 80",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:j": "jest",
+    "test:p": "playwright test"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -62,6 +64,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
+    "@playwright/test": "^1.51.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",

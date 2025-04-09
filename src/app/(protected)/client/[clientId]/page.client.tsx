@@ -14,14 +14,14 @@ import { ContractDialog, type DialogType } from "@/features/contract/components/
 import { ContractForm, type ContractFormValues } from "@/features/contract/components/contract-form";
 import { ContractOutput } from "@/features/contract/types/contract";
 import { convertContractFormValuesToContract, convertContractToFormValues } from "@/features/contract/utils/contract-converter";
+import { useMessageState } from "@/hooks/use-message-state";
 
 
 export default function ClientClientDetailsPage({ client, userId }: { client: Client, userId: string }) {
   const [contracts, setContracts] = useState<ContractOutput[]>([]);
   const [activeContract, setActiveContract] = useState<ContractOutput | null>(null);
   const [activeDialog, setActiveDialog] = useState<DialogType>(null);
-  const [error, setError] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
-  const [success, setSuccess] = useState<{ message: string, date: Date }>({ message: "", date: new Date() });
+  const { error, success, showError, showSuccess } = useMessageState();
   const { startTransition } = useTransitionContext();
   const router = useRouter();
 
@@ -58,12 +58,12 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       try {
         const contractData = convertContractFormValuesToContract(data, userId, client.id);
         await createContractAction(contractData);
-        setSuccess({ message: `契約 '${data.name}' を作成しました`, date: new Date() });
+        showSuccess(`契約 '${data.name}' を作成しました`);
         closeDialog();
         await refreshContracts();
       } catch (err) {
         console.error(err);
-        setError({ message: "契約の作成に失敗しました", date: new Date() });
+        showError("契約の作成に失敗しました");
       }
     });
   };
@@ -75,12 +75,12 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
       try {
         const contractData = convertContractFormValuesToContract(data, userId, client.id);
         await updateContractAction(activeContract.id, contractData);
-        setSuccess({ message: `契約 '${data.name}' を編集しました`, date: new Date() });
+        showSuccess(`契約 '${data.name}' を編集しました`);
         closeDialog();
         await refreshContracts();
       } catch (err) {
         console.error(err);
-        setError({ message: "契約の更新に失敗しました", date: new Date() });
+        showError("契約の更新に失敗しました");
       }
     });
   };
@@ -91,12 +91,12 @@ export default function ClientClientDetailsPage({ client, userId }: { client: Cl
     startTransition(async () => {
       try {
         await deleteContractAction(activeContract.id);
-        setSuccess({ message: `契約 '${activeContract.name}' を削除しました`, date: new Date() });
+        showSuccess(`契約 '${activeContract.name}' を削除しました`);
         closeDialog();
         await refreshContracts();
       } catch (err) {
         console.error(err);
-        setError({ message: "契約の削除に失敗しました。関連する勤怠情報が存在する可能性があります。", date: new Date() });
+        showError("契約の削除に失敗しました。関連する勤怠情報が存在する可能性があります。");
       }
     });
   };

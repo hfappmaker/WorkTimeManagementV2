@@ -55,6 +55,7 @@ import {
     shouldUpdateDate,
     getBulkEditFormDefaults,
 } from "@/features/work-report/utils/attendance-utils";
+import { useMessageState } from "@/hooks/use-message-state";
 
 
 export default function ClientWorkReportPage({
@@ -73,14 +74,7 @@ export default function ClientWorkReportPage({
     basicEndTime,
     basicBreakDuration,
 }: WorkReportClientProps) {
-    const [error, setError] = useState<{ message: string; date: Date }>({
-        message: "",
-        date: new Date(),
-    });
-    const [success, setSuccess] = useState<{ message: string; date: Date }>({
-        message: "",
-        date: new Date(),
-    });
+    const { error, success, showError, showSuccess } = useMessageState();
     const { startTransition } = useTransitionContext();
     // モーダルの状態管理
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
@@ -174,7 +168,7 @@ export default function ClientWorkReportPage({
             );
             setCurrentAttendances(updatedValues);
             resetBulkEditForm();
-            setSuccess({ message: "一括編集を適用しました", date: new Date() });
+            showSuccess("一括編集を適用しました");
         });
     };
 
@@ -215,10 +209,10 @@ export default function ClientWorkReportPage({
                 setCurrentAttendances(updatedValues);
                 setEditingDate(null);
             });
-            setSuccess({ message: "編集を適用しました", date: new Date() });
+            showSuccess("編集を適用しました");
         } catch (error) {
             console.error("編集の適用に失敗しました", error);
-            setError({ message: "編集の適用に失敗しました", date: new Date() });
+            showError("編集の適用に失敗しました");
         }
     };
 
@@ -418,16 +412,10 @@ export default function ClientWorkReportPage({
             link.download = `${targetDate.getFullYear()}年${(targetDate.getMonth() + 1)}月度作業報告書.xlsx`;
             link.click();
             window.URL.revokeObjectURL(url);
-            setSuccess({
-                message: "テンプレートからの作業報告書作成が完了しました",
-                date: new Date(),
-            });
+            showSuccess("テンプレートからの作業報告書作成が完了しました");
         } catch (err) {
             console.error("Error creating report from template:", err);
-            setError({
-                message: "テンプレートからの作業報告書作成に失敗しました",
-                date: new Date(),
-            });
+            showError("テンプレートからの作業報告書作成に失敗しました");
         }
     };
 
@@ -460,7 +448,7 @@ ${targetDate.getFullYear()}年${(targetDate.getMonth() + 1)}月分の作業報�
             );
         } catch (error) {
             console.error("作業報告書の作成に失敗しました", error);
-            setError({ message: "作業報告書の作成に失敗しました", date: new Date() });
+            showError("作業報告書の作成に失敗しました");
         }
     };
 
@@ -468,10 +456,7 @@ ${targetDate.getFullYear()}年${(targetDate.getMonth() + 1)}月分の作業報�
         if (extensionOption === "excel") {
             if (templateOption === "upload") {
                 if (!uploadedTemplateFile) {
-                    setError({
-                        message: "テンプレートファイルが選択されていません",
-                        date: new Date(),
-                    });
+                    showError("テンプレートファイルが選択されていません");
                     return;
                 }
                 try {
@@ -481,10 +466,7 @@ ${targetDate.getFullYear()}年${(targetDate.getMonth() + 1)}月分の作業報�
                     await createReportFromTemplate(workbook);
                 } catch (err) {
                     console.error("アップロードテンプレートの処理に失敗しました", err);
-                    setError({
-                        message: "アップロードテンプレートの処理に失敗しました",
-                        date: new Date(),
-                    });
+                    showError("アップロードテンプレートの処理に失敗しました");
                     return;
                 }
             }
@@ -500,18 +482,12 @@ ${targetDate.getFullYear()}年${(targetDate.getMonth() + 1)}月分の作業報�
                     await createReportFromTemplate(workbook);
                 } catch (err) {
                     console.error("デフォルトテンプレートの読み込みに失敗しました:", err);
-                    setError({
-                        message: "デフォルトテンプレートの読み込みに失敗しました",
-                        date: new Date(),
-                    });
+                    showError("デフォルトテンプレートの読み込みに失敗しました");
                     return;
                 }
             }
         } else if (extensionOption === "pdf") {
-            setError({
-                message: "PDF形式での作業報告書作成は未実装です",
-                date: new Date(),
-            });
+            showError("PDF形式での作業報告書作成は未実装です");
             return;
         }
         setIsCreateReportDialogOpen(false);
