@@ -3,9 +3,8 @@ import { test, expect } from '@playwright/test';
 test('クライアント作成のテスト', async ({ page }) => {
     // クライアント一覧ページへ遷移
     await page.goto('http://localhost:3000/client');
-
     // クライアントが存在しない場合は「クライアントがありません」と表示されることを想定
-    const emptyMessage = page.locator('text=クライアントがありません');
+    const emptyMessage = page.getByTestId('no-clients-message');
     await expect(emptyMessage).toBeVisible();
 
     // 「新規クライアント作成」ボタンをクリック

@@ -141,7 +141,7 @@ export default function ClientClientListPage({ userId }: { userId: string }) {
             <MessageDisplay error={error} success={success} />
             {clients.length === 0 ? (
               <div className="text-center">
-                <p className="text-muted-foreground">クライアントがありません</p>
+                <p className="text-muted-foreground" data-testid="no-clients-message">クライアントがありません</p>
               </div>
             ) : (
               <div className="space-y-4">

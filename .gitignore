@@ -45,3 +45,4 @@ work-time-management-user-deploy_accessKeys.csv
 /prisma/generated
 
 /test-results
+/playwright-report

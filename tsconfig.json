@@ -39,7 +39,12 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "prettier.config.mjs",
-    "eslint.config.mjs"
+    "eslint.config.mjs",
+    "playwright.config.mjs",
+    "postcss.config.mjs",
+    "tailwind.config.ts",
+    "jest.config.ts",
+    "tsconfig.spec.json"
   ],
   "exclude": ["node_modules"]
 }
